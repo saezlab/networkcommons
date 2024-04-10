@@ -35,11 +35,17 @@ def read_network_from_file(file_path, source_col='source', target_col='target', 
                                           target=target_col, 
                                           create_using=network_type)
     else:
+        #checks if there are negative weights
         network = nx.from_pandas_edgelist(network_df, 
                                           source=source_col, 
                                           target=target_col, 
                                           edge_attr=True, 
                                           create_using=network_type)
+        if ('weight' in network_df.columns and (network_df['weight'] < 0).any()):
+            for u, v, data in network.edges(data=True):
+                weight = data['weight']
+                data['sign'] = 1 if weight >= 0 else -1
+                data['weight'] = abs(weight)
 
     return network
 
