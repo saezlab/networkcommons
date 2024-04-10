@@ -2,6 +2,7 @@ import networkx as nx
 from networkcommons.utils import get_subnetwork
 import numpy as np
 
+
 def shortest_paths(network, source, target, verbose = False):
     """
     Calculate the shortest paths between sources and targets.
@@ -15,9 +16,9 @@ def shortest_paths(network, source, target, verbose = False):
     Returns:
         nx.Graph: The subnetwork containing the shortest paths.
         list: A list containing the shortest paths.
-        """
+    """
+
     shortest_paths_res = []
-    connected_targets = {}
 
     if type(source) == str:
         source = [source]
@@ -34,9 +35,6 @@ def shortest_paths(network, source, target, verbose = False):
         target = list(target.keys())
 
     for source_node in source:
-        if source_node not in connected_targets:
-            connected_targets[source_node] = []
-
         for target_node in target:
             try:
                 shortest_paths_res.extend([p for p in nx.all_shortest_paths(network, 
@@ -44,7 +42,6 @@ def shortest_paths(network, source, target, verbose = False):
                                                                             target=target_node, 
                                                                             weight='weight'
                                                                             )])
-                connected_targets[source_node].append(target_node)
             except nx.NetworkXNoPath as e:
                 if verbose:
                     print(f"Warning: {e}")
@@ -52,7 +49,7 @@ def shortest_paths(network, source, target, verbose = False):
                 if verbose:
                     print(f"Warning: {e}")
 
-    subnetwork, connected_targets = get_subnetwork(network, shortest_paths_res)
+    subnetwork = get_subnetwork(network, shortest_paths_res)
 
     return subnetwork, shortest_paths_res
 
@@ -89,9 +86,29 @@ def sign_consistency(network, paths, source_df, target_df):
 
         if np.sign(source_sign * product_sign) == np.sign(target_sign):
             sign_consistency_res.append(path)
-            for i in range(len(path) - 1):
-                edge_data = network.get_edge_data(path[i], path[i + 1])
-                subnetwork.add_edge(path[i], path[i + 1], **edge_data)
+    
+    subnetwork = get_subnetwork(network, sign_consistency_res)
 
     return subnetwork, sign_consistency_res
+
+
+def reachability_filter(network, source_df):
+    """
+    Filters out all nodes from the graph which cannot be reached from source(s).
+
+    Args:
+        network (nx.Graph): The network.
+        source_df (pd.DataFrame): A pandas DataFrame containing the source nodes.
+
+    Returns:
+        None
+    """
+    source_nodes = set(source_df['source'].values)
+    reachable_nodes = source_nodes
+    for source in source_nodes:
+        reachable_nodes.update(nx.descendants(network, source))
+    
+    subnetwork = network.subgraph(reachable_nodes)
+
+    return subnetwork
 
