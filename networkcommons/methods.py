@@ -1,16 +1,17 @@
 import networkx as nx
 from networkcommons.utils import get_subnetwork
+from pathos.multiprocessing import ProcessingPool as Pool
 import numpy as np
 
 
-def shortest_paths(network, source, target, verbose = False):
+def shortest_paths(network, source_df, target_df, verbose = False):
     """
     Calculate the shortest paths between sources and targets.
 
     Args:
         network (nx.Graph): The network.
-        source (str, list or dict): The source node(s).
-        target (str, list or dict): The target node(s).
+        source_df (pd.DataFrame): A pandas DataFrame containing the sources.
+        target_df (pd.DataFrame): A pandas DataFrame containing the targets. Must contain three columns: source, target and sign
         verbose (bool): If True, print warnings when no path is found to a given target.
 
     Returns:
@@ -20,22 +21,11 @@ def shortest_paths(network, source, target, verbose = False):
 
     shortest_paths_res = []
 
-    if type(source) == str:
-        source = [source]
-    elif type(source) == list:
-        source = source
-    elif type(source) == dict:
-        source = list(source.keys())
-    
-    if type(target) == str:
-        target = [target]
-    elif type(target) == list:
-        target = target
-    elif type(target) == dict:
-        target = list(target.keys())
+    sources = set(source_df['source'].values)
 
-    for source_node in source:
-        for target_node in target:
+    for source_node in sources:
+        targets = set(target_df[target_df['source'] == source_node]['target'].values)
+        for target_node in targets:
             try:
                 shortest_paths_res.extend([p for p in nx.all_shortest_paths(network, 
                                                                             source=source_node, 
@@ -111,4 +101,60 @@ def reachability_filter(network, source_df):
     subnetwork = network.subgraph(reachable_nodes)
 
     return subnetwork
+
+
+def all_paths(network, source_df, target_df, depth_cutoff=None, verbose=False, num_processes=None):
+    """
+    Calculate all paths between sources and targets.
+
+    Args:
+        cutoff (int, optional): Cutoff for path length. If None, there's no cutoff.
+        verbose (bool): If True, print warnings when no path is found to a given target.
+
+    Returns:
+        list: A list containing all paths.
+    """
+    all_paths_res = []
+    connected_all_path_targets = {}
+    sources = set(source_df['source'].values)
+    results = {}
+
+    for source in sources:
+        targets = set(target_df[target_df['source'] == source]['target'].values)
+        try:
+            results[source] = compute_all_paths(network, source, targets, depth_cutoff)
+        except nx.NetworkXNoPath as e:
+            if verbose:
+                print(f"Warning: {e}")
+        except nx.NodeNotFound as e:
+            if verbose:
+                print(f"Warning: {e}")
+
+    for i, source in enumerate(sources):
+        paths_for_source = results[source]
+        all_paths_res.extend(paths_for_source)
+
+    subnetwork = get_subnetwork(network, all_paths_res)
+
+    return subnetwork, all_paths_res
+
+def compute_all_paths(network, source, targets, cutoff):
+    """
+    Compute all paths between source and targets.
+
+    Args:
+        args (tuple): Tuple containing the network, source, targets and cutoff.
+
+    Returns:
+        list: A list containing all paths.
+    """
+    paths_for_source = []
+    for target in targets:
+        paths = list(nx.all_simple_paths(network, 
+                                         source=source, 
+                                         target=target, 
+                                         cutoff=cutoff))
+        paths_for_source.extend(paths)
+
+    return paths_for_source
 
