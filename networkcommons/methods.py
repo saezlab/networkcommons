@@ -1,49 +1,97 @@
 import networkx as nx
 from networkcommons.utils import get_subnetwork
+import numpy as np
 
 def shortest_paths(network, source, target, verbose = False):
+    """
+    Calculate the shortest paths between sources and targets.
+
+    Args:
+        network (nx.Graph): The network.
+        source (str, list or dict): The source node(s).
+        target (str, list or dict): The target node(s).
+        verbose (bool): If True, print warnings when no path is found to a given target.
+
+    Returns:
+        nx.Graph: The subnetwork containing the shortest paths.
+        list: A list containing the shortest paths.
         """
-        Calculate the shortest paths between sources and targets.
+    shortest_paths_res = []
+    connected_targets = {}
 
-        Args:
-            verbose (bool): If True, print warnings when no path is found to a given target.
+    if type(source) == str:
+        source = [source]
+    elif type(source) == list:
+        source = source
+    elif type(source) == dict:
+        source = list(source.keys())
+    
+    if type(target) == str:
+        target = [target]
+    elif type(target) == list:
+        target = target
+    elif type(target) == dict:
+        target = list(target.keys())
 
-        Returns:
-            list: A list containing the shortest paths.
-         """
-        shortest_paths_res = []
-        connected_targets = {}
+    for source_node in source:
+        if source_node not in connected_targets:
+            connected_targets[source_node] = []
 
-        if type(source) == str:
-            source = [source]
-        elif type(source) == list:
-            source = source
-        elif type(source) == dict:
-            source = list(source.keys())
-        
-        if type(target) == str:
-            target = [target]
-        elif type(target) == list:
-            target = target
-        elif type(target) == dict:
-            target = list(target.keys())
+        for target_node in target:
+            try:
+                shortest_paths_res.extend([p for p in nx.all_shortest_paths(network, 
+                                                                            source=source_node, 
+                                                                            target=target_node, 
+                                                                            weight='weight'
+                                                                            )])
+                connected_targets[source_node].append(target_node)
+            except nx.NetworkXNoPath as e:
+                if verbose:
+                    print(f"Warning: {e}")
+            except nx.NodeNotFound as e:
+                if verbose:
+                    print(f"Warning: {e}")
 
-        for source_node in source:
-            if source_node not in connected_targets:
-                connected_targets[source_node] = []
+    subnetwork, connected_targets = get_subnetwork(network, shortest_paths_res)
 
-            for target_node in target:
-                try:
-                    shortest_paths_res.extend([p for p in nx.all_shortest_paths(network, source=source_node, target=target_node, weight='weight')])
-                    connected_targets[source_node].append(target_node)
-                except nx.NetworkXNoPath as e:
-                    if verbose:
-                        print(f"Warning: {e}")
-                except nx.NodeNotFound as e:
-                    if verbose:
-                        print(f"Warning: {e}")
+    return subnetwork, shortest_paths_res
 
-        subnetwork, connected_targets = get_subnetwork(network, shortest_paths_res)
 
-        return subnetwork, shortest_paths_res
+def sign_consistency(network, paths, source_df, target_df):
+    """
+    Calculate the sign consistency between sources and targets.
+
+    Args:
+        network (nx.Graph): The network.
+        paths (list): A list containing the shortest paths.
+        source_df (pd.DataFrame): A pandas DataFrame containing the sources.
+        target_df (pd.DataFrame): A pandas DataFrame containing the targets. Must contain three columns: source, target and sign
+
+    Returns:
+        nx.Graph: The subnetwork containing the sign consistent paths.
+        list: A list containing the sign consistent paths.
+    """
+    directed = nx.is_directed(network)
+    subnetwork = nx.DiGraph() if directed else nx.Graph()
+    sign_consistency_res = []
+
+    for path in paths:
+        source = path[0]
+        product_sign = 1
+        target = path[-1]
+
+        source_sign = source_df[source_df['source'] == source]['sign'].values[0]
+        target_sign = target_df[(target_df['source'] == source) & (target_df['target'] == target)]['sign'].values[0]
+
+        for i in range(len(path) - 1):
+            edge_sign = np.sign(network.get_edge_data(path[i], path[i + 1])['weight'])
+            product_sign *= edge_sign
+
+        if np.sign(source_sign * product_sign) == np.sign(target_sign):
+            sign_consistency_res.append(path)
+            for i in range(len(path) - 1):
+                edge_data = network.get_edge_data(path[i], path[i + 1])
+                subnetwork.add_edge(path[i], path[i + 1], **edge_data)
+
+    return subnetwork, sign_consistency_res
 
