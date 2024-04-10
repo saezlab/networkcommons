@@ -6,23 +6,15 @@ def read_network_from_file(file_path, source_col='source', target_col='target', 
     """
     Read network from a file.
     
-    Parameters
-    ----------
-    file_path : str
-        Path to the csv file.
-    source_col : str
-        Column name for the source nodes.
-    target_col : str
-        Column name for the target nodes.
-    directed : bool
-        Whether the network is directed or not.
-    sep : str
-        Delimiter for the file.
+    Args:
+        file_path(str): Path to the csv file.
+        source_col(str): Column name for the source nodes.
+        target_col(str): Column name for the target nodes.
+        directed(bool): Whether the network is directed or not.
+        sep(str): Delimiter for the file.
         
-    Returns
-    -------
-    network : nx.Graph or nx.DiGraph
-        The network.
+    Returns:
+        nx.Graph or nx.DiGraph: The network.
     """
 
     network_type = nx.DiGraph if directed else nx.Graph
@@ -62,17 +54,9 @@ def get_subnetwork(network, paths):
     """
     directed = nx.is_directed(network)
     subnetwork = nx.DiGraph() if directed else nx.Graph()
-    connected_targets = {}
     for path in paths:
-        source = path[0]
-        target = path[-1]
-
-        if source not in connected_targets:
-            connected_targets[source] = []
-
-        connected_targets[source].append(target) if target not in connected_targets[source] else None
         for i in range(len(path) - 1):
             edge_data = network.get_edge_data(path[i], path[i + 1])
             subnetwork.add_edge(path[i], path[i + 1], **edge_data)
     
-    return subnetwork, connected_targets
+    return subnetwork
