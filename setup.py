@@ -6,9 +6,7 @@ with open("README.md", "r", encoding="utf-8") as fh:
     LONG_DESCRIPTION = fh.read()
 
 
-# Setting up
 setup(
-       # the name must match the folder name 'verysimplemodule'
         name="networkcommons", 
         version=VERSION,
         author="Victor Paton",
