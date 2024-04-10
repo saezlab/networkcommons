@@ -1,3 +1,7 @@
 networkcommons.egg-info/
 __pycache__/
 *.sif
+*.tsv
+*.csv
+*.zip
+*.pdf
