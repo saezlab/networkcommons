@@ -120,43 +120,6 @@ def deseq2_analysis(counts,
 
     return results_df
 
-def decoupler_formatter(df, 
-                        columns: list):
-    """
-    Format dataframe to be used by decoupler.
-
-    Parameters:
-        df (DataFrame): A pandas DataFrame.
-        column (str): The column to be used as index.
-
-    Returns:
-        A formatted DataFrame.
-    """
-    if not isinstance(columns, list):
-        columns = [columns]
-    df_f = df[columns].dropna().T
-    return df_f
-
-def targetlayer_formatter(df, source):
-    """
-    Format dataframe to be used by the network methods.
-    It converts the df values to 1, -1 and 0.
-
-    Parameters:
-        df (DataFrame): A pandas DataFrame.
-        source (str): The source node of the perturbation.
-
-    Returns:
-        A formatted DataFrame.
-    """
-    df.columns = ['sign']
-    df.reset_index(inplace=True)
-    df.rename(columns={'index': 'target'}, inplace=True)
-    df.insert(0, 'source', source)
-    df['sign'] = df['sign'].apply(lambda x: 1 if x>0 else -1 if x<0 else 0)
-    return df
-
-
 
 
 
