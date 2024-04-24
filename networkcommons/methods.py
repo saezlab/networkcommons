@@ -2,16 +2,19 @@ import networkx as nx
 from networkcommons.utils import get_subnetwork
 from pathos.multiprocessing import ProcessingPool as Pool
 import numpy as np
+import corneto as cn
+from corneto.contrib.networkx import networkx_to_corneto_graph, corneto_graph_to_networkx
+from corneto.methods.carnival import get_result, get_selected_edges
 
-
-def shortest_paths(network, source_df, target_df, verbose = False):
+def run_shortest_paths(network, source_dict, target_dict, verbose = False):
     """
     Calculate the shortest paths between sources and targets.
 
     Args:
         network (nx.Graph): The network.
-        source_df (pd.DataFrame): A pandas DataFrame containing the sources.
-        target_df (pd.DataFrame): A pandas DataFrame containing the targets. Must contain three columns: source, target and sign
+        source_dict (dict): A dictionary containing the sources and sign of perturbation.
+        target_dict (dict): A dictionary containing the targets and sign of measurements.
+            Must contain three columns: source, target and sign
         verbose (bool): If True, print warnings when no path is found to a given target.
 
     Returns:
@@ -21,10 +24,10 @@ def shortest_paths(network, source_df, target_df, verbose = False):
 
     shortest_paths_res = []
 
-    sources = set(source_df['source'].values)
+    sources = source_dict.keys()
 
     for source_node in sources:
-        targets = set(target_df[target_df['source'] == source_node]['target'].values)
+        targets = target_dict[source_node].keys()
         for target_node in targets:
             try:
                 shortest_paths_res.extend([p for p in nx.all_shortest_paths(network, 
@@ -44,15 +47,15 @@ def shortest_paths(network, source_df, target_df, verbose = False):
     return subnetwork, shortest_paths_res
 
 
-def sign_consistency(network, paths, source_df, target_df):
+def run_sign_consistency(network, paths, source_dict, target_dict):
     """
     Calculate the sign consistency between sources and targets.
 
     Args:
         network (nx.Graph): The network.
         paths (list): A list containing the shortest paths.
-        source_df (pd.DataFrame): A pandas DataFrame containing the sources.
-        target_df (pd.DataFrame): A pandas DataFrame containing the targets. Must contain three columns: source, target and sign
+        source_dict (dict): A dictionary containing the sources and sign of perturbation.
+        target_dict (dict): A dictionary containing the targets and sign of measurements.
 
     Returns:
         nx.Graph: The subnetwork containing the sign consistent paths.
@@ -67,11 +70,11 @@ def sign_consistency(network, paths, source_df, target_df):
         product_sign = 1
         target = path[-1]
 
-        source_sign = source_df[source_df['source'] == source]['sign'].values[0]
-        target_sign = target_df[(target_df['source'] == source) & (target_df['target'] == target)]['sign'].values[0]
+        source_sign = source_dict[source]
+        target_sign = target_dict[source][target]
 
         for i in range(len(path) - 1):
-            edge_sign = np.sign(network.get_edge_data(path[i], path[i + 1])['weight'])
+            edge_sign = network.get_edge_data(path[i], path[i + 1])['sign']
             product_sign *= edge_sign
 
         if np.sign(source_sign * product_sign) == np.sign(target_sign):
@@ -82,18 +85,18 @@ def sign_consistency(network, paths, source_df, target_df):
     return subnetwork, sign_consistency_res
 
 
-def reachability_filter(network, source_df):
+def run_reachability_filter(network, source_dict):
     """
     Filters out all nodes from the graph which cannot be reached from source(s).
 
     Args:
         network (nx.Graph): The network.
-        source_df (pd.DataFrame): A pandas DataFrame containing the source nodes.
+        source_dict (dict): A dictionary containing the sources and sign of perturbation.
 
     Returns:
         None
     """
-    source_nodes = set(source_df['source'].values)
+    source_nodes = list(source_dict.keys())
     reachable_nodes = source_nodes
     for source in source_nodes:
         reachable_nodes.update(nx.descendants(network, source))
@@ -103,36 +106,33 @@ def reachability_filter(network, source_df):
     return subnetwork
 
 
-def all_paths(network, source_df, target_df, depth_cutoff=None, verbose=False, num_processes=None):
+def run_all_paths(network, source_dict, target_dict, depth_cutoff=None, verbose=False):
     """
     Calculate all paths between sources and targets.
 
     Args:
-        cutoff (int, optional): Cutoff for path length. If None, there's no cutoff.
+        network (nx.Graph): The network.
+        source_dict (dict): A dictionary containing the sources and sign of perturbation.
+        target_dict (dict): A dictionary containing the targets and sign of measurements.
+        depth_cutoff (int, optional): Cutoff for path length. If None, there's no cutoff.
         verbose (bool): If True, print warnings when no path is found to a given target.
 
     Returns:
         list: A list containing all paths.
     """
     all_paths_res = []
-    connected_all_path_targets = {}
-    sources = set(source_df['source'].values)
-    results = {}
+    sources = list(source_dict.keys())
 
     for source in sources:
-        targets = set(target_df[target_df['source'] == source]['target'].values)
+        targets = list(target_dict[source].keys())
         try:
-            results[source] = compute_all_paths(network, source, targets, depth_cutoff)
+            all_paths_res.extend(compute_all_paths(network, source, targets, depth_cutoff))
         except nx.NetworkXNoPath as e:
             if verbose:
                 print(f"Warning: {e}")
         except nx.NodeNotFound as e:
             if verbose:
                 print(f"Warning: {e}")
-
-    for i, source in enumerate(sources):
-        paths_for_source = results[source]
-        all_paths_res.extend(paths_for_source)
 
     subnetwork = get_subnetwork(network, all_paths_res)
 
@@ -160,14 +160,22 @@ def compute_all_paths(network, source, targets, cutoff):
     return paths_for_source
 
 
-def add_pagerank_scores(network, source_df, target_df, alpha=0.85, max_iter=100, tol=1.0e-6, nstart=None, weight='weight', personalize_for=None):
+def add_pagerank_scores(network, 
+                        source_dict, 
+                        target_dict, 
+                        alpha=0.85, 
+                        max_iter=100, 
+                        tol=1.0e-6, 
+                        nstart=None, 
+                        weight='weight', 
+                        personalize_for=None):
     """
     Add PageRank scores to the nodes of the network.
 
     Args:
         network (nx.Graph): The network.
-        source_df (pd.DataFrame): A pandas DataFrame containing the sources.
-        target_df (pd.DataFrame): A pandas DataFrame containing the targets. Must contain three columns: source, target and sign
+        source_dict (dict): A dictionary containing the sources and sign of perturbation.
+        target_dict (dict): A dictionary containing the targets and sign of measurements.
         percentage (int): Percentage of nodes to keep.
         alpha (float): Damping factor for the PageRank algorithm.
         max_iter (int): Maximum number of iterations.
@@ -179,8 +187,11 @@ def add_pagerank_scores(network, source_df, target_df, alpha=0.85, max_iter=100,
     Returns:
         tuple: Contains nodes above threshold from sources, nodes above threshold from targets, and overlapping nodes.
     """
-    sources = set(source_df['source'].values)
-    targets = set(target_df['target'].values)
+    sources = source_dict.keys()
+    targets = set()
+    for key, value in target_dict.items():
+        for sub_key, sub_value in value.items():
+            targets.add(sub_key)
 
     if personalize_for == "source":
         personalized_prob = {n: 1/len(sources) for n in sources}
@@ -226,8 +237,12 @@ def compute_ppr_overlap(network, percentage=20):
     """
     # Sorting nodes by PageRank score from sources and targets
     try:
-        sorted_nodes_sources = sorted(network.nodes(data=True), key=lambda x: x[1].get('pagerank_from_sources'), reverse=True)
-        sorted_nodes_targets = sorted(network.nodes(data=True), key=lambda x: x[1].get('pagerank_from_targets'), reverse=True)
+        sorted_nodes_sources = sorted(network.nodes(data=True), 
+                                      key=lambda x: x[1].get('pagerank_from_sources'), 
+                                      reverse=True)
+        sorted_nodes_targets = sorted(network.nodes(data=True), 
+                                      key=lambda x: x[1].get('pagerank_from_targets'), 
+                                      reverse=True)
     except KeyError:
         raise KeyError("Please run the add_pagerank_scores method first with personalization options.")
 
@@ -245,6 +260,35 @@ def compute_ppr_overlap(network, percentage=20):
     subnetwork = network.subgraph(nodes_to_include)
 
     return subnetwork
+
+
+def run_corneto_carnival(network, source_dict, target_dict):
+    """
+    Run the Vanilla Carnival algorithm via CORNETO.
+
+    Args:
+        network (nx.Graph): The network.
+        source_df (pd.DataFrame): A pandas DataFrame containing the sources.
+        target_df (pd.DataFrame): A pandas DataFrame containing the targets. 
+            Must contain three columns: source, target and sign
+
+    Returns:
+        nx.Graph: The subnetwork containing the paths found by CARNIVAL.
+        list: A list containing the paths found by CARNIVAL.
+    """
+
+    corneto_net = networkx_to_corneto_graph(network)
+
+    for source in list(source_dict.keys()):
+        corneto_measurements = target_dict[source]
+        problem, graph = cn.methods.runVanillaCarnival(source_dict, corneto_measurements, corneto_net)
+    
+    network_sol = graph.edge_subgraph(get_selected_edges(problem, graph))
+
+    network_nx = corneto_graph_to_networkx(network_sol)
+
+    return network_nx
+
 
 
 
