@@ -71,6 +71,8 @@ def visualize_graph_simple(network,
     for edge in A.edges():
         u, v = edge
         edge_data = network.get_edge_data(u, v)
+        if 'interaction' in edge_data:
+            edge_data['sign'] = edge_data.pop('interaction')
         if edge_data['sign'] == 1 and is_sign_consistent:
             edge_color = 'forestgreen'
         elif edge_data['sign'] == -1 and is_sign_consistent:
