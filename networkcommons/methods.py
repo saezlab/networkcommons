@@ -262,7 +262,7 @@ def compute_ppr_overlap(network, percentage=20):
     return subnetwork
 
 
-def run_corneto_carnival(network, source_dict, target_dict):
+def run_corneto_carnival(network, source_dict, target_dict, betaWeight=0.2, solver=None, verbose=True):
     """
     Run the Vanilla Carnival algorithm via CORNETO.
 
@@ -276,16 +276,25 @@ def run_corneto_carnival(network, source_dict, target_dict):
         nx.Graph: The subnetwork containing the paths found by CARNIVAL.
         list: A list containing the paths found by CARNIVAL.
     """
-
-    corneto_net = networkx_to_corneto_graph(network)
+    if type(network) == cn._graph.Graph:
+        corneto_net = network
+    elif type(network) == nx.Graph or type(network) == nx.DiGraph:
+        corneto_net = networkx_to_corneto_graph(network)
 
     for source in list(source_dict.keys()):
         corneto_measurements = target_dict[source]
-        problem, graph = cn.methods.runVanillaCarnival(source_dict, corneto_measurements, corneto_net)
+        problem, graph = cn.methods.runVanillaCarnival(perturbations=source_dict, 
+                                                       measurements=corneto_measurements, 
+                                                       priorKnowledgeNetwork=corneto_net, 
+                                                       betaWeight=betaWeight,
+                                                       solver=solver,
+                                                       verbose=verbose)
     
     network_sol = graph.edge_subgraph(get_selected_edges(problem, graph))
 
-    network_nx = corneto_graph_to_networkx(network_sol)
+    network_nx = corneto_graph_to_networkx(network_sol, skip_unsupported_edges=True)
+
+    network_nx.remove_nodes_from(['_s', '_pert_c0', '_meas_c0'])
 
     return network_nx
 
