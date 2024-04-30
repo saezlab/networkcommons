@@ -1,6 +1,5 @@
 import omnipath as op
 import numpy as np
-import omnipath as op
 
 
 def get_omnipath(genesymbols=True,
