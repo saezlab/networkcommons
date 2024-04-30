@@ -261,6 +261,23 @@ def compute_ppr_overlap(network, percentage=20):
 
     return subnetwork
 
+def convert_cornetograph(graph):
+    """
+    Convert a networkx graph to a corneto graph, if needed.
+
+    Args:
+        graph (nx.Graph or nx.DiGraph): The corneto graph.
+
+    Returns:
+        cn.Graph: The corneto graph.
+    """
+    if type(graph) == cn._graph.Graph:
+        corneto_graph = graph
+    elif type(graph) == nx.Graph or type(graph) == nx.DiGraph:
+        corneto_graph = networkx_to_corneto_graph(graph)
+    
+    return corneto_graph
+
 
 def run_corneto_carnival(network, source_dict, target_dict, betaWeight=0.2, solver=None, verbose=True):
     """
@@ -276,10 +293,7 @@ def run_corneto_carnival(network, source_dict, target_dict, betaWeight=0.2, solv
         nx.Graph: The subnetwork containing the paths found by CARNIVAL.
         list: A list containing the paths found by CARNIVAL.
     """
-    if type(network) == cn._graph.Graph:
-        corneto_net = network
-    elif type(network) == nx.Graph or type(network) == nx.DiGraph:
-        corneto_net = networkx_to_corneto_graph(network)
+    corneto_net = convert_cornetograph(network)
 
     for source in list(source_dict.keys()):
         corneto_measurements = target_dict[source]
