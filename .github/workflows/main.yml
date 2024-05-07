@@ -13,7 +13,6 @@ jobs:
       with:
         activate-environment: networkcommons
         environment-file: environment.yml
-        python-version: 3.10
     - name: Install additional dependencies
       run: |
         pip install git+https://github.com/saezlab/corneto.git@dev .
