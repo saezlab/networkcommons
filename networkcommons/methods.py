@@ -96,8 +96,8 @@ def run_reachability_filter(network, source_dict):
     Returns:
         None
     """
-    source_nodes = list(source_dict.keys())
-    reachable_nodes = source_nodes
+    source_nodes = set(source_dict.keys())
+    reachable_nodes = source_nodes.copy()
     for source in source_nodes:
         reachable_nodes.update(nx.descendants(network, source))
     
@@ -261,6 +261,7 @@ def compute_ppr_overlap(network, percentage=20):
 
     return subnetwork
 
+
 def convert_cornetograph(graph):
     """
     Convert a networkx graph to a corneto graph, if needed.
@@ -285,9 +286,8 @@ def run_corneto_carnival(network, source_dict, target_dict, betaWeight=0.2, solv
 
     Args:
         network (nx.Graph): The network.
-        source_df (pd.DataFrame): A pandas DataFrame containing the sources.
-        target_df (pd.DataFrame): A pandas DataFrame containing the targets. 
-            Must contain three columns: source, target and sign
+        source_dict (dict): A dictionary containing the sources and sign of perturbation.
+        target_dict (dict): A dictionary containing the targets and sign of measurements.
 
     Returns:
         nx.Graph: The subnetwork containing the paths found by CARNIVAL.
