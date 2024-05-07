@@ -15,7 +15,6 @@ jobs:
         environment-file: environment.yml
     - name: Install additional dependencies
       run: |
-        pip install rpy2
         pip install git+https://github.com/saezlab/corneto.git@dev .
     - name: Lint with flake8
       run: |
