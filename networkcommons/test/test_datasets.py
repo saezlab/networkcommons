@@ -1,4 +1,4 @@
-from networkcommons.datasets import get_available_datasets, download_dataset, download_url, deseq2_analysis
+from networkcommons.datasets import get_available_datasets, download_dataset, run_deseq2_analysis
 import pytest
 import pandas as pd
 
