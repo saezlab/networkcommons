@@ -16,7 +16,7 @@ def test_get_available_datasets():
 
 def test_download_dataset():
     # Call the download_dataset function with a specific dataset
-    dataset = 'panacea'
+    dataset = 'unit_test'
     data = download_dataset(dataset)
 
     # Assert that the returned value is a list
