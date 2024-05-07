@@ -6,10 +6,6 @@ import owncloud as oc
 import zipfile
 import os
 import pandas as pd
-import rpy2.robjects as robjects
-from rpy2.robjects import pandas2ri
-from rpy2.robjects.packages import importr
-from rpy2.robjects.conversion import localconverter
 import decoupler as dc
 from pydeseq2.dds import DeseqDataSet
 from pydeseq2.default_inference import DefaultInference
