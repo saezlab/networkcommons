@@ -41,7 +41,7 @@ def test_deseq2_analysis():
     })
 
     # Call the deseq2_analysis function
-    result = deseq2_analysis(counts, metadata)
+    result = run_deseq2_analysis(counts, metadata, ref_group='Control', test_group='Treatment')
 
     # Assert that the returned value is a pandas DataFrame
     assert isinstance(result, pd.DataFrame)
@@ -55,13 +55,14 @@ def test_deseq2_analysis():
 
     # Assert that the DataFrame has the expected content
     data = {
-        'baseMean': [93.233027, 101.285704, 11.793541],
-        'log2FoldChange': [-0.218172, 0.682183, 0.052954],
-        'lfcSE': [0.328036, 0.352393, 0.521659],
-        'stat': [-0.665087, 1.935862, 0.101510],
-        'pvalue': [0.505995, 0.052885, 0.919146],
-        'padj': [0.758992, 0.158654, 0.919146]
+        'baseMean': [93.233032, 101.285698, 11.793541],
+        'log2FoldChange': [0.222414, -0.682183, -0.052951],
+        'lfcSE': [0.150059, 0.352411, 0.521689],
+        'stat': [1.482173, -1.935763, -0.101499],
+        'pvalue': [0.138294, 0.052897, 0.919154],
+        'padj': [0.207441, 0.158690, 0.919154]
     }
     
     expected_result = pd.DataFrame(data, index=['Gene1', 'Gene2', 'Gene3'])
+    expected_result.index.name = 'gene_symbol'
     pd.testing.assert_frame_equal(result, expected_result, check_exact=False)
