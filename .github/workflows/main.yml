@@ -22,7 +22,7 @@ jobs:
         python -m pip install --upgrade pip
         sudo apt-get install -y r-base
         sudo apt-get install graphviz libgraphviz-dev pkg-config
-        pip install pytest-cov flake8 decoupler omnipath requests rpy2 pathos
+        pip install pytest-cov flake8 decoupler omnipath requests rpy2 pathos pyocclient
         pip install git+https://github.com/saezlab/corneto.git@dev networkx pygraphviz picos .
     - name: Lint with flake8
       run: |
