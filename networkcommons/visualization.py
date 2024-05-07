@@ -1,4 +1,3 @@
-import graphviz as gv
 import pygraphviz as pgv
 import networkx as nx
 

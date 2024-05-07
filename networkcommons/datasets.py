@@ -6,13 +6,18 @@ import owncloud as oc
 import zipfile
 import os
 import pandas as pd
-import rpy2.robjects as robjects
-from rpy2.robjects import pandas2ri
-from rpy2.robjects.packages import importr
-from rpy2.robjects.conversion import localconverter
 import decoupler as dc
+from pydeseq2.dds import DeseqDataSet
+from pydeseq2.default_inference import DefaultInference
+from pydeseq2.ds import DeseqStats
 
 def get_available_datasets():
+    """
+    Retrieves a list of available datasets from a specified public link.
+
+    Returns:
+        list: A list of file paths for the available datasets.
+    """
     public_link="https://oc.embl.de/index.php/s/6KsHfeoqJOKLF6B"
     password="networkcommons_datasaezlab"
     occontents = oc.Client.from_public_link(public_link,folder_password=password)
@@ -23,6 +28,19 @@ def get_available_datasets():
     
 
 def download_dataset(dataset):
+    """
+    Downloads a dataset and returns a list of pandas DataFrames.
+
+    Args:
+        dataset (str): The name of the dataset to download.
+
+    Returns:
+        list: A list of pandas DataFrames, each representing a file in the downloaded dataset.
+
+    Raises:
+        ValueError: If the specified dataset is not available.
+
+    """
     available_datasets = get_available_datasets()
     if dataset not in available_datasets:
         raise ValueError(f"Dataset {dataset} not available. Check available datasets with get_available_datasets()")
@@ -46,6 +64,14 @@ def download_dataset(dataset):
 
 
 def download_url(url, save_path, chunk_size=128):
+    """
+    Downloads a file from the given URL and saves it to the specified path.
+
+    Args:
+        url (str): The URL of the file to download.
+        save_path (str): The path where the downloaded file will be saved.
+        chunk_size (int, optional): The size of each chunk to download. Defaults to 128.
+    """
     r = requests.get(url, stream=True)
     # mkdir if not exists
     os.makedirs(os.path.dirname(save_path), exist_ok=True)
@@ -54,71 +80,50 @@ def download_url(url, save_path, chunk_size=128):
             fd.write(chunk)
 
 
-def deseq2_analysis(counts, 
-                    metadata,
-                    covariates="",
-                    deseq2_test='Wald',
-                    deseq2_fitType='parametric',
-                    deseq2_betaprior=False,
-                    deseq2_quiet=False,
-                    deseq2_minReplicatesForReplace=7,
-                    ):
-    """
-    Perform DESeq2 analysis using rpy2.
 
-    Parameters:
-        counts (DataFrame): A pandas DataFrame containing raw count data.
-        metadata (DataFrame): A pandas DataFrame containing metadata.
-        additional_args (dict): Additional arguments for DESeq2 analysis.
+def run_deseq2_analysis(counts, 
+                      metadata, 
+                      test_group, 
+                      ref_group, 
+                      covariates=[]):
+    """
+    Runs DESeq2 analysis on the given counts and metadata.
+
+    Args:
+        counts (DataFrame): The counts data with gene symbols as index.
+        metadata (DataFrame): The metadata with sample IDs as index.
+        test_group (str): The name of the test group.
+        ref_group (str): The name of the reference group.
+        covariates (list, optional): List of covariates to include in the analysis. Defaults to an empty list.
 
     Returns:
-        DESeq2 results as a DataFrame.
+        DataFrame: The results of the DESeq2 analysis as a DataFrame.
     """
-    # Importing required R packages
-    DESeq2 = importr("DESeq2")
-    base = importr("base")
-
-    # Set genesymbol as rownames
     counts.set_index('gene_symbol', inplace=True)
     metadata.set_index('sample_ID', inplace=True)
 
-    # Convert pandas DataFrames to R DataFrames
-    pandas2ri.activate()
-    gene_counts = pandas2ri.py2rpy(counts)
-    metadata_r = pandas2ri.py2rpy(metadata)
+    design_factors = ['group']
 
-    if covariates != "" and len(covariates)>=1:
-        covariates = ["" + covariates]
+    if len(covariates) > 0:
+        if isinstance(covariates, str):
+            covariates = [covariates]
+        design_factors += covariates
+    
+    inference = DefaultInference(n_cpus=8)
+    dds = DeseqDataSet(
+        counts=counts.T,
+        metadata=metadata,
+        design_factors=design_factors,
+        refit_cooks=True,
+        inference=inference
+    )
+    dds.deseq2()
 
-    # Create design formula
-    design_formula = robjects.Formula("~ 0 + group" + " + ".join(covariates))
+    results = DeseqStats(dds, contrast=["group", test_group, ref_group], inference=inference)
+    results.summary()
+    return results.results_df.astype('float64')
 
 
-    # Create DESeqDataSet object
-    formatted_data = DESeq2.DESeqDataSetFromMatrix(countData=gene_counts,
-                                                   colData=metadata_r,
-                                                   design=design_formula)
-
-    # Get study groups
-    studygroups = list(set(metadata['group']))
-
-
-    # Run DESeq2 analysis
-    results = DESeq2.DESeq(formatted_data,
-                            test=deseq2_test,
-                            fitType=deseq2_fitType,
-                            betaPrior=deseq2_betaprior,
-                            quiet=deseq2_quiet,
-                            minReplicatesForReplace=deseq2_minReplicatesForReplace)
-    results = DESeq2.results(results, contrast=robjects.StrVector(['group', studygroups[0], studygroups[1]]))
-    results = base.as_data_frame(results)
-
-    # Convert DESeq2 results to pandas DataFrame
-    with localconverter(robjects.default_converter + pandas2ri.converter):
-        results_df = robjects.conversion.rpy2py(results)
-        
-
-    return results_df
 
 
 

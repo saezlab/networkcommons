@@ -10,7 +10,7 @@ setup(
         name="networkcommons", 
         version=VERSION,
         author="Victor Paton",
-        author_email="victor.paton_gonzalez@stud.uni-heidelberg.de",
+        author_email="victor.paton@uni-heidelberg.de",
         description=DESCRIPTION,
         long_description=LONG_DESCRIPTION,
         packages=find_packages(),
