@@ -6,11 +6,7 @@ on:
 
 jobs:
   build-linux:
-
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        shell: bash -leo pipefail {0}
     steps:
     - uses: mamba-org/setup-micromamba@v1
       with:
