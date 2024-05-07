@@ -19,6 +19,7 @@ dependencies:
       - pathos==0.3.2
       - picos==2.4.17
       - pydeseq2==0.4.9
+      - pygraphviz==1.11
       - pyocclient==0.6
       - pytest==8.2.0
       - pytest-cov==5.0.0
