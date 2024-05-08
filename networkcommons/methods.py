@@ -14,7 +14,6 @@ def run_shortest_paths(network, source_dict, target_dict, verbose = False):
         network (nx.Graph): The network.
         source_dict (dict): A dictionary containing the sources and sign of perturbation.
         target_dict (dict): A dictionary containing the targets and sign of measurements.
-            Must contain three columns: source, target and sign
         verbose (bool): If True, print warnings when no path is found to a given target.
 
     Returns:
@@ -25,9 +24,9 @@ def run_shortest_paths(network, source_dict, target_dict, verbose = False):
     shortest_paths_res = []
 
     sources = source_dict.keys()
+    targets = target_dict.keys()
 
     for source_node in sources:
-        targets = target_dict[source_node].keys()
         for target_node in targets:
             try:
                 shortest_paths_res.extend([p for p in nx.all_shortest_paths(network, 
@@ -71,7 +70,7 @@ def run_sign_consistency(network, paths, source_dict, target_dict):
         target = path[-1]
 
         source_sign = source_dict[source]
-        target_sign = target_dict[source][target]
+        target_sign = target_dict[target]
 
         for i in range(len(path) - 1):
             edge_sign = network.get_edge_data(path[i], path[i + 1])['sign']
@@ -122,9 +121,9 @@ def run_all_paths(network, source_dict, target_dict, depth_cutoff=None, verbose=
     """
     all_paths_res = []
     sources = list(source_dict.keys())
+    targets = list(target_dict.keys())
 
     for source in sources:
-        targets = list(target_dict[source].keys())
         try:
             all_paths_res.extend(compute_all_paths(network, source, targets, depth_cutoff))
         except nx.NetworkXNoPath as e:
@@ -188,10 +187,7 @@ def add_pagerank_scores(network,
         tuple: Contains nodes above threshold from sources, nodes above threshold from targets, and overlapping nodes.
     """
     sources = source_dict.keys()
-    targets = set()
-    for key, value in target_dict.items():
-        for sub_key, sub_value in value.items():
-            targets.add(sub_key)
+    targets = target_dict.keys()
 
     if personalize_for == "source":
         personalized_prob = {n: 1/len(sources) for n in sources}
@@ -296,9 +292,8 @@ def run_corneto_carnival(network, source_dict, target_dict, betaWeight=0.2, solv
     corneto_net = convert_cornetograph(network)
 
     for source in list(source_dict.keys()):
-        corneto_measurements = target_dict[source]
         problem, graph = cn.methods.runVanillaCarnival(perturbations=source_dict, 
-                                                       measurements=corneto_measurements, 
+                                                       measurements=target_dict, 
                                                        priorKnowledgeNetwork=corneto_net, 
                                                        betaWeight=betaWeight,
                                                        solver=solver,

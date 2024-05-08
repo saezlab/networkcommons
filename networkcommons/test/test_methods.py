@@ -13,7 +13,7 @@ def test_run_shortest_paths():
     network.add_edge('E', 'F', weight=5)
     
     source_dict = {'A': 1}
-    target_dict = {'A': {'D': 1}}
+    target_dict = {'D': 1}
 
     subnetwork, shortest_paths_res = run_shortest_paths(network, source_dict, target_dict)
 
@@ -31,7 +31,7 @@ def test_run_sign_consistency():
     network.add_edge('E', 'F', weight=5, sign=-1)
 
     source_dict = {'A': 1}
-    target_dict = {'A': {'D': -1}}
+    target_dict = {'D': -1}
 
     paths = [['A', 'B', 'C', 'D']]
 
@@ -70,7 +70,7 @@ def test_run_all_paths():
     network.add_edge('Y', 'A', weight=8)
 
     source_dict = {'A': 1}
-    target_dict = {'A': {'D': 1}}
+    target_dict = {'D': 1}
 
     subnetwork, all_paths_res = run_all_paths(network, source_dict, target_dict)
 
@@ -90,7 +90,7 @@ def test_add_pagerank_scores():
     network.add_edge('Y', 'A', weight=8)
 
     source_dict = {'A': 1}
-    target_dict = {'A': {'D': 1}}
+    target_dict = {'D': 1}
 
     network_with_pagerank = add_pagerank_scores(network, source_dict, target_dict, personalize_for='source')
     network_with_pagerank = add_pagerank_scores(network, source_dict, target_dict, personalize_for='target')
@@ -197,7 +197,7 @@ def test_run_corneto_carnival():
     )
     
     source_dict = {'I1': 1}
-    target_dict = {'I1': {'M1': 1, 'M2': 1}}
+    target_dict = {'M1': 1, 'M2': 1}
 
     result_network = run_corneto_carnival(network, source_dict, target_dict, betaWeight=0.1, solver='scipy')
 
