@@ -73,7 +73,7 @@ def get_mean_closeness(network):
     return np.mean(list(nx.closeness_centrality(network).values()))
 
 
-def get_connected_targets(network, target_dict):
+def get_connected_targets(network, target_dict, percent=False):
     """
     Get the number of connected targets in the network.
 
@@ -83,6 +83,8 @@ def get_connected_targets(network, target_dict):
             of perturbation.
         target_dict (dict): A dictionary containing the targets and sign
             of measurements.
+        percent (bool, optional): If True, return the percentage of connected
+            targets. Defaults to False.
 
     Returns:
         int: The number of connected targets in the network.
@@ -90,7 +92,12 @@ def get_connected_targets(network, target_dict):
 
     target_nodes = list(target_dict.keys())
 
-    return len(set(target_nodes).intersection(set(network.nodes())))
+    connected_nodes = len(set(target_nodes).intersection(set(network.nodes())))
+
+    if percent:
+        return connected_nodes / len(target_nodes) * 100
+    else:
+        return connected_nodes
 
 
 def get_recovered_offtargets(network, offtargets, percent=False):
