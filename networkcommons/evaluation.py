@@ -2,6 +2,7 @@ import pandas as pd
 import networkx as nx
 import numpy as np
 
+
 def get_number_nodes(network):
     """
     Get the number of nodes in the network.
@@ -14,7 +15,6 @@ def get_number_nodes(network):
     """
 
     return network.number_of_nodes()
-
 
 
 def get_number_edges(network):
@@ -31,7 +31,6 @@ def get_number_edges(network):
     return network.number_of_edges()
 
 
-
 def get_mean_degree(network):
     """
     Get the mean degree centrality of the network.
@@ -44,7 +43,6 @@ def get_mean_degree(network):
     """
 
     return np.mean(list(dict(nx.degree(network)).values()))
-
 
 
 def get_mean_betweenness(network):
@@ -61,7 +59,6 @@ def get_mean_betweenness(network):
     return np.mean(list(nx.betweenness_centrality(network).values()))
 
 
-
 def get_mean_closeness(network):
     """
     Get the mean closeness centrality of the network.
@@ -74,3 +71,72 @@ def get_mean_closeness(network):
     """
 
     return np.mean(list(nx.closeness_centrality(network).values()))
+
+
+def get_connected_targets(network, target_dict):
+    """
+    Get the number of connected targets in the network.
+
+    Args:
+        network (nx.Graph): The network to get the connected targets from.
+        source_dict (dict): A dictionary containing the sources and sign
+            of perturbation.
+        target_dict (dict): A dictionary containing the targets and sign
+            of measurements.
+
+    Returns:
+        int: The number of connected targets in the network.
+    """
+
+    target_nodes = list(target_dict.keys())
+
+    return len(set(target_nodes).intersection(set(network.nodes())))
+
+
+def get_recovered_offtargets(network, offtargets, percent=False):
+    """
+    Get the number of off-targets recovered by the network.
+
+    Args:
+        network (nx.Graph): The network to get the off-targets from.
+        offtargets (list): A list of off-targets.
+        percent (bool, optional): If True, return the percentage of
+            off-targets recovered. Defaults to False.
+
+    Returns:
+        int: The number/percentage of off-targets recovered by the network.
+    """
+
+    recovered_offtargets = len(set(offtargets).intersection(
+        set(network.nodes()))
+        )
+
+    if percent:
+        return recovered_offtargets / len(offtargets) * 100
+    else:
+        return recovered_offtargets
+
+
+def get_graph_metrics(network, target_dict):
+    """
+    Get the graph metrics of the network.
+
+    Args:
+        network (nx.Graph): The network to get the graph metrics from.
+        target_dict (dict): A dictionary containing the targets and sign
+            of measurements.
+
+    Returns:
+        DataFrame: The graph metrics of the network.
+    """
+
+    metrics = {
+        'Number of nodes': get_number_nodes(network),
+        'Number of edges': get_number_edges(network),
+        'Mean degree': get_mean_degree(network),
+        'Mean betweenness': get_mean_betweenness(network),
+        'Mean closeness': get_mean_closeness(network),
+        'Connected targets': get_connected_targets(network, target_dict)
+    }
+
+    return pd.DataFrame(metrics, index=[0])

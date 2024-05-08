@@ -1,20 +1,26 @@
 import networkx as nx
 from networkcommons.utils import get_subnetwork
-from pathos.multiprocessing import ProcessingPool as Pool
 import numpy as np
 import corneto as cn
-from corneto.contrib.networkx import networkx_to_corneto_graph, corneto_graph_to_networkx
-from corneto.methods.carnival import get_result, get_selected_edges
+from corneto.contrib.networkx import (
+    networkx_to_corneto_graph,
+    corneto_graph_to_networkx
+)
+from corneto.methods.carnival import get_selected_edges
 
-def run_shortest_paths(network, source_dict, target_dict, verbose = False):
+
+def run_shortest_paths(network, source_dict, target_dict, verbose=False):
     """
     Calculate the shortest paths between sources and targets.
 
     Args:
         network (nx.Graph): The network.
-        source_dict (dict): A dictionary containing the sources and sign of perturbation.
-        target_dict (dict): A dictionary containing the targets and sign of measurements.
-        verbose (bool): If True, print warnings when no path is found to a given target.
+        source_dict (dict): A dictionary containing the sources and sign
+            of perturbation.
+        target_dict (dict): A dictionary containing the targets and sign
+            of measurements.
+        verbose (bool): If True, print warnings when no path is found to
+            a given target.
 
     Returns:
         nx.Graph: The subnetwork containing the shortest paths.
@@ -29,11 +35,12 @@ def run_shortest_paths(network, source_dict, target_dict, verbose = False):
     for source_node in sources:
         for target_node in targets:
             try:
-                shortest_paths_res.extend([p for p in nx.all_shortest_paths(network, 
-                                                                            source=source_node, 
-                                                                            target=target_node, 
-                                                                            weight='weight'
-                                                                            )])
+                shortest_paths_res.extend([p for p in nx.all_shortest_paths(
+                    network,
+                    source=source_node,
+                    target=target_node,
+                    weight='weight'
+                )])
             except nx.NetworkXNoPath as e:
                 if verbose:
                     print(f"Warning: {e}")
@@ -53,8 +60,10 @@ def run_sign_consistency(network, paths, source_dict, target_dict):
     Args:
         network (nx.Graph): The network.
         paths (list): A list containing the shortest paths.
-        source_dict (dict): A dictionary containing the sources and sign of perturbation.
-        target_dict (dict): A dictionary containing the targets and sign of measurements.
+        source_dict (dict): A dictionary containing the sources and sign
+            of perturbation.
+        target_dict (dict): A dictionary containing the targets and sign
+            of measurements.
 
     Returns:
         nx.Graph: The subnetwork containing the sign consistent paths.
@@ -86,11 +95,13 @@ def run_sign_consistency(network, paths, source_dict, target_dict):
 
 def run_reachability_filter(network, source_dict):
     """
-    Filters out all nodes from the graph which cannot be reached from source(s).
+    Filters out all nodes from the graph which cannot be reached from
+        source(s).
 
     Args:
         network (nx.Graph): The network.
-        source_dict (dict): A dictionary containing the sources and sign of perturbation.
+        source_dict (dict): A dictionary containing the sources and sign
+            of perturbation.
 
     Returns:
         None
@@ -105,16 +116,24 @@ def run_reachability_filter(network, source_dict):
     return subnetwork
 
 
-def run_all_paths(network, source_dict, target_dict, depth_cutoff=None, verbose=False):
+def run_all_paths(network,
+                  source_dict,
+                  target_dict,
+                  depth_cutoff=None,
+                  verbose=False):
     """
     Calculate all paths between sources and targets.
 
     Args:
         network (nx.Graph): The network.
-        source_dict (dict): A dictionary containing the sources and sign of perturbation.
-        target_dict (dict): A dictionary containing the targets and sign of measurements.
-        depth_cutoff (int, optional): Cutoff for path length. If None, there's no cutoff.
-        verbose (bool): If True, print warnings when no path is found to a given target.
+        source_dict (dict): A dictionary containing the sources and sign
+            of perturbation.
+        target_dict (dict): A dictionary containing the targets and sign
+            of measurements.
+        depth_cutoff (int, optional): Cutoff for path length. If None,
+            there's no cutoff.
+        verbose (bool): If True, print warnings when no path is found to
+            a given target.
 
     Returns:
         list: A list containing all paths.
@@ -125,7 +144,10 @@ def run_all_paths(network, source_dict, target_dict, depth_cutoff=None, verbose=
 
     for source in sources:
         try:
-            all_paths_res.extend(compute_all_paths(network, source, targets, depth_cutoff))
+            all_paths_res.extend(compute_all_paths(network,
+                                                   source,
+                                                   targets,
+                                                   depth_cutoff))
         except nx.NetworkXNoPath as e:
             if verbose:
                 print(f"Warning: {e}")
@@ -173,18 +195,22 @@ def add_pagerank_scores(network,
 
     Args:
         network (nx.Graph): The network.
-        source_dict (dict): A dictionary containing the sources and sign of perturbation.
-        target_dict (dict): A dictionary containing the targets and sign of measurements.
+        source_dict (dict): A dictionary containing the sources and sign
+            of perturbation.
+        target_dict (dict): A dictionary containing the targets and sign
+            of measurements.
         percentage (int): Percentage of nodes to keep.
         alpha (float): Damping factor for the PageRank algorithm.
         max_iter (int): Maximum number of iterations.
         tol (float): Tolerance to determine convergence.
         nstart (dict): Starting value of PageRank iteration for all nodes.
         weight (str): Edge data key to use as weight.
-        personalize_for (str): Personalize the PageRank by setting initial probabilities for either sources or targets.
+        personalize_for (str): Personalize the PageRank by setting initial
+            probabilities for either sources or targets.
 
     Returns:
-        tuple: Contains nodes above threshold from sources, nodes above threshold from targets, and overlapping nodes.
+        tuple: Contains nodes above threshold from sources, nodes above
+            threshold from targets, and overlapping nodes.
     """
     sources = source_dict.keys()
     targets = target_dict.keys()
@@ -222,36 +248,50 @@ def add_pagerank_scores(network,
 
 def compute_ppr_overlap(network, percentage=20):
     """
-    Compute the overlap of nodes that exceed the personalized PageRank percentage threshold from sources and targets.
+    Compute the overlap of nodes that exceed the personalized PageRank
+        percentage threshold from sources and targets.
 
     Args:
         network (nx.Graph): The network.
         percentage (int): Percentage of top nodes to keep.
 
     Returns:
-        tuple: Contains nodes above threshold from sources, nodes above threshold from targets, and overlapping nodes.
+        tuple: Contains nodes above threshold from sources, nodes above
+            threshold from targets, and overlapping nodes.
     """
     # Sorting nodes by PageRank score from sources and targets
     try:
-        sorted_nodes_sources = sorted(network.nodes(data=True), 
-                                      key=lambda x: x[1].get('pagerank_from_sources'), 
+        sorted_nodes_sources = sorted(network.nodes(data=True),
+                                      key=lambda x: x[1].get(
+                                          'pagerank_from_sources'
+                                          ),
                                       reverse=True)
-        sorted_nodes_targets = sorted(network.nodes(data=True), 
-                                      key=lambda x: x[1].get('pagerank_from_targets'), 
+        sorted_nodes_targets = sorted(network.nodes(data=True),
+                                      key=lambda x: x[1].get(
+                                          'pagerank_from_targets'
+                                          ),
                                       reverse=True)
     except KeyError:
-        raise KeyError("Please run the add_pagerank_scores method first with personalization options.")
+        raise KeyError("Please run the add_pagerank_scores method first with\
+                        personalization options.")
 
     # Calculating the number of nodes to keep
-    num_nodes_to_keep_sources = int(len(sorted_nodes_sources) * (percentage / 100))
-    num_nodes_to_keep_targets = int(len(sorted_nodes_targets) * (percentage / 100))
+    num_nodes_to_keep_sources = int(
+        len(sorted_nodes_sources) * (percentage / 100))
+    num_nodes_to_keep_targets = int(
+        len(sorted_nodes_targets) * (percentage / 100))
 
     # Selecting the top nodes
-    nodes_above_threshold_from_sources = {node[0] for node in sorted_nodes_sources[:num_nodes_to_keep_sources]}
-    nodes_above_threshold_from_targets = {node[0] for node in sorted_nodes_targets[:num_nodes_to_keep_targets]}
+    nodes_above_threshold_from_sources = {
+        node[0] for node in sorted_nodes_sources[:num_nodes_to_keep_sources]
+    }
+    nodes_above_threshold_from_targets = {
+        node[0] for node in sorted_nodes_targets[:num_nodes_to_keep_targets]
+    }
 
-    overlap = nodes_above_threshold_from_sources.intersection(nodes_above_threshold_from_targets)
-    nodes_to_include = nodes_above_threshold_from_sources.union(nodes_above_threshold_from_targets)
+    nodes_to_include = nodes_above_threshold_from_sources.union(
+        nodes_above_threshold_from_targets
+        )
 
     subnetwork = network.subgraph(nodes_to_include)
 
@@ -268,22 +308,29 @@ def convert_cornetograph(graph):
     Returns:
         cn.Graph: The corneto graph.
     """
-    if type(graph) == cn._graph.Graph:
+    if isinstance(graph, cn._graph.Graph):
         corneto_graph = graph
-    elif type(graph) == nx.Graph or type(graph) == nx.DiGraph:
+    elif isinstance(graph, (nx.Graph, nx.DiGraph)):
         corneto_graph = networkx_to_corneto_graph(graph)
     
     return corneto_graph
 
 
-def run_corneto_carnival(network, source_dict, target_dict, betaWeight=0.2, solver=None, verbose=True):
+def run_corneto_carnival(network,
+                         source_dict,
+                         target_dict,
+                         betaWeight=0.2,
+                         solver=None,
+                         verbose=True):
     """
     Run the Vanilla Carnival algorithm via CORNETO.
 
     Args:
         network (nx.Graph): The network.
-        source_dict (dict): A dictionary containing the sources and sign of perturbation.
-        target_dict (dict): A dictionary containing the targets and sign of measurements.
+        source_dict (dict): A dictionary containing the sources and sign
+            of perturbation.
+        target_dict (dict): A dictionary containing the targets and sign
+            of measurements.
 
     Returns:
         nx.Graph: The subnetwork containing the paths found by CARNIVAL.
@@ -291,17 +338,19 @@ def run_corneto_carnival(network, source_dict, target_dict, betaWeight=0.2, solv
     """
     corneto_net = convert_cornetograph(network)
 
-    for source in list(source_dict.keys()):
-        problem, graph = cn.methods.runVanillaCarnival(perturbations=source_dict, 
-                                                       measurements=target_dict, 
-                                                       priorKnowledgeNetwork=corneto_net, 
-                                                       betaWeight=betaWeight,
-                                                       solver=solver,
-                                                       verbose=verbose)
+    problem, graph = cn.methods.runVanillaCarnival(
+        perturbations=source_dict,
+        measurements=target_dict,
+        priorKnowledgeNetwork=corneto_net,
+        betaWeight=betaWeight,
+        solver=solver,
+        verbose=verbose
+    )
     
     network_sol = graph.edge_subgraph(get_selected_edges(problem, graph))
 
-    network_nx = corneto_graph_to_networkx(network_sol, skip_unsupported_edges=True)
+    network_nx = corneto_graph_to_networkx(network_sol,
+                                           skip_unsupported_edges=True)
 
     network_nx.remove_nodes_from(['_s', '_pert_c0', '_meas_c0'])
 

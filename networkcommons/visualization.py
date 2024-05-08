@@ -1,20 +1,23 @@
-import pygraphviz as pgv
 import networkx as nx
+
 
 def visualize_graph_simple(network,
                            source_dict,
                            target_dict,
-                           prog='dot', 
+                           prog='dot',
                            is_sign_consistent=True):
     """
     Visualize the graph using the provided network.
 
     Args:
         network (nx.Graph): The network to visualize.
-        source_dict (dict): A dictionary containing the sources and sign of perturbation.
-        target_dict (dict): A dictionary containing the targets and sign of measurements.
+        source_dict (dict): A dictionary containing the sources and sign of
+            perturbation.
+        target_dict (dict): A dictionary containing the targets and sign of
+            measurements.
         prog (str, optional): The layout program to use. Defaults to 'dot'.
-        is_sign_consistent (bool, optional): If True, only visualize sign consistent paths. Defaults to True.
+        is_sign_consistent (bool, optional): If True, only visualize sign
+            consistent paths. Defaults to True.
     """
 
     A = nx.nx_agraph.to_agraph(network)
@@ -26,9 +29,6 @@ def visualize_graph_simple(network,
         for sub_key, sub_value in value.items():
             target_dict_flat[sub_key] = sub_value
     targets = set(target_dict_flat.keys())
-
-
-    # Add an intermediary invisible node and edges for layout control
 
     for node in A.nodes():
         n = node.get_name()
@@ -66,7 +66,7 @@ def visualize_graph_simple(network,
             node.attr['style'] = 'filled'
             node.attr['fillcolor'] = 'gray'
             node.attr['label'] = ''
-    
+
     for edge in A.edges():
         u, v = edge
         edge_data = network.get_edge_data(u, v)
@@ -80,6 +80,7 @@ def visualize_graph_simple(network,
             edge_color = 'gray30'
         edge.attr['color'] = edge_color
         edge.attr['penwidth'] = 2
-    
+
     A.layout(prog=prog)
-    return(A)
+
+    return A

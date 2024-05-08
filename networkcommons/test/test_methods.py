@@ -1,6 +1,14 @@
 import networkx as nx
-from networkcommons.methods import run_shortest_paths, run_reachability_filter, run_all_paths, run_corneto_carnival, run_sign_consistency, add_pagerank_scores, compute_ppr_overlap
+from networkcommons.methods import (
+    run_shortest_paths,
+    run_reachability_filter,
+    run_all_paths,
+    run_corneto_carnival,
+    run_sign_consistency,
+    add_pagerank_scores,
+    compute_ppr_overlap)
 import corneto as cn
+
 
 def test_run_shortest_paths():
     # Crea un grafo de prueba
@@ -15,9 +23,14 @@ def test_run_shortest_paths():
     source_dict = {'A': 1}
     target_dict = {'D': 1}
 
-    subnetwork, shortest_paths_res = run_shortest_paths(network, source_dict, target_dict)
+    subnetwork, shortest_paths_res = run_shortest_paths(network,
+                                                        source_dict,
+                                                        target_dict)
 
-    assert list(subnetwork.edges) == [('A', 'D'), ('A', 'B'), ('B', 'C'), ('C', 'D')]
+    assert list(subnetwork.edges) == [('A', 'D'),
+                                      ('A', 'B'),
+                                      ('B', 'C'),
+                                      ('C', 'D')]
     assert shortest_paths_res == [['A', 'D'], ['A', 'B', 'C', 'D']]
 
 
@@ -35,7 +48,10 @@ def test_run_sign_consistency():
 
     paths = [['A', 'B', 'C', 'D']]
 
-    subnetwork, sign_consistency_res = run_sign_consistency(network, paths, source_dict, target_dict)
+    subnetwork, sign_consistency_res = run_sign_consistency(network,
+                                                            paths,
+                                                            source_dict,
+                                                            target_dict)
 
     assert list(subnetwork.edges) == [('A', 'B'), ('B', 'C'), ('C', 'D')]
     assert sign_consistency_res == [['A', 'B', 'C', 'D']]
@@ -72,9 +88,14 @@ def test_run_all_paths():
     source_dict = {'A': 1}
     target_dict = {'D': 1}
 
-    subnetwork, all_paths_res = run_all_paths(network, source_dict, target_dict)
+    subnetwork, all_paths_res = run_all_paths(network,
+                                              source_dict,
+                                              target_dict)
 
-    assert list(subnetwork.edges) == [('A', 'B'), ('A', 'D'), ('B', 'C'), ('C', 'D')]
+    assert list(subnetwork.edges) == [('A', 'B'),
+                                      ('A', 'D'),
+                                      ('B', 'C'),
+                                      ('C', 'D')]
     assert all_paths_res == [['A', 'B', 'C', 'D'], ['A', 'D']]
 
 
@@ -92,9 +113,15 @@ def test_add_pagerank_scores():
     source_dict = {'A': 1}
     target_dict = {'D': 1}
 
-    network_with_pagerank = add_pagerank_scores(network, source_dict, target_dict, personalize_for='source')
-    network_with_pagerank = add_pagerank_scores(network, source_dict, target_dict, personalize_for='target')
-    
+    network_with_pagerank = add_pagerank_scores(network,
+                                                source_dict,
+                                                target_dict,
+                                                personalize_for='source')
+    network_with_pagerank = add_pagerank_scores(network,
+                                                source_dict,
+                                                target_dict,
+                                                personalize_for='target')
+
     network.nodes['A']['pagerank_from_sources'] = 0.3053985948347749
     network.nodes['A']['pagerank_from_targets'] = 0.2806554600002494
 
@@ -126,6 +153,7 @@ def test_add_pagerank_scores():
 
     for edge in network.edges:
         assert network.edges[edge] == network_with_pagerank.edges[edge]
+
 
 def test_compute_ppr_overlap():
     network = nx.DiGraph()
@@ -173,7 +201,6 @@ def test_compute_ppr_overlap():
     test_network.nodes['D']['pagerank_from_sources'] = 0.25303871980865306
     test_network.nodes['D']['pagerank_from_targets'] = 0.3527711939246324
 
-
     assert nx.is_isomorphic(test_network, subnetwork)
 
     for node in test_network.nodes:
@@ -185,27 +212,28 @@ def test_compute_ppr_overlap():
 
 def test_run_corneto_carnival():
     # From CORNETO docs:
-    network = cn.Graph.from_sif_tuples(    
-        [
-        ('I1',  1, 'N1'), # I1 activates N1
-        ('N1',  1, 'M1'), # N1 activates M1
-        ('N1',  1, 'M2'), # N1 activaes M2
-        ('I2', -1, 'N2'), # I2 inhibits N2
-        ('N2', -1, 'M2'), # N2 inhibits M2
+    network = cn.Graph.from_sif_tuples([
+        ('I1', 1, 'N1'),  # I1 activates N1
+        ('N1', 1, 'M1'),  # N1 activates M1
+        ('N1', 1, 'M2'),  # N1 activates M2
+        ('I2', -1, 'N2'),  # I2 inhibits N2
+        ('N2', -1, 'M2'),  # N2 inhibits M2
         ('N2', -1, 'M1'),  # N2 inhibits M1
-        ]
-    )
-    
+    ])
+
     source_dict = {'I1': 1}
     target_dict = {'M1': 1, 'M2': 1}
 
-    result_network = run_corneto_carnival(network, source_dict, target_dict, betaWeight=0.1, solver='scipy')
+    result_network = run_corneto_carnival(network,
+                                          source_dict,
+                                          target_dict,
+                                          betaWeight=0.1,
+                                          solver='scipy')
 
     test_network = nx.DiGraph()
     test_network.add_edge('I1', 'N1')
     test_network.add_edge('N1', 'M1')
     test_network.add_edge('N1', 'M2')
-
 
     assert nx.is_isomorphic(result_network, test_network)
     assert isinstance(result_network, nx.Graph)
@@ -213,5 +241,3 @@ def test_run_corneto_carnival():
     assert '_s' not in result_network.nodes
     assert '_pert_c0' not in result_network.nodes
     assert '_meas_c0' not in result_network.nodes
-
-
