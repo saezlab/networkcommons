@@ -1,8 +1,8 @@
 name: build
 
 on:
-  pull_request:
-    types: [opened]
+  push:
+    branches: [ dev ]
 
 jobs:
   build-linux:
@@ -31,4 +31,5 @@ jobs:
     - name: Upload coverage reports to Codecov
       uses: codecov/codecov-action@v4.0.1
       with:
-        token: ${{ secrets.CODECOV_TOKEN }}    
+        directory: ./
+        token: ${{ secrets.CODECOV_TOKEN }}
