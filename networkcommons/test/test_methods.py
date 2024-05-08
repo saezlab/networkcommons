@@ -19,7 +19,7 @@ def test_run_shortest_paths():
     network.add_edge('A', 'D', weight=6)
     network.add_edge('A', 'E', weight=4)
     network.add_edge('E', 'F', weight=5)
-    
+
     source_dict = {'A': 1}
     target_dict = {'D': 1}
 
@@ -75,13 +75,13 @@ def test_run_reachability_filter():
 
 def test_run_all_paths():
     network = nx.DiGraph()
-    
+
     network.add_edge('A', 'B', weight=1)
     network.add_edge('B', 'C', weight=2)
     network.add_edge('C', 'D', weight=3)
     network.add_edge('A', 'D', weight=10)
     network.add_edge('D', 'E', weight=4)
-    network.add_edge('E', 'F', weight=5) 
+    network.add_edge('E', 'F', weight=5)
     network.add_edge('X', 'A', weight=7)
     network.add_edge('Y', 'A', weight=8)
 
@@ -106,7 +106,7 @@ def test_add_pagerank_scores():
     network.add_edge('C', 'D', weight=3)
     network.add_edge('A', 'D', weight=10)
     network.add_edge('D', 'E', weight=4)
-    network.add_edge('E', 'F', weight=5) 
+    network.add_edge('E', 'F', weight=5)
     network.add_edge('X', 'A', weight=7)
     network.add_edge('Y', 'A', weight=8)
 
@@ -162,7 +162,7 @@ def test_compute_ppr_overlap():
     network.add_edge('C', 'D', weight=3)
     network.add_edge('A', 'D', weight=10)
     network.add_edge('D', 'E', weight=4)
-    network.add_edge('E', 'F', weight=5) 
+    network.add_edge('E', 'F', weight=5)
     network.add_edge('X', 'A', weight=7)
     network.add_edge('Y', 'A', weight=8)
 

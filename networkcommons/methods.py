@@ -87,7 +87,7 @@ def run_sign_consistency(network, paths, source_dict, target_dict):
 
         if np.sign(source_sign * product_sign) == np.sign(target_sign):
             sign_consistency_res.append(path)
-    
+
     subnetwork = get_subnetwork(network, sign_consistency_res)
 
     return subnetwork, sign_consistency_res
@@ -110,7 +110,7 @@ def run_reachability_filter(network, source_dict):
     reachable_nodes = source_nodes.copy()
     for source in source_nodes:
         reachable_nodes.update(nx.descendants(network, source))
-    
+
     subnetwork = network.subgraph(reachable_nodes)
 
     return subnetwork
@@ -172,23 +172,23 @@ def compute_all_paths(network, source, targets, cutoff):
     """
     paths_for_source = []
     for target in targets:
-        paths = list(nx.all_simple_paths(network, 
-                                         source=source, 
-                                         target=target, 
+        paths = list(nx.all_simple_paths(network,
+                                         source=source,
+                                         target=target,
                                          cutoff=cutoff))
         paths_for_source.extend(paths)
 
     return paths_for_source
 
 
-def add_pagerank_scores(network, 
-                        source_dict, 
-                        target_dict, 
-                        alpha=0.85, 
-                        max_iter=100, 
-                        tol=1.0e-6, 
-                        nstart=None, 
-                        weight='weight', 
+def add_pagerank_scores(network,
+                        source_dict,
+                        target_dict,
+                        alpha=0.85,
+                        max_iter=100,
+                        tol=1.0e-6,
+                        nstart=None,
+                        weight='weight',
                         personalize_for=None):
     """
     Add PageRank scores to the nodes of the network.
@@ -223,14 +223,14 @@ def add_pagerank_scores(network,
     else:
         personalized_prob = None
 
-    pagerank = nx.pagerank(network, 
-                           alpha=alpha, 
-                           max_iter=max_iter, 
-                           personalization=personalized_prob, 
-                           tol=tol, nstart=nstart, 
-                           weight=weight, 
+    pagerank = nx.pagerank(network,
+                           alpha=alpha,
+                           max_iter=max_iter,
+                           personalization=personalized_prob,
+                           tol=tol, nstart=nstart,
+                           weight=weight,
                            dangling=personalized_prob)
-    
+
     if personalize_for == "target":
         network = network.reverse()
 
@@ -312,7 +312,7 @@ def convert_cornetograph(graph):
         corneto_graph = graph
     elif isinstance(graph, (nx.Graph, nx.DiGraph)):
         corneto_graph = networkx_to_corneto_graph(graph)
-    
+
     return corneto_graph
 
 
@@ -346,7 +346,7 @@ def run_corneto_carnival(network,
         solver=solver,
         verbose=verbose
     )
-    
+
     network_sol = graph.edge_subgraph(get_selected_edges(problem, graph))
 
     network_nx = corneto_graph_to_networkx(network_sol,
@@ -355,7 +355,3 @@ def run_corneto_carnival(network,
     network_nx.remove_nodes_from(['_s', '_pert_c0', '_meas_c0'])
 
     return network_nx
-
-
-
-
