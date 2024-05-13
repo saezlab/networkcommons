@@ -18,7 +18,10 @@ jobs:
         environment-file: environment.yml
     - name: Install additional dependencies
       run: |
-        pip install git+https://github.com/saezlab/corneto.git@dev .
+        pip install git+https://github.com/saezlab/corneto.git@dev
+    - name: Install NetworkCommons
+      run: |
+        pip install .
     - name: Lint with flake8
       run: |
         # stop the build if there are Python syntax errors or undefined names
