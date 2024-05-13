@@ -20,7 +20,9 @@ def get_available_datasets():
         list: A list of file paths for the available datasets.
     """
 
-    return list_directories('/')
+    owncloud_obj, folders = list_directories('/')
+
+    return folders
 
 
 def download_dataset(dataset, **kwargs):
@@ -166,7 +168,7 @@ def get_decryptm():
 def decryptm_handler(experiment, data_type='Phosphoproteome'):
     save_path = f'./data/decryptm/{experiment}/{data_type}/'
 
-    curve_files = list_directories(f'decryptm/{experiment}/{data_type}')[1]
+    curve_files = list_directories(f'decryptm/{experiment}/{data_type}')
 
     curve_files = [
         os.path.basename(file) for file in curve_files if 'curves' in file
