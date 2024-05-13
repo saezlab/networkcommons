@@ -1,6 +1,10 @@
-from networkcommons.datasets import get_available_datasets, download_dataset, run_deseq2_analysis
-import pytest
+from networkcommons.datasets import (
+    get_available_datasets,
+    download_dataset,
+    run_deseq2_analysis
+)
 import pandas as pd
+
 
 # Test get_available_datasets
 def test_get_available_datasets():
@@ -12,7 +16,6 @@ def test_get_available_datasets():
 
     # Assert that the returned list is not empty
     assert len(datasets) > 0
-
 
 
 def test_download_dataset():
@@ -27,9 +30,8 @@ def test_download_dataset():
     assert len(data) > 0
 
 
-
 def test_deseq2_analysis():
-    # Create a dummy dataset for testing, samples as colnames and genes as rownames
+    # Create dummy dataset for testing, samples as colnames, genes as rownames
     counts = pd.DataFrame({
         'gene_symbol': ['Gene1', 'Gene2', 'Gene3'],
         'Sample1': [90, 150, 10],
@@ -44,7 +46,10 @@ def test_deseq2_analysis():
     })
 
     # Call the deseq2_analysis function
-    result = run_deseq2_analysis(counts, metadata, ref_group='Control', test_group='Treatment')
+    result = run_deseq2_analysis(counts,
+                                 metadata,
+                                 ref_group='Control',
+                                 test_group='Treatment')
 
     # Assert that the returned value is a pandas DataFrame
     assert isinstance(result, pd.DataFrame)
@@ -65,7 +70,7 @@ def test_deseq2_analysis():
         'pvalue': [0.505986, 0.052896, 0.919154],
         'padj': [0.758979, 0.158688, 0.919154]
     }
-    
+
     expected_result = pd.DataFrame(data, index=['Gene1', 'Gene2', 'Gene3'])
     expected_result.index.name = 'gene_symbol'
     pd.testing.assert_frame_equal(result, expected_result, check_exact=False)

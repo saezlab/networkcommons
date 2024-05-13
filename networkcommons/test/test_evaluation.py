@@ -92,7 +92,7 @@ def test_get_recovered_offtargets():
     offtargets = ['B', 'D', 'W']
 
     assert get_recovered_offtargets(network, offtargets) == 2
-    assert get_recovered_offtargets(network, offtargets, percent=True) == 2/3*100 # noqa: E501
+    assert get_recovered_offtargets(network, offtargets, percent=True) == 2/3*100  # noqa: E501
 
 
 def test_get_graph_metrics():
