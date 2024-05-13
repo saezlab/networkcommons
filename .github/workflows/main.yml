@@ -1,8 +1,6 @@
 name: build
 
-on:
-  pull_request:
-    types: [opened]
+on: pull_request
 
 jobs:
   build-linux:
