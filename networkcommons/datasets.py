@@ -51,25 +51,24 @@ def download_dataset(dataset, **kwargs):
         error_message = f"Dataset {dataset} not available. Check available datasets with get_available_datasets()"  # noqa: E501
         raise ValueError(error_message)
     elif dataset == 'decryptm':
-        decryptm_handler(**kwargs)
-        return
+        file_list = decryptm_handler(**kwargs)
+    else:
+        save_path = f'./data/{dataset}.zip'
+        if not os.path.exists(save_path):
+            download_url(f'https://oc.embl.de/index.php/s/6KsHfeoqJOKLF6B/download?path=%2F&files={dataset}', save_path)  # noqa: E501
 
-    save_path = f'./data/{dataset}.zip'
-    if not os.path.exists(save_path):
-        download_url(f'https://oc.embl.de/index.php/s/6KsHfeoqJOKLF6B/download?path=%2F&files={dataset}', save_path)  # noqa: E501
+            # download?path=%2Fdecryptm%2F3_EGFR_Inhibitors%2FFullproteome&files=curves.txt
 
-        # download?path=%2Fdecryptm%2F3_EGFR_Inhibitors%2FFullproteome&files=curves.txt
+        # unzip files
+        with zipfile.ZipFile(save_path, 'r') as zip_ref:
+            zip_ref.extractall('./data/')
 
-    # unzip files
-    with zipfile.ZipFile(save_path, 'r') as zip_ref:
-        zip_ref.extractall('./data/')
-
-    # list contents of dir, read them and append to list
-    files = os.listdir(f'./data/{dataset}')
-    file_list = []
-    for file in files:
-        df = pd.read_csv(f'./data/{dataset}/{file}', sep='\t')
-        file_list.append(df)
+        # list contents of dir, read them and append to list
+        files = os.listdir(f'./data/{dataset}')
+        file_list = []
+        for file in files:
+            df = pd.read_csv(f'./data/{dataset}/{file}', sep='\t')
+            file_list.append(df)
 
     return file_list
 
@@ -168,7 +167,7 @@ def get_decryptm():
 def decryptm_handler(experiment, data_type='Phosphoproteome'):
     save_path = f'./data/decryptm/{experiment}/{data_type}/'
 
-    curve_files = list_directories(f'decryptm/{experiment}/{data_type}')
+    curve_files = list_directories(f'decryptm/{experiment}/{data_type}')[1]
 
     curve_files = [
         os.path.basename(file) for file in curve_files if 'curves' in file
