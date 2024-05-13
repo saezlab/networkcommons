@@ -6,6 +6,10 @@ import pandas as pd
 from pydeseq2.dds import DeseqDataSet
 from pydeseq2.default_inference import DefaultInference
 from pydeseq2.ds import DeseqStats
+from ftplib import FTP
+import re
+import glob
+import shutil
 
 
 def get_available_datasets():
@@ -15,22 +19,21 @@ def get_available_datasets():
     Returns:
         list: A list of file paths for the available datasets.
     """
-    public_link = "https://oc.embl.de/index.php/s/6KsHfeoqJOKLF6B"
-    password = "networkcommons_datasaezlab"
-    occontents = oc.Client.from_public_link(public_link,
-                                            folder_password=password)
-    response = occontents.list('/')
-    file_paths = [item.path.strip('/') for item in response]
 
-    return file_paths
+    return list_directories('/')
 
 
-def download_dataset(dataset):
+def download_dataset(dataset, **kwargs):
     """
     Downloads a dataset and returns a list of pandas DataFrames.
 
     Args:
         dataset (str): The name of the dataset to download.
+        **kwargs: Additional keyword arguments to pass to the decryptm call:
+            - experiment (str): The name of the experiment.
+            - data_type (str): The type of data to download (Phosphoproteome,
+            Full proteome, Acetylome...). Not all data types are available for
+            all experiments.
 
     Returns:
         list: A list of pandas DataFrames, each representing a file in
@@ -41,13 +44,19 @@ def download_dataset(dataset):
 
     """
     available_datasets = get_available_datasets()
+
     if dataset not in available_datasets:
         error_message = f"Dataset {dataset} not available. Check available datasets with get_available_datasets()"  # noqa: E501
         raise ValueError(error_message)
+    elif dataset == 'decryptm':
+        decryptm_handler(**kwargs)
+        return
 
     save_path = f'./data/{dataset}.zip'
     if not os.path.exists(save_path):
         download_url(f'https://oc.embl.de/index.php/s/6KsHfeoqJOKLF6B/download?path=%2F&files={dataset}', save_path)  # noqa: E501
+
+        # download?path=%2Fdecryptm%2F3_EGFR_Inhibitors%2FFullproteome&files=curves.txt
 
     # unzip files
     with zipfile.ZipFile(save_path, 'r') as zip_ref:
@@ -127,3 +136,78 @@ def run_deseq2_analysis(counts,
     )
     results.summary()
     return results.results_df.astype('float64')
+
+
+def get_decryptm():
+    ftp = FTP('ftp.pride.ebi.ac.uk')
+    ftp.login()
+
+    files = ftp.nlst('pride/data/archive/2023/03/PXD037285/')
+
+    curve_files = [
+        "https://ftp.pride.ebi.ac.uk/" + file
+        for file in files
+        if re.search(r'Curves\.zip', file)
+    ]
+
+    for curve_file in curve_files:
+        download_url(curve_file, f'./tmp/{os.path.basename(curve_file)}')
+
+        with zipfile.ZipFile(f'./tmp/{os.path.basename(curve_file)}', 'r') as zip_ref:  # noqa: E501
+            zip_ref.extractall('./data/')
+
+        pdfs_toremove = glob.glob('./data/*/*/pdfs', recursive=True)
+        for pdf in pdfs_toremove:
+            shutil.rmtree(pdf)
+
+        os.remove(f'./tmp/{os.path.basename(curve_file)}')
+
+
+def decryptm_handler(experiment, data_type='Phosphoproteome'):
+    save_path = f'./data/decryptm/{experiment}/{data_type}/'
+
+    curve_files = list_directories(f'decryptm/{experiment}/{data_type}')[1]
+
+    curve_files = [
+        os.path.basename(file) for file in curve_files if 'curves' in file
+    ]
+
+    for curve_file in curve_files:
+        if not os.path.exists(save_path + curve_file):
+            download_url(
+                f'https://oc.embl.de/index.php/s/6KsHfeoqJOKLF6B/download?path=%2Fdecryptm%2F{experiment}%2F{data_type}&files={curve_file}',  # noqa: E501
+                save_path + curve_file
+            )  # noqa: E501
+
+    file_list = {}
+    for curve_file in curve_files:
+        df = pd.read_csv(
+            f'./data/decryptm/{experiment}/{data_type}/{curve_file}',
+            sep='\t'
+        )
+        file_list[curve_file] = df
+
+    return file_list
+
+
+def list_directories(path):
+    public_link = (
+        "https://oc.embl.de/index.php/s/6KsHfeoqJOKLF6B"
+        "?path=%2Fdecryptm"
+    )
+    password = "networkcommons_datasaezlab"
+    occontents = oc.Client.from_public_link(public_link,
+                                            folder_password=password)
+    response = occontents.list(path)
+    file_paths = [item.path.strip('/') for item in response]
+    return response, file_paths
+
+
+# def define_downloadclient():
+#     GOODBOY = pooch.create(
+#     path=pooch.os_cache("networkcommons"),
+#     base_url="https://oc.embl.de/index.php/s/6KsHfeoqJOKLF6B",
+#     registry={
+#         "stations.zip": None,
+#     },
+# )
