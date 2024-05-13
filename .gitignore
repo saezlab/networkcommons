@@ -8,3 +8,4 @@ __pycache__/
 licensetools11.0.1_linux64/
 *.coverage
 *.coverage.*
+data
