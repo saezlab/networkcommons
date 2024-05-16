@@ -36,6 +36,17 @@ def meta_network_cleanup(graph):
 
 
 def prepare_metab_inputs(metab_input, compartment_codes):
+    """
+    Prepares the metabolite inputs by adding compartment codes.
+
+    Args:
+        metab_input (dict): A dictionary containing the metabolite names and their corresponding values.
+        compartment_codes (list): A list of compartment codes to be added to the metabolite names.
+
+    Returns:
+        dict: A dictionary containing the updated metabolite names with compartment codes.
+
+    """
     comps = ["r", "c", "e", "x", "m", "l", "n", "g"]
 
     ignored = [code for code in compartment_codes if code not in comps]
@@ -76,6 +87,17 @@ def prepare_metab_inputs(metab_input, compartment_codes):
 
 
 def is_expressed(x, expressed_genes_entrez):
+    """
+    Determines if a gene is expressed based on the given criteria.
+
+    Args:
+        x (str): The gene name.
+        expressed_genes_entrez (list): List of expressed genes.
+
+    Returns:
+        str or None: The gene name if it is expressed, otherwise None.
+    """
+    
     if not re.search("Metab", x) and not re.search("orphanReac", x):
         if x in expressed_genes_entrez:
             return x
@@ -104,6 +126,16 @@ def is_expressed(x, expressed_genes_entrez):
 
 
 def filter_pkn_expressed_genes(expressed_genes_entrez, meta_pkn):
+    """
+    Filters out unexpressed nodes from the prior knowledge network (PKN).
+
+    Args:
+        expressed_genes_entrez (list): List of expressed genes in Entrez ID format.
+        meta_pkn (nx.DiGraph): prior knowledge network (PKN) graph.
+
+    Returns:
+        nx.DiGraph: Filtered PKN graph with unexpressed nodes removed.
+    """
     print("MOON: removing unexpressed nodes from PKN...")
 
     nodes_to_remove = [node for node in meta_pkn.nodes if is_expressed(node, expressed_genes_entrez) is None]
@@ -115,6 +147,17 @@ def filter_pkn_expressed_genes(expressed_genes_entrez, meta_pkn):
 
 
 def filter_input_nodes_not_in_pkn(data, pkn):
+    """
+    Filters the input nodes in the 'data' dictionary that are not present in the PKN.
+
+    Args:
+        data (dict): A dictionary containing the input nodes.
+        pkn (nx.DiGraph): The network object representing the PKN.
+
+    Returns:
+        dict: A new dictionary containing only the input nodes that are present in the PKN.
+    """
+    
     new_data = {key: value for key, value in data.items() if key in pkn.nodes}
 
     if len(data) != len(new_data):
@@ -198,9 +241,23 @@ def run_moon_core(upstream_input=None,
                   n_layers=None,
                   n_perm=1000,
                   downstream_cutoff=0,
-                  statistic="ulm",
-                  return_levels=False):
+                  statistic="ulm"):
+    """
+    Runs the MOON algorithm to iteratively infer MOON scores from downstream nodes.
 
+    Args:
+        upstream_input (dict, optional): Dictionary containing upstream input data. Defaults to None.
+        downstream_input (dict): Dictionary containing downstream input data.
+        meta_network (networkx.Graph): Graph representing the regulatory network.
+        n_layers (int): Number of layers to run the MOON algorithm. 
+        n_perm (int): Number of permutations for statistical testing. Defaults to 1000.
+        downstream_cutoff (float): Cutoff value for downstream input scores. Defaults to 0.
+        statistic (str): Statistic to use for scoring. Can be "ulm" (univariate linear model) or "wmean" (weighted mean). Defaults to "ulm".
+
+    Returns:
+        pandas.DataFrame: DataFrame containing the decoupled regulatory network.
+    """
+    
     regulons = nx.to_pandas_edgelist(meta_network)
     regulons.rename(columns={"sign": "mor"}, inplace=True)
     regulons = regulons[~regulons["source"].isin(downstream_input.keys())]
@@ -281,7 +338,19 @@ def filter_incohrent_TF_target(decoupleRnival_res,
                                TF_reg_net,
                                meta_network,
                                RNA_input):
+    """
+    Filters incoherent TF-target interactions from the meta_network based on the given inputs.
 
+    Parameters:
+    decoupleRnival_res (pd.DataFrame): DataFrame containing decoupled RNAi validation results.
+    TF_reg_net (pd.DataFrame): DataFrame containing TF regulatory network.
+    meta_network (networkx.Graph): Graph representing the meta network.
+    RNA_input (dict): Dictionary containing RNA input values.
+
+    Returns:
+    networkx.Graph: Filtered meta network with incoherent TF-target interactions removed.
+    """
+    
     TF_reg_net.set_index('source', inplace=True, drop=True)
     RNA_df = pd.DataFrame.from_dict(RNA_input, orient='index', columns=['RNA_input'])
 
@@ -303,6 +372,19 @@ def filter_incohrent_TF_target(decoupleRnival_res,
 
 
 def decompress_moon_result(moon_res, meta_network_compressed_list, meta_network):
+    """
+    Decompresses the moon_res dataframe by mapping the compressed nodes to their corresponding 
+    original source using the provided meta_network_compressed_list and meta_network.
+
+    Args:
+        moon_res (pandas.DataFrame): The compressed moon_res dataframe.
+        meta_network_compressed_list (dict): The compressed meta_network_compressed_list containing node_signatures and duplicated_parents.
+        meta_network (pandas.DataFrame): The original meta_network dataframe.
+
+    Returns:
+        pandas.DataFrame: The decompressed moon_res dataframe with the source column mapped to its corresponding original source.
+    """
+
     # Extract node_signatures and duplicated_parents from the list
     node_signatures = meta_network_compressed_list['node_signatures']
     duplicated_parents = meta_network_compressed_list['duplicated_signatures']
@@ -360,12 +442,13 @@ def reduce_solution_network(decoupleRnival_res, meta_network, cutoff, sig_input,
     merged_df['filterout'] = np.sign(merged_df['real_score']) != np.sign(merged_df['score'])
     merged_df = merged_df[merged_df['filterout'] == False]
     upstream_nodes = merged_df.index.values
-    upstream_nodes = {node, 1 for node in upstream_nodes if node in res_network.nodes}
+    upstream_nodes = {node: 1 for node in upstream_nodes if node in res_network.nodes}
 
     res_network = keep_controllable_neighbours(upstream_nodes, res_network) 
 
     return res_network
-### ask aurélien what this means. 
+
+### formats the network to be human-readable. test whole framework with the data to understand 
 #   SIF <- res_network
 #   ATT <- recursive_decoupleRnival_res[recursive_decoupleRnival_res$nodes %in% SIF$source | recursive_decoupleRnival_res$nodes %in% SIF$target,]
   
