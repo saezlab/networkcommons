@@ -104,12 +104,12 @@ def is_expressed(x, expressed_genes_entrez):
 
 
 def filter_pkn_expressed_genes(expressed_genes_entrez, meta_pkn):
-    print("COSMOS: removing unexpressed nodes from PKN...")
+    print("MOON: removing unexpressed nodes from PKN...")
 
     nodes_to_remove = [node for node in meta_pkn.nodes if is_expressed(node, expressed_genes_entrez) is None]
     meta_pkn.remove_nodes_from(nodes_to_remove)
 
-    print(f"COSMOS: {len(nodes_to_remove)} nodes removed")
+    print(f"MOON: {len(nodes_to_remove)} nodes removed")
 
     return meta_pkn
 
@@ -220,9 +220,9 @@ def run_moon_core(upstream_input=None,
             estimate = norm
     elif statistic == "ulm":
         estimate, pvals = dc.run_ulm(
-            mat=pd.DataFrame(downstream_input),
-            network=regulons,
-            minsize=1
+            mat=decoupler_mat,
+            net=regulons,
+            min_n=1
         )
 
     n_plus_one = estimate.T
@@ -237,7 +237,6 @@ def run_moon_core(upstream_input=None,
 
         regulons = regulons[~regulons["source"].isin(res_list[i - 1].index.values)]
         previous_n_plus_one = res_list[i - 1].drop(columns="level").T
-        previous_n_plus_one.T
 
         if "wmean" in statistic:
             estimate, norm, corr, pvals = dc.run_wmean(
@@ -251,8 +250,8 @@ def run_moon_core(upstream_input=None,
         elif statistic == "ulm":
             estimate, pvals = dc.run_ulm(
                 mat=previous_n_plus_one,
-                network=regulons,
-                minsize=1
+                net=regulons,
+                min_n=1
             )
 
         n_plus_one = estimate.T
@@ -298,9 +297,95 @@ def filter_incohrent_TF_target(decoupleRnival_res,
     to_tuple_list = reg_meta.rename_axis("source").reset_index()
     tuple_list = list(to_tuple_list.itertuples(index=False, name=None))
 
-    subnetwork = meta_network.remove_edges_from(tuple_list)
+    meta_network.remove_edges_from(tuple_list)
 
-    return subnetwork
+    return meta_network
+
+
+def decompress_moon_result(moon_res, meta_network_compressed_list, meta_network):
+    # Extract node_signatures and duplicated_parents from the list
+    node_signatures = meta_network_compressed_list['node_signatures']
+    duplicated_parents = meta_network_compressed_list['duplicated_signatures']
+
+    # Create a dataframe for duplicated parents
+    duplicated_parents_df = pd.DataFrame.from_dict(duplicated_parents)
+    duplicated_parents_df['source_original'] = duplicated_parents_df.index
+    duplicated_parents_df.columns = ['source', 'source_original']
+
+    # Create a dataframe for addons
+    addons = pd.DataFrame(list(node_signatures.keys() - duplicated_parents_df['source_original']))
+    addons.columns = ['source']
+    addons['source_original'] = addons['source']
+
+    # Get final leaves
+    final_leaves = meta_network[~meta_network['target'].isin(meta_network['source'])]['target']
+    final_leaves = pd.DataFrame({'source': final_leaves, 'source_original': final_leaves})
+
+    # Combine addons and final leaves
+    addons = pd.concat([addons, final_leaves])
+
+    # Create mapping table by combining duplicated parents and addons
+    mapping_table = pd.concat([duplicated_parents_df, addons])
+    mapping_table = mapping_table.drop_duplicates()
+
+    # Merge the moon_res dataframe with the mapping table
+    moon_res = pd.merge(moon_res, mapping_table, on='source')
+
+    # Return the merged dataframe
+    return moon_res
+
+
+def reduce_solution_network(decoupleRnival_res, meta_network, cutoff, sig_input, RNA_input=None):
+    recursive_decoupleRnival_res = decoupleRnival_res.copy()
+    
+    recursive_decoupleRnival_res = recursive_decoupleRnival_res[abs(recursive_decoupleRnival_res['score']) > cutoff]
+    consistency_vec = recursive_decoupleRnival_res['score']
+    
+    res_network = meta_network.subgraph([node for node in meta_network.nodes if node in recursive_decoupleRnival_res.index.values])
+    res_network_edges = res_network.edges(data=True)
+    res_network = nx.DiGraph()
+    for source, target, data in res_network_edges:
+        if data['interaction'] == np.sign(consistency_vec[source] * consistency_vec[target]):
+            res_network.add_edge(source, target, interaction=data['interaction'])
+    
+    recursive_decoupleRnival_res.columns = ['nodes'] + list(recursive_decoupleRnival_res.columns)[1:]
+    
+    res_network_edges = res_network.edges(data=True)
+    res_network = nx.DiGraph()
+    for source, target, data in res_network_edges:
+        res_network.add_edge(source, target, interaction=data['interaction'])
+
+    sig_input_df = pd.DataFrame.from_dict(sig_input, orient='index', columns=['real_score'])
+    merged_df = sig_input_df.join(recursive_decoupleRnival_res, how='left')
+    merged_df['filterout'] = np.sign(merged_df['real_score']) != np.sign(merged_df['score'])
+    merged_df = merged_df[merged_df['filterout'] == False]
+    upstream_nodes = merged_df.index.values
+    upstream_nodes = {node, 1 for node in upstream_nodes if node in res_network.nodes}
+
+    res_network = keep_controllable_neighbours(upstream_nodes, res_network) 
+
+    return res_network
+### ask aurélien what this means. 
+#   SIF <- res_network
+#   ATT <- recursive_decoupleRnival_res[recursive_decoupleRnival_res$nodes %in% SIF$source | recursive_decoupleRnival_res$nodes %in% SIF$target,]
+  
+#   if(!is.null(RNA_input))
+#   {
+#     RNA_df <- data.frame(RNA_input)
+#     RNA_df$nodes <- row.names(RNA_df)
+    
+#     ATT <- merge(ATT, RNA_df, all.x = T)
+#   } else
+#   {
+#     ATT$RNA_input <- NA
+#   }
+#   return(list("SIF" = SIF, "ATT" = ATT))
+# }
+###
+
+
+
+
 
 
 
