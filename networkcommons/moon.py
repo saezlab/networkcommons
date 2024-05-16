@@ -40,24 +40,29 @@ def prepare_metab_inputs(metab_input, compartment_codes):
     Prepares the metabolite inputs by adding compartment codes.
 
     Args:
-        metab_input (dict): A dictionary containing the metabolite names and their corresponding values.
-        compartment_codes (list): A list of compartment codes to be added to the metabolite names.
+        metab_input (dict): A dictionary containing the metabolite names and
+        their corresponding values.
+        compartment_codes (list): A list of compartment codes to be added to
+        the metabolite names.
 
     Returns:
-        dict: A dictionary containing the updated metabolite names with compartment codes.
+        dict: A dictionary containing the updated metabolite names with
+        compartment codes.
 
     """
     comps = ["r", "c", "e", "x", "m", "l", "n", "g"]
 
     ignored = [code for code in compartment_codes if code not in comps]
     if ignored:
-        print("The following compartment codes are not found in the PKN and will be ignored:")
+        print("The following compartment codes are not found in the PKN and "
+              "will be ignored:")
         print(ignored)
 
     compartment_codes = [code for code in compartment_codes if code in comps]
 
     if not compartment_codes:
-        print("There are no valid compartments left. No compartment codes will be added.")
+        print("There are no valid compartments left. No compartment codes "
+              "will be added.")
         metab_input = {
             f"Metab__{name}": value for name, value in metab_input.items()
         }
@@ -72,15 +77,19 @@ def prepare_metab_inputs(metab_input, compartment_codes):
         for compartment_code in compartment_codes:
             curr_metab_input = metab_input.copy()
             curr_metab_input = {
-                f"{name}_{compartment_code}": value for name, value in curr_metab_input.items()
+                f"{name}_{compartment_code}": value
+                for name, value in curr_metab_input.items()
             }
             curr_metab_input = {
-                f"Metab__{name}": value for name, value in curr_metab_input.items()
+                f"Metab__{name}": value
+                for name, value in curr_metab_input.items()
             }
             metab_input_list.append(curr_metab_input)
 
         metab_input = {
-            name: value for curr_metab_input in metab_input_list for name, value in curr_metab_input.items()
+            name: value
+            for curr_metab_input in metab_input_list
+            for name, value in curr_metab_input.items()
         }
 
         return metab_input
@@ -130,7 +139,8 @@ def filter_pkn_expressed_genes(expressed_genes_entrez, meta_pkn):
     Filters out unexpressed nodes from the prior knowledge network (PKN).
 
     Args:
-        expressed_genes_entrez (list): List of expressed genes in Entrez ID format.
+        expressed_genes_entrez (list): List of expressed genes in Entrez ID
+        format.
         meta_pkn (nx.DiGraph): prior knowledge network (PKN) graph.
 
     Returns:
@@ -138,7 +148,12 @@ def filter_pkn_expressed_genes(expressed_genes_entrez, meta_pkn):
     """
     print("MOON: removing unexpressed nodes from PKN...")
 
-    nodes_to_remove = [node for node in meta_pkn.nodes if is_expressed(node, expressed_genes_entrez) is None]
+    nodes_to_remove = [
+        node
+        for node in meta_pkn.nodes
+        if is_expressed(node, expressed_genes_entrez) is None
+    ]
+
     meta_pkn.remove_nodes_from(nodes_to_remove)
 
     print(f"MOON: {len(nodes_to_remove)} nodes removed")
@@ -148,30 +163,35 @@ def filter_pkn_expressed_genes(expressed_genes_entrez, meta_pkn):
 
 def filter_input_nodes_not_in_pkn(data, pkn):
     """
-    Filters the input nodes in the 'data' dictionary that are not present in the PKN.
+    Filters the input nodes in the 'data' dictionary that are not present in
+    the PKN.
 
     Args:
         data (dict): A dictionary containing the input nodes.
         pkn (nx.DiGraph): The network object representing the PKN.
 
     Returns:
-        dict: A new dictionary containing only the input nodes that are present in the PKN.
+        dict: A new dictionary containing only the input nodes that are
+        present in the PKN.
     """
     
     new_data = {key: value for key, value in data.items() if key in pkn.nodes}
 
     if len(data) != len(new_data):
-        removed_nodes = [node for node in data.keys() if node not in new_data.keys()]
+        removed_nodes = [
+            node for node in data.keys() if node not in new_data.keys()
+        ]
 
-        print(f"COSMOS: {len(removed_nodes)} input/measured nodes are not in PKN anymore: {removed_nodes}")
+        print(f"COSMOS: {len(removed_nodes)} input/measured nodes are not in"
+              "PKN anymore: {removed_nodes}")
 
     return new_data
 
 
 def keep_controllable_neighbours(source_dict, graph):
     '''
-    This function filters out nodes from a dictionary of source nodes that are not
-    controllable from the graph.
+    This function filters out nodes from a dictionary of source nodes that are
+    not controllable from the graph.
 
     Parameters:
     - source_dict: A dictionary of source nodes.
@@ -186,8 +206,8 @@ def keep_controllable_neighbours(source_dict, graph):
 
 def keep_observable_neighbours(target_dict, graph):
     '''
-    This function filters out nodes from a dictionary of target nodes that are not
-    observable from the graph.
+    This function filters out nodes from a dictionary of target nodes that are
+    not observable from the graph.
 
     Parameters:
     - target_dict: A dictionary of target nodes.
@@ -204,15 +224,18 @@ def keep_observable_neighbours(target_dict, graph):
 
 def compress_same_children(graph, sig_input, metab_input):
     """
-    Compresses nodes in the graph that have the same children by relabeling them with a common signature.
+    Compresses nodes in the graph that have the same children by relabeling
+    them with a common signature.
 
     Parameters:
     - graph (networkx.Graph): The input graph.
     - sig_input (list): List of signatures to exclude from compression.
-    - metab_input (list): List of metadata signatures to exclude from compression.
+    - metab_input (list): List of metadata signatures to exclude from
+    compression.
 
     Returns:
-    - tuple: A tuple containing the compressed subnetwork, node signatures, and duplicated parents.
+    - tuple: A tuple containing the compressed subnetwork, node signatures,
+    and duplicated parents.
     """
 
     parents = [node for node in graph.nodes if graph.out_degree(node) > 0]
@@ -243,19 +266,26 @@ def run_moon_core(upstream_input=None,
                   downstream_cutoff=0,
                   statistic="ulm"):
     """
-    Runs the MOON algorithm to iteratively infer MOON scores from downstream nodes.
+    Runs the MOON algorithm to iteratively infer MOON scores from downstream
+    nodes.
 
     Args:
-        upstream_input (dict, optional): Dictionary containing upstream input data. Defaults to None.
+        upstream_input (dict, optional): Dictionary containing upstream input
+        data. Defaults to None.
         downstream_input (dict): Dictionary containing downstream input data.
-        meta_network (networkx.Graph): Graph representing the regulatory network.
+        meta_network (networkx.Graph): Graph representing the regulatory
+        network.
         n_layers (int): Number of layers to run the MOON algorithm. 
-        n_perm (int): Number of permutations for statistical testing. Defaults to 1000.
-        downstream_cutoff (float): Cutoff value for downstream input scores. Defaults to 0.
-        statistic (str): Statistic to use for scoring. Can be "ulm" (univariate linear model) or "wmean" (weighted mean). Defaults to "ulm".
+        n_perm (int): Number of permutations for statistical testing. Defaults
+        to 1000.
+        downstream_cutoff (float): Cutoff value for downstream input scores.
+        Defaults to 0.
+        statistic (str): Statistic to use for scoring. Can be "ulm"
+        (univariate linear model) or "wmean" (weighted mean). Defaults to ulm.
 
     Returns:
-        pandas.DataFrame: DataFrame containing the decoupled regulatory network.
+        pandas.DataFrame: DataFrame containing the decoupled regulatory
+        network.
     """
     
     regulons = nx.to_pandas_edgelist(meta_network)
@@ -339,16 +369,19 @@ def filter_incohrent_TF_target(decoupleRnival_res,
                                meta_network,
                                RNA_input):
     """
-    Filters incoherent TF-target interactions from the meta_network based on the given inputs.
+    Filters incoherent TF-target interactions from the meta_network based on
+    the given inputs.
 
     Parameters:
-    decoupleRnival_res (pd.DataFrame): DataFrame containing decoupled RNAi validation results.
+    decoupleRnival_res (pd.DataFrame): DataFrame containing decoupled RNAi
+    validation results.
     TF_reg_net (pd.DataFrame): DataFrame containing TF regulatory network.
     meta_network (networkx.Graph): Graph representing the meta network.
     RNA_input (dict): Dictionary containing RNA input values.
 
     Returns:
-    networkx.Graph: Filtered meta network with incoherent TF-target interactions removed.
+    networkx.Graph: Filtered meta network with incoherent TF-target
+    interactions removed.
     """
     
     TF_reg_net.set_index('source', inplace=True, drop=True)
@@ -373,16 +406,21 @@ def filter_incohrent_TF_target(decoupleRnival_res,
 
 def decompress_moon_result(moon_res, meta_network_compressed_list, meta_network):
     """
-    Decompresses the moon_res dataframe by mapping the compressed nodes to their corresponding 
-    original source using the provided meta_network_compressed_list and meta_network.
+    Decompresses the moon_res dataframe by mapping the compressed nodes to
+    their corresponding 
+    original source using the provided meta_network_compressed_list and
+    meta_network.
 
     Args:
         moon_res (pandas.DataFrame): The compressed moon_res dataframe.
-        meta_network_compressed_list (dict): The compressed meta_network_compressed_list containing node_signatures and duplicated_parents.
+        meta_network_compressed_list (dict): The compressed
+        meta_network_compressed_list containing node_signatures and
+        duplicated_parents.
         meta_network (pandas.DataFrame): The original meta_network dataframe.
 
     Returns:
-        pandas.DataFrame: The decompressed moon_res dataframe with the source column mapped to its corresponding original source.
+        pandas.DataFrame: The decompressed moon_res dataframe with the source
+        column mapped to its corresponding original source.
     """
 
     # Extract node_signatures and duplicated_parents from the list
