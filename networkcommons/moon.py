@@ -24,7 +24,7 @@ def meta_network_cleanup(graph):
     graph.remove_edges_from(nx.selfloop_edges(graph))
 
     # Keep only interactions with values of 1 or -1
-    graph = nx.Graph(
+    graph = nx.DiGraph(
         [
             (u, v, d)
             for u, v, d in graph.edges(data=True)
@@ -287,7 +287,7 @@ def run_moon_core(upstream_input=None,
         pandas.DataFrame: DataFrame containing the decoupled regulatory
         network.
     """
-    
+
     regulons = nx.to_pandas_edgelist(meta_network)
     regulons.rename(columns={"sign": "mor"}, inplace=True)
     regulons = regulons[~regulons["source"].isin(downstream_input.keys())]
@@ -301,14 +301,17 @@ def run_moon_core(upstream_input=None,
             mat=decoupler_mat,
             net=regulons,
             times=n_perm,
+            weight=None,
             min_n=1
         )
         if statistic == "norm_wmean":
             estimate = norm
     elif statistic == "ulm":
+        print(decoupler_mat)
         estimate, pvals = dc.run_ulm(
             mat=decoupler_mat,
             net=regulons,
+            weight=None,
             min_n=1
         )
 
@@ -330,6 +333,7 @@ def run_moon_core(upstream_input=None,
                 mat=previous_n_plus_one,
                 net=regulons,
                 times=n_perm,
+                weight=None,
                 min_n=1
             )
             if statistic == "norm_wmean":
@@ -338,6 +342,7 @@ def run_moon_core(upstream_input=None,
             estimate, pvals = dc.run_ulm(
                 mat=previous_n_plus_one,
                 net=regulons,
+                weight=None,
                 min_n=1
             )
 
@@ -383,7 +388,7 @@ def filter_incohrent_TF_target(decoupleRnival_res,
     networkx.Graph: Filtered meta network with incoherent TF-target
     interactions removed.
     """
-    
+
     TF_reg_net.set_index('source', inplace=True, drop=True)
     RNA_df = pd.DataFrame.from_dict(RNA_input, orient='index', columns=['RNA_input'])
 
@@ -392,7 +397,7 @@ def filter_incohrent_TF_target(decoupleRnival_res,
     reg_meta.rename(columns={'score': 'TF_score'}, inplace=True)
 
     reg_meta = pd.merge(reg_meta, RNA_df, left_on='target', right_index=True)
-    reg_meta['incoherent'] = np.sign(reg_meta['TF_score'] * reg_meta['RNA_input'] * reg_meta['mor']) < 0
+    reg_meta['incoherent'] = np.sign(reg_meta['TF_score'] * reg_meta['RNA_input'] * reg_meta['weight']) < 0
 
     reg_meta = reg_meta[reg_meta["incoherent"]==True][['target']]
 
@@ -404,7 +409,7 @@ def filter_incohrent_TF_target(decoupleRnival_res,
     return meta_network
 
 
-def decompress_moon_result(moon_res, meta_network_compressed_list, meta_network):
+def decompress_moon_result(moon_res, meta_network_compressed_list, meta_network_graph):
     """
     Decompresses the moon_res dataframe by mapping the compressed nodes to
     their corresponding 
@@ -422,15 +427,16 @@ def decompress_moon_result(moon_res, meta_network_compressed_list, meta_network)
         pandas.DataFrame: The decompressed moon_res dataframe with the source
         column mapped to its corresponding original source.
     """
+    meta_network = nx.to_pandas_edgelist(meta_network_graph)
+
 
     # Extract node_signatures and duplicated_parents from the list
     node_signatures = meta_network_compressed_list['node_signatures']
     duplicated_parents = meta_network_compressed_list['duplicated_signatures']
 
     # Create a dataframe for duplicated parents
-    duplicated_parents_df = pd.DataFrame.from_dict(duplicated_parents)
+    duplicated_parents_df = pd.DataFrame.from_dict(duplicated_parents, orient='index', columns=['source'])
     duplicated_parents_df['source_original'] = duplicated_parents_df.index
-    duplicated_parents_df.columns = ['source', 'source_original']
 
     # Create a dataframe for addons
     addons = pd.DataFrame(list(node_signatures.keys() - duplicated_parents_df['source_original']))
@@ -482,7 +488,7 @@ def reduce_solution_network(decoupleRnival_res, meta_network, cutoff, sig_input,
     upstream_nodes = merged_df.index.values
     upstream_nodes = {node: 1 for node in upstream_nodes if node in res_network.nodes}
 
-    res_network = keep_controllable_neighbours(upstream_nodes, res_network) 
+    res_network = keep_controllable_neighbours(upstream_nodes, res_network)
 
     return res_network
 
