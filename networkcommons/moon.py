@@ -134,7 +134,7 @@ def is_expressed(x, expressed_genes_entrez):
         return x
 
 
-def filter_pkn_expressed_genes(expressed_genes_entrez, meta_pkn):
+def filter_pkn_expressed_genes(expressed_genes_entrez, graph):
     """
     Filters out unexpressed nodes from the prior knowledge network (PKN).
 
@@ -150,15 +150,15 @@ def filter_pkn_expressed_genes(expressed_genes_entrez, meta_pkn):
 
     nodes_to_remove = [
         node
-        for node in meta_pkn.nodes
+        for node in graph.nodes
         if is_expressed(node, expressed_genes_entrez) is None
     ]
 
-    meta_pkn.remove_nodes_from(nodes_to_remove)
+    graph.remove_nodes_from(nodes_to_remove)
 
     print(f"MOON: {len(nodes_to_remove)} nodes removed")
 
-    return meta_pkn
+    return graph
 
 
 def filter_input_nodes_not_in_pkn(data, pkn):
@@ -366,10 +366,11 @@ def run_moon_core(upstream_input=None,
         upstream_input_df = upstream_input_df[(np.sign(upstream_input_df["real_score"]) == np.sign(upstream_input_df["score"])) | (np.isnan(upstream_input_df["real_score"]))]
         recursive_decoupleRnival_res = upstream_input_df.drop(columns="real_score")
 
+
     return recursive_decoupleRnival_res
 
 
-def filter_incohrent_TF_target(decoupleRnival_res,
+def filter_incoherent_TF_target(decoupleRnival_res,
                                TF_reg_net,
                                meta_network,
                                RNA_input):
@@ -378,8 +379,7 @@ def filter_incohrent_TF_target(decoupleRnival_res,
     the given inputs.
 
     Parameters:
-    decoupleRnival_res (pd.DataFrame): DataFrame containing decoupled RNAi
-    validation results.
+    decoupleRnival_res (pd.DataFrame): DataFrame
     TF_reg_net (pd.DataFrame): DataFrame containing TF regulatory network.
     meta_network (networkx.Graph): Graph representing the meta network.
     RNA_input (dict): Dictionary containing RNA input values.
@@ -457,6 +457,11 @@ def decompress_moon_result(moon_res, meta_network_compressed_list, meta_network_
     # Merge the moon_res dataframe with the mapping table
     moon_res = pd.merge(moon_res, mapping_table, on='source')
 
+    # Add node score to the graph
+    for node in meta_network.nodes:
+        if node in moon_res.index:
+            meta_network.nodes[node]["score"] = moon_res.loc[node, "score"]
+
     # Return the merged dataframe
     return moon_res
 
@@ -467,12 +472,12 @@ def reduce_solution_network(decoupleRnival_res, meta_network, cutoff, sig_input,
     recursive_decoupleRnival_res = recursive_decoupleRnival_res[abs(recursive_decoupleRnival_res['score']) > cutoff]
     consistency_vec = recursive_decoupleRnival_res['score']
     
-    res_network = meta_network.subgraph([node for node in meta_network.nodes if node in recursive_decoupleRnival_res.index.values])
+    res_network = meta_network.subgraph([node for node in meta_network.nodes if node in recursive_decoupleRnival_res.source.values])
     res_network_edges = res_network.edges(data=True)
     res_network = nx.DiGraph()
     for source, target, data in res_network_edges:
-        if data['interaction'] == np.sign(consistency_vec[source] * consistency_vec[target]):
-            res_network.add_edge(source, target, interaction=data['interaction'])
+        if data['sign'] == np.sign(consistency_vec[source] * consistency_vec[target]):
+            res_network.add_edge(source, target, interaction=data['sign'])
     
     recursive_decoupleRnival_res.columns = ['nodes'] + list(recursive_decoupleRnival_res.columns)[1:]
     
