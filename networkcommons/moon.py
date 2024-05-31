@@ -183,7 +183,7 @@ def filter_input_nodes_not_in_pkn(data, pkn):
         ]
 
         print(f"COSMOS: {len(removed_nodes)} input/measured nodes are not in"
-              "PKN anymore: {removed_nodes}")
+              f"PKN anymore: {removed_nodes}")
 
     return new_data
 
