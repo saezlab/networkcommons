@@ -34,10 +34,16 @@ homepage = "https://github.com/saezlab/networkcommons"
 documentation = "https://networkcommons.readthedocs.io/"
 readme = "README.md"
 
+[[tool.poetry.source]]
+name = "pypi-public"
+url = "https://pypi.org/simple/"
+
 [tool.poetry.dependencies]
-python = "^3.8"
+python = "^3.9"
 toml = "*"
 networkx = "*"
+pandas = "*"
+corneto = { git = "https://github.com/deeenes/corneto.git", branch = "main" }
 
 [tool.poetry.dev-dependencies]
 pytest = ">=6.0"
@@ -46,7 +52,7 @@ pre-commit = ">=2.17.0"
 bump2version = "*"
 coverage = ">=6.0"
 distlib = "*"
-sphinx = ">=5.0.0"
+sphinx = "^7.0.0"
 sphinx-last-updated-by-git = ">=0.3"
 sphinx-autodoc-typehints = ">=1.18.0"
 sphinxcontrib-fulltoc = ">=1.2.0"
