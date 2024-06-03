@@ -18,16 +18,16 @@ Integrated framework for network inference and evaluation
 using prior knowledge and omics data.
 """
 
-from .utils import *  # noqa: F401 F403
-from .methods import *  # noqa: F401 F403
-from .datasets import *  # noqa: F401 F403
-from .prior_knowledge import *  # noqa: F401 F403
-from .visualization import *  # noqa: F401 F403
-from .evaluation import *  # noqa: F401 F403
-
 __all__ = [
     '__version__',
     '__author__',
 ]
 
 from ._metadata import __author__, __version__
+from .utils import *  # noqa: F401 F403
+from .methods import *  # noqa: F401 F403
+from .datasets import *  # noqa: F401 F403
+from .prior_knowledge import *  # noqa: F401 F403
+from .visualization import *  # noqa: F401 F403
+from .evaluation import *  # noqa: F401 F403
+from .moon import *  # noqa: F401 F403
