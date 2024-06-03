@@ -23,6 +23,12 @@ classifiers = [
     "Natural Language :: English",
     "Topic :: Scientific/Engineering :: Bio-Informatics"
 ]
+keywords = [
+    "systems biology", "molecular biology", "signaling network",
+    "transcriptomics", "modeling", "mechanistic modeling",
+    "network inference", "molecular network", "omics",
+    "biomedicine"
+]
 repository = "https://github.com/saezlab/networkcommons"
 homepage = "https://github.com/saezlab/networkcommons"
 documentation = "https://networkcommons.readthedocs.io/"
@@ -31,6 +37,7 @@ readme = "README.md"
 [tool.poetry.dependencies]
 python = "^3.8"
 toml = "*"
+networkx = "*"
 
 [tool.poetry.dev-dependencies]
 pytest = ">=6.0"
@@ -53,7 +60,7 @@ jupyter-contrib-nbextensions = { git = "https://github.com/deeenes/jupyter_contr
 nbsphinx = { git = "https://github.com/deeenes/nbsphinx.git", branch = "timings" }
 
 [tool.poetry.urls]
-"Bug Tracker" = "https://github.com/https://github.com/saezlab/networkcommons/issues"
+"Bug Tracker" = "https://github.com/saezlab/networkcommons/issues"
 
 [tool.black]
 line-length = 80
