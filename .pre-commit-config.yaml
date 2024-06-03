@@ -9,19 +9,19 @@ default_stages:
 minimum_pre_commit_version: 2.7.1
 repos:
 -   repo: https://github.com/deeenes/unexport
-    rev: 0.4.0-patch0-3
+    rev: 0.4.0-patch0-8
     hooks:
     -   id: unexport
         args: [--refactor, --single_quotes]
         exclude: __init__.py$
 -   repo: https://github.com/google/yapf
-    rev: v0.40.2
+    rev: v0.32.0
     hooks:
     -   id: yapf
         additional_dependencies: [toml]
         stages: [manual]
 -   repo: https://github.com/psf/black
-    rev: 24.4.2
+    rev: 23.3.0
     hooks:
     -   id: black
         additional_dependencies: [toml]
@@ -32,17 +32,17 @@ repos:
     -   id: fixit-run-rules
         stages: [manual]
 -   repo: https://github.com/timothycrosley/isort
-    rev: 5.13.2
+    rev: 5.12.0
     hooks:
     -   id: isort
         additional_dependencies: [toml]
 -   repo: https://github.com/snok/pep585-upgrade
-    rev: v1.0
+    rev: v1.0.1
     hooks:
     -   id: upgrade-type-hints
         args: [--futures=true]
 -   repo: https://github.com/asottile/add-trailing-comma
-    rev: v3.1.0
+    rev: v2.4.0
     hooks:
     -   id: add-trailing-comma
 -   repo: https://github.com/myint/unify
@@ -50,7 +50,7 @@ repos:
     hooks:
     -   id: unify
 -   repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.6.0
+    rev: v4.4.0
     hooks:
     -   id: detect-private-key
     -   id: check-ast
@@ -75,30 +75,33 @@ repos:
     rev: 1.2.3
     hooks:
     -   id: Flake8-pyproject
-        additional_dependencies: [flake8-docstrings, flake8-comprehensions, flake8-bugbear]
+        additional_dependencies:
+        -   flake8-docstrings
+        -   flake8-comprehensions
+        -   flake8-bugbear
+        -   git+https://github.com/saezlab/flake8-kwargs-spaces.git
 -   repo: https://github.com/rstcheck/rstcheck
-    rev: v6.2.0
+    rev: v6.1.2
     hooks:
     -   id: rstcheck
         exclude: docs
 -   repo: https://github.com/asottile/blacken-docs
-    rev: 1.16.0
+    rev: 1.13.0
     hooks:
     -   id: blacken-docs
 -   repo: https://github.com/asottile/pyupgrade
-    rev: v3.15.2
+    rev: v3.3.1
     hooks:
     -   id: pyupgrade
         args: [--py3-plus, --py38-plus, --keep-runtime-typing]
 -   repo: https://github.com/macisamuele/language-formatters-pre-commit-hooks
-    rev: v2.13.0
+    rev: v2.8.0
     hooks:
     -   id: pretty-format-yaml
         args: [--autofix, --indent, '4']
 -   repo: https://github.com/pre-commit/pygrep-hooks
     rev: v1.10.0
     hooks:
-    -   id: python-no-eval
     -   id: python-use-type-annotations
     -   id: python-check-blanket-noqa
     -   id: rst-backticks
