@@ -6,7 +6,7 @@ build-backend = "poetry.core.masonry.api"
 name = "networkcommons"
 version = "0.1.0"
 description = "Integrated framework for network inference and evaluation using prior knowledge and omics data"
-license = "GNU General Public License Version 3"
+license = "gpl-3.0-only"
 authors = [
     "Saez Lab <omnipathdb@gmail.com>"
 ]
@@ -45,6 +45,7 @@ tox = ">=3.20.1"
 pre-commit = ">=2.17.0"
 bump2version = "*"
 coverage = ">=6.0"
+distlib = "*"
 sphinx = ">=5.0.0"
 sphinx-last-updated-by-git = ">=0.3"
 sphinx-autodoc-typehints = ">=1.18.0"
@@ -64,7 +65,7 @@ nbsphinx = { git = "https://github.com/deeenes/nbsphinx.git", branch = "timings"
 
 [tool.black]
 line-length = 80
-target-version = ['py310']
+target-version = ['py31*']
 include = '\.pyi?$'
 exclude = '''
 (
@@ -99,7 +100,12 @@ indent = "    "
 skip = []
 
 [tool.flake8]
-ignore = ["D200", "D202", "D401", "D105", "W503", "W504", "E731"]
+extend-select = ["CE101"]
+ignore = [
+  "D200", "D202", "D401", "D105",
+  "W503", "W504",
+  "E731", "E131", "E251", "E303"
+]
 per-file-ignores = [
     "docs/src/conf.py:D100",
     "tests/*:D100,D101,D102",
