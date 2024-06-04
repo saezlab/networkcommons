@@ -44,7 +44,12 @@ toml = "*"
 networkx = "*"
 pandas = "*"
 corneto = { git = "https://github.com/deeenes/corneto.git", branch = "main" }
+liana = { git = "https://github.com/deeenes/liana-py.git", branch = "main" }
 pypath-common = "^0.2.2"
+pyocclient = "^0.6"
+pydeseq2 = "^0.4.9"
+omnipath = "^1.0.8"
+decoupler = "^1.6.0"
 
 [tool.poetry.dev-dependencies]
 pytest = ">=6.0"
