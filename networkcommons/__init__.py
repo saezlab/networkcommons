@@ -24,6 +24,7 @@ __all__ = [
 ]
 
 from ._metadata import __author__, __version__
+from ._session import log, _log, session
 from .utils import *  # noqa: F401 F403
 from .methods import *  # noqa: F401 F403
 from .datasets import *  # noqa: F401 F403
