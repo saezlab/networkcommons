@@ -44,6 +44,7 @@ toml = "*"
 networkx = "*"
 pandas = "*"
 corneto = { git = "https://github.com/deeenes/corneto.git", branch = "main" }
+pypath-common = "^0.2.2"
 
 [tool.poetry.dev-dependencies]
 pytest = ">=6.0"
