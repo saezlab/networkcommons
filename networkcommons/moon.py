@@ -21,18 +21,19 @@ def meta_network_cleanup(graph):
     '''
     # Clean up the meta network
     # Remove self-interactions
-    graph.remove_edges_from(nx.selfloop_edges(graph))
+    pre_graph = graph.copy()
+    pre_graph.remove_edges_from(nx.selfloop_edges(pre_graph))
 
     # Keep only interactions with values of 1 or -1
-    graph = nx.DiGraph(
+    post_graph = nx.DiGraph(
         [
             (u, v, d)
-            for u, v, d in graph.edges(data=True)
+            for u, v, d in pre_graph.edges(data=True)
             if d['sign'] in [1, -1]
         ]
     )
 
-    return graph
+    return post_graph
 
 
 def prepare_metab_inputs(metab_input, compartment_codes):
@@ -222,7 +223,7 @@ def keep_observable_neighbours(target_dict, graph):
     return subnetwork.reverse()
 
 
-def compress_same_children(graph, sig_input, metab_input):
+def compress_same_children(uncompressed_graph, sig_input, metab_input):
     """
     Compresses nodes in the graph that have the same children by relabeling
     them with a common signature.
@@ -237,6 +238,7 @@ def compress_same_children(graph, sig_input, metab_input):
     - tuple: A tuple containing the compressed subnetwork, node signatures,
     and duplicated parents.
     """
+    graph = uncompressed_graph.copy()
 
     parents = [node for node in graph.nodes if graph.out_degree(node) > 0]
 
@@ -253,14 +255,14 @@ def compress_same_children(graph, sig_input, metab_input):
     dubs = [signature for signature, count in Counter(node_signatures.values()).items() if count > 1 and signature not in metab_input and signature not in sig_input]
     duplicated_parents = {node: signature for node, signature in node_signatures.items() if signature in dubs}
 
-    subnetwork = nx.relabel_nodes(graph, duplicated_parents, copy=False)
+    subnetwork = nx.relabel_nodes(graph, duplicated_parents, copy=False).copy()
 
     return subnetwork, node_signatures, duplicated_parents
 
 
 def run_moon_core(upstream_input=None,
                   downstream_input=None,
-                  meta_network=None,
+                  graph=None,
                   n_layers=None,
                   n_perm=1000,
                   downstream_cutoff=0,
@@ -273,7 +275,7 @@ def run_moon_core(upstream_input=None,
         upstream_input (dict, optional): Dictionary containing upstream input
         data. Defaults to None.
         downstream_input (dict): Dictionary containing downstream input data.
-        meta_network (networkx.Graph): Graph representing the regulatory
+        meta_network (networkx.DiGraph): Graph representing the regulatory
         network.
         n_layers (int): Number of layers to run the MOON algorithm. 
         n_perm (int): Number of permutations for statistical testing. Defaults
@@ -288,7 +290,7 @@ def run_moon_core(upstream_input=None,
         network.
     """
 
-    regulons = nx.to_pandas_edgelist(meta_network)
+    regulons = nx.to_pandas_edgelist(graph)
     regulons.rename(columns={"sign": "mor"}, inplace=True)
     regulons = regulons[~regulons["source"].isin(downstream_input.keys())]
 
@@ -351,6 +353,7 @@ def run_moon_core(upstream_input=None,
         n_plus_one["level"] = i + 1
         res_list.append(n_plus_one)
         i += 1
+        print(f"Iteration count: {i-1}")
 
     recursive_decoupleRnival_res = pd.concat(res_list)
 
@@ -366,11 +369,13 @@ def run_moon_core(upstream_input=None,
         upstream_input_df = upstream_input_df[(np.sign(upstream_input_df["real_score"]) == np.sign(upstream_input_df["score"])) | (np.isnan(upstream_input_df["real_score"]))]
         recursive_decoupleRnival_res = upstream_input_df.drop(columns="real_score")
 
+    recursive_decoupleRnival_res.reset_index(inplace=True)
+    recursive_decoupleRnival_res.rename(columns={"index": "source"}, inplace=True)
 
     return recursive_decoupleRnival_res
 
 
-def filter_incoherent_TF_target(decoupleRnival_res,
+def filter_incoherent_TF_target(moon_res,
                                TF_reg_net,
                                meta_network,
                                RNA_input):
@@ -388,51 +393,41 @@ def filter_incoherent_TF_target(decoupleRnival_res,
     networkx.Graph: Filtered meta network with incoherent TF-target
     interactions removed.
     """
+    filtered_meta_network = meta_network.copy()
 
-    TF_reg_net.set_index('source', inplace=True, drop=True)
     RNA_df = pd.DataFrame.from_dict(RNA_input, orient='index', columns=['RNA_input'])
-
-    reg_meta = decoupleRnival_res[decoupleRnival_res.index.isin(TF_reg_net.index)]
-    reg_meta = reg_meta.join(TF_reg_net)
+    reg_meta = pd.merge(moon_res, TF_reg_net, left_on='source', right_on='source', how='inner')
     reg_meta.rename(columns={'score': 'TF_score'}, inplace=True)
 
-    reg_meta = pd.merge(reg_meta, RNA_df, left_on='target', right_index=True)
+    reg_meta = pd.merge(reg_meta, RNA_df, left_on='target', right_index=True, how='inner')
     reg_meta['incoherent'] = np.sign(reg_meta['TF_score'] * reg_meta['RNA_input'] * reg_meta['weight']) < 0
 
-    reg_meta = reg_meta[reg_meta["incoherent"]==True][['target']]
+    reg_meta = reg_meta[reg_meta["incoherent"]==True][['source', 'target']]
 
-    to_tuple_list = reg_meta.rename_axis("source").reset_index()
-    tuple_list = list(to_tuple_list.itertuples(index=False, name=None))
+    tuple_list = list(reg_meta.itertuples(index=False, name=None))
 
-    meta_network.remove_edges_from(tuple_list)
+    filtered_meta_network.remove_edges_from(tuple_list)
 
-    return meta_network
+    return filtered_meta_network
 
 
-def decompress_moon_result(moon_res, meta_network_compressed_list, meta_network_graph):
+def decompress_moon_result(moon_res, node_signatures, duplicated_parents, meta_network_graph):
     """
     Decompresses the moon_res dataframe by mapping the compressed nodes to
-    their corresponding 
-    original source using the provided meta_network_compressed_list and
-    meta_network.
+    their corresponding original source using the provided meta_network_compressed_list and
+    the filtered meta_network.
 
     Args:
         moon_res (pandas.DataFrame): The compressed moon_res dataframe.
-        meta_network_compressed_list (dict): The compressed
-        meta_network_compressed_list containing node_signatures and
-        duplicated_parents.
-        meta_network (pandas.DataFrame): The original meta_network dataframe.
+        node_signatures (dict): The node signatures dictionary.
+        duplicated_parents (dict): The duplicated parents dictionary.
+        meta_network_graph (nx.DiGraph): The compressed meta_network.
 
     Returns:
         pandas.DataFrame: The decompressed moon_res dataframe with the source
         column mapped to its corresponding original source.
     """
-    meta_network = nx.to_pandas_edgelist(meta_network_graph)
-
-
-    # Extract node_signatures and duplicated_parents from the list
-    node_signatures = meta_network_compressed_list['node_signatures']
-    duplicated_parents = meta_network_compressed_list['duplicated_signatures']
+    compressed_meta_network = nx.to_pandas_edgelist(meta_network_graph)
 
     # Create a dataframe for duplicated parents
     duplicated_parents_df = pd.DataFrame.from_dict(duplicated_parents, orient='index', columns=['source'])
@@ -444,7 +439,7 @@ def decompress_moon_result(moon_res, meta_network_compressed_list, meta_network_
     addons['source_original'] = addons['source']
 
     # Get final leaves
-    final_leaves = meta_network[~meta_network['target'].isin(meta_network['source'])]['target']
+    final_leaves = compressed_meta_network[~compressed_meta_network['target'].isin(compressed_meta_network['source'])]['target']
     final_leaves = pd.DataFrame({'source': final_leaves, 'source_original': final_leaves})
 
     # Combine addons and final leaves
@@ -455,12 +450,7 @@ def decompress_moon_result(moon_res, meta_network_compressed_list, meta_network_
     mapping_table = mapping_table.drop_duplicates()
 
     # Merge the moon_res dataframe with the mapping table
-    moon_res = pd.merge(moon_res, mapping_table, on='source')
-
-    # Add node score to the graph
-    for node in meta_network.nodes:
-        if node in moon_res.index:
-            meta_network.nodes[node]["score"] = moon_res.loc[node, "score"]
+    moon_res = pd.merge(moon_res, mapping_table, on='source', how='outer')
 
     # Return the merged dataframe
     return moon_res
