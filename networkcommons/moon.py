@@ -5,6 +5,7 @@ from networkcommons.methods import run_reachability_filter
 import pandas as pd
 import decoupler as dc
 import numpy as np
+import re
 
 
 def meta_network_cleanup(graph):
@@ -456,95 +457,90 @@ def decompress_moon_result(moon_res, node_signatures, duplicated_parents, meta_n
     return moon_res
 
 
-def reduce_solution_network(decoupleRnival_res, meta_network, cutoff, sig_input, RNA_input=None):
-    recursive_decoupleRnival_res = decoupleRnival_res.copy()
-    
+def reduce_solution_network(moon_res, meta_network, cutoff, sig_input, rna_input=None):
+    """
+    Reduces the solution network based on certain criteria and returns the reduced network and attribute table.
+
+    Args:
+        moon_res (pandas.DataFrame): The solution network.
+        meta_network (networkx.Graph): The original network.
+        cutoff (float): The cutoff value for filtering edges.
+        sig_input (dict): Dictionary containing the significant input scores.
+        rna_input (dict, optional): Dictionary containing the RNA input scores. Defaults to None.
+
+    Returns:
+        res_network (networkx.DiGraph): The reduced network.
+        att (pandas.DataFrame): The attribute table containing the relevant attributes of the nodes in the reduced network.
+    """
+
+    recursive_decoupleRnival_res = moon_res.copy()
+
     recursive_decoupleRnival_res = recursive_decoupleRnival_res[abs(recursive_decoupleRnival_res['score']) > cutoff]
-    consistency_vec = recursive_decoupleRnival_res['score']
-    
-    res_network = meta_network.subgraph([node for node in meta_network.nodes if node in recursive_decoupleRnival_res.source.values])
+    consistency_vec = recursive_decoupleRnival_res.set_index('source_original')['score'].to_dict()
+
+    res_network = meta_network.subgraph([node for node in meta_network.nodes if node in recursive_decoupleRnival_res.source_original.values])
     res_network_edges = res_network.edges(data=True)
-    res_network = nx.DiGraph()
+    res_network = nx.DiGraph(res_network)
     for source, target, data in res_network_edges:
-        if data['sign'] == np.sign(consistency_vec[source] * consistency_vec[target]):
-            res_network.add_edge(source, target, interaction=data['sign'])
-    
-    recursive_decoupleRnival_res.columns = ['nodes'] + list(recursive_decoupleRnival_res.columns)[1:]
-    
-    res_network_edges = res_network.edges(data=True)
-    res_network = nx.DiGraph()
-    for source, target, data in res_network_edges:
-        res_network.add_edge(source, target, interaction=data['interaction'])
+        if data['sign'] != np.sign(consistency_vec[source] * consistency_vec[target]):
+            res_network.remove_edge(source, target)
+
+    recursive_decoupleRnival_res.rename(columns={'source_original': 'nodes'}, inplace=True)
+    recursive_decoupleRnival_res.drop(columns=['source'], inplace=True)
 
     sig_input_df = pd.DataFrame.from_dict(sig_input, orient='index', columns=['real_score'])
-    merged_df = sig_input_df.join(recursive_decoupleRnival_res, how='left')
+    merged_df = pd.merge(sig_input_df, recursive_decoupleRnival_res, how='inner', left_index=True, right_on='nodes')
     merged_df['filterout'] = np.sign(merged_df['real_score']) != np.sign(merged_df['score'])
     merged_df = merged_df[merged_df['filterout'] == False]
-    upstream_nodes = merged_df.index.values
+    upstream_nodes = merged_df.nodes.values
     upstream_nodes = {node: 1 for node in upstream_nodes if node in res_network.nodes}
 
     res_network = keep_controllable_neighbours(upstream_nodes, res_network)
 
-    return res_network
-
-### formats the network to be human-readable. test whole framework with the data to understand 
-#   SIF <- res_network
-#   ATT <- recursive_decoupleRnival_res[recursive_decoupleRnival_res$nodes %in% SIF$source | recursive_decoupleRnival_res$nodes %in% SIF$target,]
-  
-#   if(!is.null(RNA_input))
-#   {
-#     RNA_df <- data.frame(RNA_input)
-#     RNA_df$nodes <- row.names(RNA_df)
+    moon_scores = recursive_decoupleRnival_res.set_index('nodes')['score'].to_dict()
+    nx.set_node_attributes(res_network, moon_scores, 'moon_score')
     
-#     ATT <- merge(ATT, RNA_df, all.x = T)
-#   } else
-#   {
-#     ATT$RNA_input <- NA
-#   }
-#   return(list("SIF" = SIF, "ATT" = ATT))
-# }
-###
+    att = recursive_decoupleRnival_res[recursive_decoupleRnival_res['nodes'].isin(res_network.nodes)]
+
+    if rna_input is not None:
+        rna_input_df = pd.DataFrame.from_dict(rna_input, orient='index', columns=['real_score']).reset_index().rename(columns={'index': 'nodes'})
+        att = pd.merge(att, rna_input_df, how='left', on='nodes')
+    else:
+        att['RNA_input'] = np.nan
+
+    return res_network, att
 
 
+def translate_res(network, att, mapping_dict):
+    """
+    Translates the network and attribute table based on the given mapping dataframe.
 
+    Args:
+        network (networkx.DiGraph): The network to be translated.
+        att (pandas.DataFrame): The attribute table to be translated.
+        mapping_df (pandas.DataFrame): The mapping dataframe containing the translation information.
 
+    Returns:
+        network (networkx.DiGraph): The translated network.
+        att (pandas.DataFrame): The translated attribute table.
+    """
 
+    to_rename = att.nodes.values
+    renamed = {}
+    
+    for name in to_rename:
+        name_changed = re.sub("Metab__", "", name)
+        name_changed = re.sub("^Gene", "Enzyme", name_changed)
+        suffix = re.search("_[a-z]$", name_changed)
+        name_changed = re.sub("_[a-z]$", "", name_changed)
+        if name_changed in mapping_dict:
+            name_changed = mapping_dict[name_changed]
+            name_changed = "Metab__" + name_changed + suffix.group() if suffix else "Metab__" + name_changed
+        renamed[name] = name_changed
+    
+    att['nodes'] = att['nodes'].map(renamed)
 
+    network = nx.relabel_nodes(network, mapping_dict, copy=True)
 
-upstream_input = {"A": 1, "B": -1, "C": 0.5}
-downstream_input = {"D": 2, "E": -1.5}
-meta_network_edges = [
-    ("A", "B", 1),
-    ("A", "C", -1),
-    ("B", "D", -1),
-    ("C", "E", 1),
-    ("C", "D", -1),
-    ("D", "B", -1),
-    ("E", "A", 1)
-]
-
-graph = nx.DiGraph()
-graph.add_weighted_edges_from(meta_network_edges)
-
-RNA_input = {
-    "A": 1,
-    "B": -1,
-    "C": 5,
-    "D": -0.7,
-    "E": -0.3
-}
-
-RNA_input = {
-    "A": 1,
-    "B": -1,
-    "C": 5,
-    "D": -0.7,
-    "E": -0.3
-}
-
-TF_reg_net = pd.DataFrame({
-    "source": ["B"],
-    "target": ["D"],
-    "mor": [-1]
-})
-
+    return network, att
+    
