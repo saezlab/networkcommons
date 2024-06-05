@@ -136,7 +136,7 @@ def is_expressed(x, expressed_genes_entrez):
         return x
 
 
-def filter_pkn_expressed_genes(expressed_genes_entrez, graph):
+def filter_pkn_expressed_genes(expressed_genes_entrez, unfiltered_graph):
     """
     Filters out unexpressed nodes from the prior knowledge network (PKN).
 
@@ -149,6 +149,8 @@ def filter_pkn_expressed_genes(expressed_genes_entrez, graph):
         nx.DiGraph: Filtered PKN graph with unexpressed nodes removed.
     """
     print("MOON: removing unexpressed nodes from PKN...")
+
+    graph = unfiltered_graph.copy()
 
     nodes_to_remove = [
         node
