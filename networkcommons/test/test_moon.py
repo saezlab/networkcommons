@@ -1,11 +1,5 @@
-import unittest
 import networkx as nx
 import pandas as pd
-import numpy as np
-import decoupler as dc
-import unittest
-import networkx as nx
-import networkx as nx
 from networkcommons.moon import (
     meta_network_cleanup,
     prepare_metab_inputs,
@@ -34,7 +28,8 @@ def test_meta_network_cleanup():
 
     cleaned_graph = meta_network_cleanup(graph)
 
-    assert list(nx.nodes_with_selfloops(cleaned_graph)) == [], "Self-loops are removed"
+    assert list(nx.nodes_with_selfloops(cleaned_graph)) == [], \
+        "Self-loops are removed"
     for u, v, d in cleaned_graph.edges(data=True):
         assert d['sign'] in [1, -1], f"Unexpected sign value: {d['sign']}"
     assert len(cleaned_graph.edges) == 3, "Unexpected number of edges"
@@ -57,8 +52,10 @@ def test_is_expressed():
 
     assert is_expressed('Gene1', expressed_genes) == 'Gene1'
     assert is_expressed('Gene4', expressed_genes) is None
-    assert is_expressed('Metab__something', expressed_genes) == 'Metab__something'
-    assert is_expressed('orphanReac__something', expressed_genes) == 'orphanReac__something'
+    assert is_expressed('Metab__something', expressed_genes) == \
+        'Metab__something'
+    assert is_expressed('orphanReac__something', expressed_genes) == \
+        'orphanReac__something'
 
 
 def test_filter_pkn_expressed_genes():
@@ -67,9 +64,9 @@ def test_filter_pkn_expressed_genes():
     graph.add_nodes_from(['Gene1', 'Gene2', 'Gene4'])
     graph.add_edge('Gene1', 'Gene2')
     graph.add_edge('Gene2', 'Gene4')
-    
+
     filtered_graph = filter_pkn_expressed_genes(expressed_genes, graph)
-    
+
     assert 'Gene4' not in filtered_graph.nodes, "Unexpressed node not removed"
     assert len(filtered_graph.nodes) == 2, "Unexpected number of nodes"
 
@@ -78,9 +75,9 @@ def test_filter_input_nodes_not_in_pkn():
     data = {'Gene1': 1, 'Gene2': 2, 'Gene3': 3}
     graph = nx.DiGraph()
     graph.add_nodes_from(['Gene1', 'Gene2'])
-    
+
     filtered_data = filter_input_nodes_not_in_pkn(data, graph)
-    
+
     assert 'Gene3' not in filtered_data, "Node not in PKN not removed"
     assert len(filtered_data) == 2, "Unexpected number of input nodes"
 
@@ -129,11 +126,13 @@ def test_compress_same_children():
     sig_input = []
     metab_input = []
 
-    subnetwork, node_signatures, duplicated_parents = compress_same_children(graph, sig_input, metab_input)
-    
-    assert len(subnetwork.nodes) == 3, "Unexpected number of nodes in subnetwork"
-    assert len(duplicated_parents) == 2, "Unexpected number of duplicated parents"
-    assert duplicated_parents['D'] == node_signatures['D'], "Duplicated parents mismatch"
+    subnetwork, node_signatures, duplicated_parents = compress_same_children(
+        graph, sig_input, metab_input
+    )
+
+    assert len(subnetwork.nodes) == 3, "Unexpected number of nodes in subnetwork" # noqa E501
+    assert len(duplicated_parents) == 2, "Unexpected number of duplicated parents" # noqa E501
+    assert duplicated_parents['D'] == node_signatures['D'], "Duplicated parents mismatch" # noqa E501
 
 
 def test_run_moon_core():
@@ -148,23 +147,33 @@ def test_run_moon_core():
     upstream_input = {'A': 1}
     downstream_input = {'E': 0.5, 'F': -2}
 
-    result = run_moon_core(upstream_input=upstream_input, downstream_input=downstream_input, graph=graph, n_layers=5, statistic='wmean')
-    
+    result = run_moon_core(
+        upstream_input=upstream_input,
+        downstream_input=downstream_input,
+        graph=graph,
+        n_layers=5,
+        statistic='wmean'
+    )
+
     assert 'score' in result.columns, "Score column missing in result"
     assert 'source' in result.columns, "Source column missing in result"
     assert len(result.index) == 3, "Unexpected number of rows in result"
-    assert result.empty == False, "Empty result"
+    assert result.empty is False, "Empty result"
 
 
 def test_filter_incoherent_TF_target():
     moon_res = pd.DataFrame({'source': ['TF1'], 'score': [1]})
-    TF_reg_net = pd.DataFrame({'source': ['TF1', 'TF1'], 'target': ['Gene1', 'Gene2'], 'weight': [1, -1]})
+    TF_reg_net = pd.DataFrame({'source': ['TF1', 'TF1'],
+                               'target': ['Gene1', 'Gene2'],
+                               'weight': [1, -1]})
     meta_network = nx.DiGraph()
     meta_network.add_edge('TF1', 'Gene1')
     meta_network.add_edge('TF1', 'Gene2')
     RNA_input = {'Gene1': -1, 'Gene2': -1}
 
-    filtered_network = filter_incoherent_TF_target(moon_res, TF_reg_net, meta_network, RNA_input)
+    filtered_network = filter_incoherent_TF_target(
+        moon_res, TF_reg_net, meta_network, RNA_input
+    )
 
     assert len(filtered_network.edges) == 1, "Incoherent edge not removed"
 
@@ -176,13 +185,18 @@ def test_decompress_moon_result():
     meta_network_graph = nx.DiGraph()
     meta_network_graph.add_edge('A', 'B')
 
-    decompressed_result = decompress_moon_result(moon_res, node_signatures, duplicated_parents, meta_network_graph)
-    
-    assert 'source_original' in decompressed_result.columns, "Missing 'source_original' in result"
+    decompressed_result = decompress_moon_result(
+        moon_res, node_signatures, duplicated_parents, meta_network_graph
+    )
+
+    assert 'source_original' in decompressed_result.columns, \
+        "Missing 'source_original' in result"
 
 
 def test_reduce_solution_network():
-    moon_res = pd.DataFrame({'source_original': ['A', 'B', 'C'], 'source': ['Parent_of_C', 'Parent_of_C', 'C'], 'score': [1.4783, -1.54, 0.5]})
+    moon_res = pd.DataFrame({'source_original': ['A', 'B', 'C'],
+                             'source': ['Parent_of_C', 'Parent_of_C', 'C'],
+                             'score': [1.4783, -1.54, 0.5]})
     meta_network = nx.DiGraph()
     meta_network.add_edges_from([
         ('A', 'B', {'sign': -1}),
@@ -190,9 +204,12 @@ def test_reduce_solution_network():
     ])
     sig_input = {'A': 1}
 
-    res_network, att = reduce_solution_network(moon_res, meta_network, cutoff=1, sig_input=sig_input)
+    res_network, att = reduce_solution_network(
+        moon_res, meta_network, cutoff=1, sig_input=sig_input
+    )
 
-    assert len(nx.get_node_attributes(res_network, 'moon_score').keys()) != 0, "Missing moon_score attribute in network"
+    assert len(nx.get_node_attributes(res_network, 'moon_score')) != 0, \
+        "Missing moon_score attribute in network"
     assert 'score' in att.columns, "Missing score column in attributes"
     assert len(res_network.nodes) == 2, "Unexpected number of nodes"
 
@@ -203,7 +220,12 @@ def test_translate_res():
     att = pd.DataFrame({'nodes': ['Metab__HMDB179392', 'B']})
     mapping_dict = {'HMDB179392': 'A'}
 
-    translated_network, translated_att = translate_res(network, att, mapping_dict)
+    translated_network, translated_att = translate_res(
+        network, att, mapping_dict
+    )
 
-    assert 'Metab__A' in translated_network.nodes, "Translation failed in network"
-    assert 'Metab__A' in translated_att['nodes'].values, "Translation failed in attributes"
+    assert 'Metab__A' in translated_network.nodes, "Translation failed"
+    assert 'Metab__A' in translated_att['nodes'].values, \
+        "Translation failed in attributes"
+
+
