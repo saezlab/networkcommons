@@ -424,7 +424,7 @@ def filter_incoherent_TF_target(
         reg_meta['TF_score'] * reg_meta['RNA_input'] * reg_meta['weight']
     ) < 0
 
-    reg_meta = reg_meta[reg_meta["incoherent"] is True][['source', 'target']]
+    reg_meta = reg_meta[reg_meta["incoherent"]][['source', 'target']]
 
     tuple_list = list(reg_meta.itertuples(index=False, name=None))
 
@@ -494,12 +494,12 @@ def reduce_solution_network(
         moon_res, meta_network, cutoff, sig_input, rna_input=None
 ):
     """
-    Reduces the solution network based on certain criteria and returns the
+    Reduces the solution network based on MOON score cutoffs and returns the
     reduced network and attribute table.
 
     Args:
-        moon_res (pandas.DataFrame): The solution network.
-        meta_network (networkx.Graph): The original network.
+        moon_res (pandas.DataFrame): The solution MOON df.
+        meta_network (networkx.DiGraph): The original network.
         cutoff (float): The cutoff value for filtering edges.
         sig_input (dict): Dictionary containing the significant input scores.
         rna_input (dict, optional): Dictionary containing the RNA input scores.
@@ -510,18 +510,18 @@ def reduce_solution_network(
         att (pandas.DataFrame): The attribute table containing the relevant
         attributes of the nodes in the reduced network.
     """
-    recursive_decoupleRnival_res = moon_res.copy()
+    recursive_moon_res = moon_res.copy()
 
-    recursive_decoupleRnival_res = recursive_decoupleRnival_res[
-        abs(recursive_decoupleRnival_res['score']) > cutoff
+    recursive_moon_res = recursive_moon_res[
+        abs(recursive_moon_res['score']) > cutoff
     ]
-    consistency_vec = recursive_decoupleRnival_res.set_index(
+    consistency_vec = recursive_moon_res.set_index(
         'source_original')['score'].to_dict()
 
     res_network = meta_network.subgraph(
         [
             node for node in meta_network.nodes if node in
-            recursive_decoupleRnival_res.source_original.values
+            recursive_moon_res.source_original.values
         ]
     )
     res_network_edges = res_network.edges(data=True)
@@ -530,21 +530,21 @@ def reduce_solution_network(
         if data['sign'] != np.sign(consistency_vec[source] * consistency_vec[target]): # noqa E501
             res_network.remove_edge(source, target)
 
-    recursive_decoupleRnival_res.rename(columns={'source_original': 'nodes'},
+    recursive_moon_res.rename(columns={'source_original': 'nodes'},
                                         inplace=True)
-    recursive_decoupleRnival_res.drop(columns=['source'], inplace=True)
+    recursive_moon_res.drop(columns=['source'], inplace=True)
 
     sig_input_df = pd.DataFrame.from_dict(
         sig_input, orient='index', columns=['real_score']
     )
     merged_df = pd.merge(
-        sig_input_df, recursive_decoupleRnival_res, how='inner',
+        sig_input_df, recursive_moon_res, how='inner',
         left_index=True, right_on='nodes'
     )
     merged_df['filterout'] = np.sign(
         merged_df['real_score']) != np.sign(
             merged_df['score'])
-    merged_df = merged_df[merged_df['filterout'] is False]
+    merged_df = merged_df[~ merged_df['filterout']]
     upstream_nodes = merged_df.nodes.values
     upstream_nodes = {
         node: 1 for node in upstream_nodes if node in res_network.nodes
@@ -552,12 +552,12 @@ def reduce_solution_network(
 
     res_network = keep_controllable_neighbours(upstream_nodes, res_network)
 
-    moon_scores = recursive_decoupleRnival_res.set_index(
+    moon_scores = recursive_moon_res.set_index(
         'nodes')['score'].to_dict()
-    nx.set_node_attributes(res_network, moon_scores, 'moon_score')
+    nx.set_node_attributes(G=res_network, values=moon_scores, name='moon_score')
 
-    att = recursive_decoupleRnival_res[
-        recursive_decoupleRnival_res['nodes'].isin(res_network.nodes)
+    att = recursive_moon_res[
+        recursive_moon_res['nodes'].isin(res_network.nodes)
     ]
 
     if rna_input is not None:
@@ -602,6 +602,6 @@ def translate_res(network, att, mapping_dict):
 
     att['nodes'] = att['nodes'].map(renamed)
 
-    network = nx.relabel_nodes(network, mapping_dict, copy=True)
+    network = nx.relabel_nodes(network, renamed, copy=True)
 
     return network, att
