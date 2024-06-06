@@ -5,7 +5,6 @@ from networkcommons.methods import run_reachability_filter
 import pandas as pd
 import decoupler as dc
 import numpy as np
-import re
 
 
 def meta_network_cleanup(graph):
@@ -108,32 +107,24 @@ def is_expressed(x, expressed_genes_entrez):
     Returns:
         str or None: The gene name if it is expressed, otherwise None.
     """
-    
     if not re.search("Metab", x) and not re.search("orphanReac", x):
         if x in expressed_genes_entrez:
             return x
-        else:
-            if re.search("Gene[0-9]+__[A-Z0-9_]+$", x):
-                genes = re.sub("Gene[0-9]+__", "", x).split("_")
-                if sum(gene in expressed_genes_entrez for gene in genes) != len(genes):
-                    return None
-                else:
-                    return x
-            else:
-                if re.search("Gene[0-9]+__[^_][a-z]", x):
-                    print(x)
-                    return x
-                else:
-                    if re.search("Gene[0-9]+__[A-Z0-9_]+reverse", x):
-                        genes = re.sub("_reverse", "", re.sub("Gene[0-9]+__", "", x)).split("_")
-                        if sum(gene in expressed_genes_entrez for gene in genes) != len(genes):
-                            return None
-                        else:
-                            return x
-                    else:
-                        return None
-    else:
-        return x
+        if re.search("Gene[0-9]+__[A-Z0-9_]+$", x):
+            genes = re.sub("Gene[0-9]+__", "", x).split("_")
+            if sum(gene in expressed_genes_entrez for gene in genes) != len(genes): # noqa E501
+                return None
+            return x
+        if re.search("Gene[0-9]+__[^_][a-z]", x):
+            print(x)
+            return x
+        if re.search("Gene[0-9]+__[A-Z0-9_]+reverse", x):
+            genes = re.sub("_reverse", "", re.sub("Gene[0-9]+__", "", x)).split("_") # noqa E501
+            if sum(gene in expressed_genes_entrez for gene in genes) != len(genes): # noqa E501
+                return None
+            return x
+        return None
+    return x
 
 
 def filter_pkn_expressed_genes(expressed_genes_entrez, unfiltered_graph):
@@ -178,7 +169,6 @@ def filter_input_nodes_not_in_pkn(data, pkn):
         dict: A new dictionary containing only the input nodes that are
         present in the PKN.
     """
-    
     new_data = {key: value for key, value in data.items() if key in pkn.nodes}
 
     if len(data) != len(new_data):
@@ -247,29 +237,43 @@ def compress_same_children(uncompressed_graph, sig_input, metab_input):
 
     df_signature = pd.DataFrame(graph.edges, columns=['source', 'target'])
     sign_dict = nx.get_edge_attributes(graph, 'sign')
-    df_signature['sign'] = df_signature.apply(lambda row: sign_dict.get((row['source'], row['target'])), axis=1)
+    df_signature['sign'] = df_signature.apply(
+        lambda row: sign_dict.get((row['source'], row['target'])), axis=1
+    )
 
-    df_signature['target'] = df_signature['target'] + df_signature['sign'].astype(str)
+    df_signature['target'] = df_signature['target'] + df_signature['sign'].astype(str) # noqa E501
 
     node_signatures = {}
     for parent in parents:
-        node_signatures[parent] = 'parent_of_' + '_____'.join(df_signature[df_signature['source'] == parent]['target'])
+        node_signatures[parent] = 'parent_of_' + '_____'.join(
+            df_signature[df_signature['source'] == parent]['target']
+        )
 
-    dubs = [signature for signature, count in Counter(node_signatures.values()).items() if count > 1 and signature not in metab_input and signature not in sig_input]
-    duplicated_parents = {node: signature for node, signature in node_signatures.items() if signature in dubs}
+    dubs = [
+        signature for signature, count in Counter(
+            node_signatures.values()
+        ).items() if count > 1 and signature not in metab_input and
+        signature not in sig_input
+    ]
+    duplicated_parents = {
+        node: signature for node, signature in node_signatures.items()
+        if signature in dubs
+    }
 
     subnetwork = nx.relabel_nodes(graph, duplicated_parents, copy=False).copy()
 
     return subnetwork, node_signatures, duplicated_parents
 
 
-def run_moon_core(upstream_input=None,
-                  downstream_input=None,
-                  graph=None,
-                  n_layers=None,
-                  n_perm=1000,
-                  downstream_cutoff=0,
-                  statistic="ulm"):
+def run_moon_core(
+        upstream_input=None,
+        downstream_input=None,
+        graph=None,
+        n_layers=None,
+        n_perm=1000,
+        downstream_cutoff=0,
+        statistic="ulm"
+):
     """
     Runs the MOON algorithm to iteratively infer MOON scores from downstream
     nodes.
@@ -280,7 +284,7 @@ def run_moon_core(upstream_input=None,
         downstream_input (dict): Dictionary containing downstream input data.
         meta_network (networkx.DiGraph): Graph representing the regulatory
         network.
-        n_layers (int): Number of layers to run the MOON algorithm. 
+        n_layers (int): Number of layers to run the MOON algorithm.
         n_perm (int): Number of permutations for statistical testing. Defaults
         to 1000.
         downstream_cutoff (float): Cutoff value for downstream input scores.
@@ -292,32 +296,24 @@ def run_moon_core(upstream_input=None,
         pandas.DataFrame: DataFrame containing the decoupled regulatory
         network.
     """
-
     regulons = nx.to_pandas_edgelist(graph)
     regulons.rename(columns={"sign": "mor"}, inplace=True)
     regulons = regulons[~regulons["source"].isin(downstream_input.keys())]
 
     decoupler_mat = pd.DataFrame(
-        list(downstream_input.values()),
-        index=downstream_input.keys()).T
+        list(downstream_input.values()), index=downstream_input.keys()
+    ).T
 
     if "wmean" in statistic:
         estimate, norm, corr, pvals = dc.run_wmean(
-            mat=decoupler_mat,
-            net=regulons,
-            times=n_perm,
-            weight=None,
-            min_n=1
+            mat=decoupler_mat, net=regulons, times=n_perm, weight=None, min_n=1
         )
         if statistic == "norm_wmean":
             estimate = norm
     elif statistic == "ulm":
         print(decoupler_mat)
         estimate, pvals = dc.run_ulm(
-            mat=decoupler_mat,
-            net=regulons,
-            weight=None,
-            min_n=1
+            mat=decoupler_mat, net=regulons, weight=None, min_n=1
         )
 
     n_plus_one = estimate.T
@@ -327,10 +323,10 @@ def run_moon_core(upstream_input=None,
     res_list = [n_plus_one]
     i = 1
     while len(regulons) > 1 and \
-            regulons["target"].isin(res_list[i - 1].index.values).sum() > 1 and \
-            i <= n_layers:
+            regulons["target"].isin(res_list[i - 1].index.values).sum() > 1 \
+            and i <= n_layers:
 
-        regulons = regulons[~regulons["source"].isin(res_list[i - 1].index.values)]
+        regulons = regulons[~regulons["source"].isin(res_list[i - 1].index.values)] # noqa E501
         previous_n_plus_one = res_list[i - 1].drop(columns="level").T
 
         if "wmean" in statistic:
@@ -360,34 +356,49 @@ def run_moon_core(upstream_input=None,
 
     recursive_decoupleRnival_res = pd.concat(res_list)
 
-    downstream_names = pd.DataFrame.from_dict(downstream_input, orient="index", columns=["score"])
-    downstream_names = downstream_names[abs(downstream_names["score"]) > downstream_cutoff]
+    downstream_names = pd.DataFrame.from_dict(
+        downstream_input, orient="index", columns=["score"]
+    )
+    downstream_names = downstream_names[
+        abs(downstream_names["score"]) > downstream_cutoff
+    ]
     downstream_names["level"] = 0
 
-    recursive_decoupleRnival_res = pd.concat([recursive_decoupleRnival_res, downstream_names])
+    recursive_decoupleRnival_res = pd.concat(
+        [recursive_decoupleRnival_res, downstream_names]
+    )
 
     if upstream_input is not None:
-        upstream_input_df = pd.DataFrame.from_dict(upstream_input, orient="index", columns=["real_score"])
-        upstream_input_df = upstream_input_df.join(recursive_decoupleRnival_res, how='right')
-        upstream_input_df = upstream_input_df[(np.sign(upstream_input_df["real_score"]) == np.sign(upstream_input_df["score"])) | (np.isnan(upstream_input_df["real_score"]))]
-        recursive_decoupleRnival_res = upstream_input_df.drop(columns="real_score")
+        upstream_input_df = pd.DataFrame.from_dict(
+            upstream_input, orient="index", columns=["real_score"]
+        )
+        upstream_input_df = upstream_input_df.join(
+            recursive_decoupleRnival_res, how='right'
+        )
+        upstream_input_df = upstream_input_df[
+            (np.sign(upstream_input_df["real_score"]) ==
+             np.sign(upstream_input_df["score"])) |
+            (np.isnan(upstream_input_df["real_score"]))
+        ]
+        recursive_decoupleRnival_res = upstream_input_df.drop(
+            columns="real_score"
+        )
 
     recursive_decoupleRnival_res.reset_index(inplace=True)
-    recursive_decoupleRnival_res.rename(columns={"index": "source"}, inplace=True)
+    recursive_decoupleRnival_res.rename(columns={"index": "source"}, inplace=True) # noqa E501
 
     return recursive_decoupleRnival_res
 
 
-def filter_incoherent_TF_target(moon_res,
-                               TF_reg_net,
-                               meta_network,
-                               RNA_input):
+def filter_incoherent_TF_target(
+        moon_res, TF_reg_net, meta_network, RNA_input
+):
     """
     Filters incoherent TF-target interactions from the meta_network based on
     the given inputs.
 
     Parameters:
-    decoupleRnival_res (pd.DataFrame): DataFrame
+    moon_res (pd.DataFrame): DataFrame
     TF_reg_net (pd.DataFrame): DataFrame containing TF regulatory network.
     meta_network (networkx.Graph): Graph representing the meta network.
     RNA_input (dict): Dictionary containing RNA input values.
@@ -398,14 +409,22 @@ def filter_incoherent_TF_target(moon_res,
     """
     filtered_meta_network = meta_network.copy()
 
-    RNA_df = pd.DataFrame.from_dict(RNA_input, orient='index', columns=['RNA_input'])
-    reg_meta = pd.merge(moon_res, TF_reg_net, left_on='source', right_on='source', how='inner')
+    RNA_df = pd.DataFrame.from_dict(
+        RNA_input, orient='index', columns=['RNA_input']
+    )
+    reg_meta = pd.merge(
+        moon_res, TF_reg_net, left_on='source', right_on='source', how='inner'
+    )
     reg_meta.rename(columns={'score': 'TF_score'}, inplace=True)
 
-    reg_meta = pd.merge(reg_meta, RNA_df, left_on='target', right_index=True, how='inner')
-    reg_meta['incoherent'] = np.sign(reg_meta['TF_score'] * reg_meta['RNA_input'] * reg_meta['weight']) < 0
+    reg_meta = pd.merge(
+        reg_meta, RNA_df, left_on='target', right_index=True, how='inner'
+    )
+    reg_meta['incoherent'] = np.sign(
+        reg_meta['TF_score'] * reg_meta['RNA_input'] * reg_meta['weight']
+    ) < 0
 
-    reg_meta = reg_meta[reg_meta["incoherent"]==True][['source', 'target']]
+    reg_meta = reg_meta[reg_meta["incoherent"] is True][['source', 'target']]
 
     tuple_list = list(reg_meta.itertuples(index=False, name=None))
 
@@ -414,11 +433,13 @@ def filter_incoherent_TF_target(moon_res,
     return filtered_meta_network
 
 
-def decompress_moon_result(moon_res, node_signatures, duplicated_parents, meta_network_graph):
+def decompress_moon_result(
+        moon_res, node_signatures, duplicated_parents, meta_network_graph
+):
     """
     Decompresses the moon_res dataframe by mapping the compressed nodes to
-    their corresponding original source using the provided meta_network_compressed_list and
-    the filtered meta_network.
+    their corresponding original source using the provided
+    meta_network_compressed_list and the filtered meta_network.
 
     Args:
         moon_res (pandas.DataFrame): The compressed moon_res dataframe.
@@ -433,17 +454,27 @@ def decompress_moon_result(moon_res, node_signatures, duplicated_parents, meta_n
     compressed_meta_network = nx.to_pandas_edgelist(meta_network_graph)
 
     # Create a dataframe for duplicated parents
-    duplicated_parents_df = pd.DataFrame.from_dict(duplicated_parents, orient='index', columns=['source'])
+    duplicated_parents_df = pd.DataFrame.from_dict(
+        duplicated_parents, orient='index', columns=['source']
+    )
     duplicated_parents_df['source_original'] = duplicated_parents_df.index
 
     # Create a dataframe for addons
-    addons = pd.DataFrame(list(node_signatures.keys() - duplicated_parents_df['source_original']))
+    addons = pd.DataFrame(
+        list(node_signatures.keys() - duplicated_parents_df['source_original'])
+    )
     addons.columns = ['source']
     addons['source_original'] = addons['source']
 
     # Get final leaves
-    final_leaves = compressed_meta_network[~compressed_meta_network['target'].isin(compressed_meta_network['source'])]['target']
-    final_leaves = pd.DataFrame({'source': final_leaves, 'source_original': final_leaves})
+    final_leaves = compressed_meta_network[
+        ~compressed_meta_network['target'].isin(
+            compressed_meta_network['source']
+        )
+    ]['target']
+    final_leaves = pd.DataFrame(
+        {'source': final_leaves, 'source_original': final_leaves}
+    )
 
     # Combine addons and final leaves
     addons = pd.concat([addons, final_leaves])
@@ -459,53 +490,80 @@ def decompress_moon_result(moon_res, node_signatures, duplicated_parents, meta_n
     return moon_res
 
 
-def reduce_solution_network(moon_res, meta_network, cutoff, sig_input, rna_input=None):
+def reduce_solution_network(
+        moon_res, meta_network, cutoff, sig_input, rna_input=None
+):
     """
-    Reduces the solution network based on certain criteria and returns the reduced network and attribute table.
+    Reduces the solution network based on certain criteria and returns the
+    reduced network and attribute table.
 
     Args:
         moon_res (pandas.DataFrame): The solution network.
         meta_network (networkx.Graph): The original network.
         cutoff (float): The cutoff value for filtering edges.
         sig_input (dict): Dictionary containing the significant input scores.
-        rna_input (dict, optional): Dictionary containing the RNA input scores. Defaults to None.
+        rna_input (dict, optional): Dictionary containing the RNA input scores.
+        Defaults to None.
 
     Returns:
         res_network (networkx.DiGraph): The reduced network.
-        att (pandas.DataFrame): The attribute table containing the relevant attributes of the nodes in the reduced network.
+        att (pandas.DataFrame): The attribute table containing the relevant
+        attributes of the nodes in the reduced network.
     """
-
     recursive_decoupleRnival_res = moon_res.copy()
 
-    recursive_decoupleRnival_res = recursive_decoupleRnival_res[abs(recursive_decoupleRnival_res['score']) > cutoff]
-    consistency_vec = recursive_decoupleRnival_res.set_index('source_original')['score'].to_dict()
+    recursive_decoupleRnival_res = recursive_decoupleRnival_res[
+        abs(recursive_decoupleRnival_res['score']) > cutoff
+    ]
+    consistency_vec = recursive_decoupleRnival_res.set_index(
+        'source_original')['score'].to_dict()
 
-    res_network = meta_network.subgraph([node for node in meta_network.nodes if node in recursive_decoupleRnival_res.source_original.values])
+    res_network = meta_network.subgraph(
+        [
+            node for node in meta_network.nodes if node in
+            recursive_decoupleRnival_res.source_original.values
+        ]
+    )
     res_network_edges = res_network.edges(data=True)
     res_network = nx.DiGraph(res_network)
     for source, target, data in res_network_edges:
-        if data['sign'] != np.sign(consistency_vec[source] * consistency_vec[target]):
+        if data['sign'] != np.sign(consistency_vec[source] * consistency_vec[target]): # noqa E501
             res_network.remove_edge(source, target)
 
-    recursive_decoupleRnival_res.rename(columns={'source_original': 'nodes'}, inplace=True)
+    recursive_decoupleRnival_res.rename(columns={'source_original': 'nodes'},
+                                        inplace=True)
     recursive_decoupleRnival_res.drop(columns=['source'], inplace=True)
 
-    sig_input_df = pd.DataFrame.from_dict(sig_input, orient='index', columns=['real_score'])
-    merged_df = pd.merge(sig_input_df, recursive_decoupleRnival_res, how='inner', left_index=True, right_on='nodes')
-    merged_df['filterout'] = np.sign(merged_df['real_score']) != np.sign(merged_df['score'])
-    merged_df = merged_df[merged_df['filterout'] == False]
+    sig_input_df = pd.DataFrame.from_dict(
+        sig_input, orient='index', columns=['real_score']
+    )
+    merged_df = pd.merge(
+        sig_input_df, recursive_decoupleRnival_res, how='inner',
+        left_index=True, right_on='nodes'
+    )
+    merged_df['filterout'] = np.sign(
+        merged_df['real_score']) != np.sign(
+            merged_df['score'])
+    merged_df = merged_df[merged_df['filterout'] is False]
     upstream_nodes = merged_df.nodes.values
-    upstream_nodes = {node: 1 for node in upstream_nodes if node in res_network.nodes}
+    upstream_nodes = {
+        node: 1 for node in upstream_nodes if node in res_network.nodes
+    }
 
     res_network = keep_controllable_neighbours(upstream_nodes, res_network)
 
-    moon_scores = recursive_decoupleRnival_res.set_index('nodes')['score'].to_dict()
+    moon_scores = recursive_decoupleRnival_res.set_index(
+        'nodes')['score'].to_dict()
     nx.set_node_attributes(res_network, moon_scores, 'moon_score')
-    
-    att = recursive_decoupleRnival_res[recursive_decoupleRnival_res['nodes'].isin(res_network.nodes)]
+
+    att = recursive_decoupleRnival_res[
+        recursive_decoupleRnival_res['nodes'].isin(res_network.nodes)
+    ]
 
     if rna_input is not None:
-        rna_input_df = pd.DataFrame.from_dict(rna_input, orient='index', columns=['real_score']).reset_index().rename(columns={'index': 'nodes'})
+        rna_input_df = pd.DataFrame.from_dict(
+            rna_input, orient='index', columns=['real_score']
+        ).reset_index().rename(columns={'index': 'nodes'})
         att = pd.merge(att, rna_input_df, how='left', on='nodes')
     else:
         att['RNA_input'] = np.nan
@@ -515,21 +573,22 @@ def reduce_solution_network(moon_res, meta_network, cutoff, sig_input, rna_input
 
 def translate_res(network, att, mapping_dict):
     """
-    Translates the network and attribute table based on the given mapping dataframe.
+    Translates the network and attribute table based on the given mapping
+    dataframe.
 
     Args:
         network (networkx.DiGraph): The network to be translated.
         att (pandas.DataFrame): The attribute table to be translated.
-        mapping_df (pandas.DataFrame): The mapping dataframe containing the translation information.
+        mapping_df (pandas.DataFrame): The mapping dataframe containing the
+        translation information.
 
     Returns:
         network (networkx.DiGraph): The translated network.
         att (pandas.DataFrame): The translated attribute table.
     """
-
     to_rename = att.nodes.values
     renamed = {}
-    
+
     for name in to_rename:
         name_changed = re.sub("Metab__", "", name)
         name_changed = re.sub("^Gene", "Enzyme", name_changed)
@@ -537,12 +596,12 @@ def translate_res(network, att, mapping_dict):
         name_changed = re.sub("_[a-z]$", "", name_changed)
         if name_changed in mapping_dict:
             name_changed = mapping_dict[name_changed]
-            name_changed = "Metab__" + name_changed + suffix.group() if suffix else "Metab__" + name_changed
+            name_changed = "Metab__" + name_changed + suffix.group() \
+                if suffix else "Metab__" + name_changed
         renamed[name] = name_changed
-    
+
     att['nodes'] = att['nodes'].map(renamed)
 
     network = nx.relabel_nodes(network, mapping_dict, copy=True)
 
     return network, att
-    
