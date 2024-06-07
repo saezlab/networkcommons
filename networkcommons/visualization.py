@@ -24,11 +24,7 @@ def visualize_graph_simple(network,
     A.graph_attr['ratio'] = '1.2'
 
     sources = list(source_dict.keys())
-    target_dict_flat = {}
-    for key, value in target_dict.items():
-        for sub_key, sub_value in value.items():
-            target_dict_flat[sub_key] = sub_value
-    targets = set(target_dict_flat.keys())
+    targets = set(target_dict.keys())
 
     for node in A.nodes():
         n = node.get_name()
