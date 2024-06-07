@@ -1,5 +1,4 @@
 import networkx as nx
-from networkcommons.utils import get_subnetwork
 import numpy as np
 import corneto as cn
 from corneto.contrib.networkx import (
@@ -7,6 +6,9 @@ from corneto.contrib.networkx import (
     corneto_graph_to_networkx
 )
 from corneto.methods.carnival import get_selected_edges
+
+from networkcommons.utils import get_subnetwork
+from networkcommons._session import session as _session
 
 
 def run_shortest_paths(network, source_dict, target_dict, verbose=False):
@@ -41,12 +43,8 @@ def run_shortest_paths(network, source_dict, target_dict, verbose=False):
                     target=target_node,
                     weight='weight'
                 )])
-            except nx.NetworkXNoPath as e:
-                if verbose:
-                    print(f"Warning: {e}")
-            except nx.NodeNotFound as e:
-                if verbose:
-                    print(f"Warning: {e}")
+            except (nx.NetworkXNoPath, nx.NodeNotFound):
+                _session.log_traceback(console = verbose)
 
     subnetwork = get_subnetwork(network, shortest_paths_res)
 
@@ -148,12 +146,8 @@ def run_all_paths(network,
                                                    source,
                                                    targets,
                                                    depth_cutoff))
-        except nx.NetworkXNoPath as e:
-            if verbose:
-                print(f"Warning: {e}")
-        except nx.NodeNotFound as e:
-            if verbose:
-                print(f"Warning: {e}")
+        except (nx.NetworkXNoPath, nx.NodeNotFound):
+            _session.log_traceback(console = verbose)
 
     subnetwork = get_subnetwork(network, all_paths_res)
 

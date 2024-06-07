@@ -1,10 +1,12 @@
 from typing import Counter
 import networkx as nx
 import re
-from networkcommons.methods import run_reachability_filter
 import pandas as pd
 import decoupler as dc
 import numpy as np
+
+from networkcommons.methods import run_reachability_filter
+from networkcommons._session import _log
 
 
 def meta_network_cleanup(graph):
@@ -55,14 +57,14 @@ def prepare_metab_inputs(metab_input, compartment_codes):
 
     ignored = [code for code in compartment_codes if code not in comps]
     if ignored:
-        print("The following compartment codes are not found in the PKN and "
+        _log("The following compartment codes are not found in the PKN and "
               "will be ignored:")
-        print(ignored)
+        _log(ignored)
 
     compartment_codes = [code for code in compartment_codes if code in comps]
 
     if not compartment_codes:
-        print("There are no valid compartments left. No compartment codes "
+        _log("There are no valid compartments left. No compartment codes "
               "will be added.")
         metab_input = {
             f"Metab__{name}": value for name, value in metab_input.items()
@@ -71,7 +73,7 @@ def prepare_metab_inputs(metab_input, compartment_codes):
         return metab_input
 
     else:
-        print("Adding compartment codes.")
+        _log("Adding compartment codes.")
 
         metab_input_list = []
 
@@ -116,7 +118,7 @@ def is_expressed(x, expressed_genes_entrez):
                 return None
             return x
         if re.search("Gene[0-9]+__[^_][a-z]", x):
-            print(x)
+            _log(x)
             return x
         if re.search("Gene[0-9]+__[A-Z0-9_]+reverse", x):
             genes = re.sub("_reverse", "", re.sub("Gene[0-9]+__", "", x)).split("_") # noqa E501
@@ -139,7 +141,7 @@ def filter_pkn_expressed_genes(expressed_genes_entrez, unfiltered_graph):
     Returns:
         nx.DiGraph: Filtered PKN graph with unexpressed nodes removed.
     """
-    print("MOON: removing unexpressed nodes from PKN...")
+    _log("MOON: removing unexpressed nodes from PKN...")
 
     graph = unfiltered_graph.copy()
 
@@ -151,7 +153,7 @@ def filter_pkn_expressed_genes(expressed_genes_entrez, unfiltered_graph):
 
     graph.remove_nodes_from(nodes_to_remove)
 
-    print(f"MOON: {len(nodes_to_remove)} nodes removed")
+    _log(f"MOON: {len(nodes_to_remove)} nodes removed")
 
     return graph
 
@@ -176,7 +178,7 @@ def filter_input_nodes_not_in_pkn(data, pkn):
             node for node in data.keys() if node not in new_data.keys()
         ]
 
-        print(f"COSMOS: {len(removed_nodes)} input/measured nodes are not in"
+        _log(f"COSMOS: {len(removed_nodes)} input/measured nodes are not in"
               f"PKN anymore: {removed_nodes}")
 
     return new_data
@@ -311,7 +313,7 @@ def run_moon_core(
         if statistic == "norm_wmean":
             estimate = norm
     elif statistic == "ulm":
-        print(decoupler_mat)
+        _log(decoupler_mat)
         estimate, pvals = dc.run_ulm(
             mat=decoupler_mat, net=regulons, weight=None, min_n=1
         )
@@ -352,7 +354,7 @@ def run_moon_core(
         n_plus_one["level"] = i + 1
         res_list.append(n_plus_one)
         i += 1
-        print(f"Iteration count: {i-1}")
+        _log(f"Iteration count: {i-1}")
 
     recursive_decoupleRnival_res = pd.concat(res_list)
 
