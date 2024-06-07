@@ -13,7 +13,8 @@ dependencies:
       - cvxpy==1.4.3
       - decoupler==1.6.0
       - flake8==7.0.0
-      - gurobipy==11.0.1      
+      - gurobipy==11.0.1
+      - liana==1.1.0   
       - networkx==3.3
       - omnipath==1.0.8
       - pathos==0.3.2
