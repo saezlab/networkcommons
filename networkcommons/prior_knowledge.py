@@ -1,6 +1,6 @@
 import omnipath as op
 import numpy as np
-import liana
+# import liana
 
 
 def get_omnipath(genesymbols=True,
