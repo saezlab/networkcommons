@@ -16,11 +16,62 @@
 from __future__ import annotations
 
 import os
+import urllib.parse
 
 import pandas as pd
 
+from . import _common
+from networkcommons import _conf
+
+__all__ = ['decryptm_datasets', 'decryptm_handler']
+
+
+def decryptm_datasets(update: bool = False) -> pd.DataFrame:
+    """
+    Table of all DecryptM datasets.
+
+    Args:
+        update:
+            Force download and update cache.
+
+    Returns:
+        Data frame of all DecryptM datasets, with columns "experiment",
+        "data_type" and "fname".
+    """
+
+    path = os.path.join(_conf.get('pickle_dir'), 'decryptm_datasets.pickle')
+
+    if update or not os.path.exists(path):
+
+        baseurl = urllib.parse.urljoin(_common._baseurl(), 'decryptm')
+
+        datasets = pd.DataFrame(
+            [
+                (
+                    experiment,
+                    data_type,
+                    fname,
+                )
+                for experiment in _common._ls(baseurl)
+                for data_type in _common._ls(f'{baseurl}/{experiment}')
+                for fname in _common._ls(f'{baseurl}/{experiment}/{data_type}')
+                if fname.startswith('curve')
+            ],
+            columns = ['experiment', 'data_type', 'fname']
+        )
+        datasets.to_pickle(path)
+
+    else:
+
+        datasets = pd.read_pickle(path)
+
+    return datasets
+
 
 def decryptm_handler(experiment, data_type='Phosphoproteome'):
+    """
+
+    """
     save_path = f'./data/decryptm/{experiment}/{data_type}/'
 
     curve_files = list_directories(f'decryptm/{experiment}/{data_type}')[1]
