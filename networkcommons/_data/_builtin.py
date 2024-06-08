@@ -13,6 +13,7 @@
 # https://www.gnu.org/licenses/gpl-3.0.txt
 #
 
-from ._builtin import _module_data
-from . import _omics as omics
-from . import _network as network
+import functools as ft
+from pypath_common import data as _data
+
+_module_data = ft.partial(_data.load, module = 'networkcommons')
