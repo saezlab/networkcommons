@@ -13,24 +13,31 @@
 # https://www.gnu.org/licenses/gpl-3.0.txt
 #
 
-import requests
-import owncloud as oc
+from __future__ import annotations
+
+from typing import Any, IO
 import zipfile
 import os
+import re
+import glob
+import hashlib
+import urllib.parse
+
+import shutil
+import requests
+import bs4
+import owncloud as oc
 import pandas as pd
 from pydeseq2.dds import DeseqDataSet
 from pydeseq2.default_inference import DefaultInference
 from pydeseq2.ds import DeseqStats
 from ftplib import FTP
-import re
-import glob
-import shutil
-import requests
-import bs4
 
 from ._builtin import _module_data
 from networkcommons import _conf
 from networkcommons._session import _log
+
+__all__ = ['datasets']
 
 
 def _datasets() -> dict[str, dict]:
@@ -49,7 +56,7 @@ def datasets() -> dict[str, str]:
     return {k: v['description'] for k, v in _datasets().items()}
 
 
-def _download(url: str, path: str) -> str:
+def _download(url: str, path: str) -> None:
 
     timeouts = tuple(_conf.get(f'http_{k}_timout') for k in ('read', 'connect'))
 
@@ -66,6 +73,76 @@ def _download(url: str, path: str) -> str:
                 f.write(chunk)
 
     _log(f'Finished downloading `{url}` to `{path}`.')
+
+
+def _maybe_download(url: str) -> str:
+
+    cachedir = _conf.get('cachedir')
+    md5 = hashlib.md5(url.encode()).hexdigest()
+    fname = os.path.basename(urllib.parse.urlparse(url).path)
+    path = os.path.join(cachedir, f'{md5}-{fname}')
+    _log(f'Looking up in cache: `{url}` -> `{path}`.')
+
+    if not os.path.exists(path):
+
+        _log(f'Not found in cache, initiating download: `{url}`.')
+        _download(url, path)
+
+    return path
+
+def _open(
+        url: str,
+        ftype: str | None = None,
+        df: bool = False,
+        **kwargs
+    ) -> IO | pd.DataFrame:
+    """
+    Args:
+        url:
+            URL of the file to open.
+        ftype:
+            File type (extension).
+        df:
+            If True, read into a pandas DataFrame.
+        **kwargs:
+            Additional keyword arguments to pass to the pandas reader.
+    """
+
+    PANDAS_READERS = {
+        'tsv': pd.read_csv,
+        'csv': pd.read_csv,
+        'txt': pd.read_csv,
+        'xls': pd.read_excel,
+        'xlsx': pd.read_excel,
+    }
+
+    path = _maybe_download(url)
+    ftype = (ftype or os.path.splitext(path)[1]).lower()
+
+    if not ftype:
+
+        raise RuntimeError(f'Cannot determine file type for {url}.')
+
+
+    if df and ftype in PANDAS_READERS:
+
+        return PANDAS_READERS[ftype](path, **kwargs)
+
+    elif ftype in {'tsv', 'csv', 'txt'}:
+
+        with open(path, 'r') as fp:
+
+            yield fp
+
+    elif ftype == 'zip':
+
+        with zipfile.ZipFile(path, 'r') as fp:
+
+            yield fp
+
+    else:
+
+        raise NotImplementedError(f'Can not open file type `{ftype}`.')
 
 
 def download_dataset(dataset, **kwargs):
