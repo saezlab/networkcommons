@@ -23,7 +23,7 @@ import pandas as pd
 from . import _common
 from networkcommons import _conf
 
-__all__ = ['decryptm_datasets', 'decryptm_handler']
+__all__ = ['decryptm_datasets', 'decryptm_load', 'decryptm_experiment']
 
 
 def decryptm_datasets(update: bool = False) -> pd.DataFrame:
@@ -68,31 +68,43 @@ def decryptm_datasets(update: bool = False) -> pd.DataFrame:
     return datasets
 
 
-def decryptm_handler(experiment, data_type='Phosphoproteome'):
+def decryptm_load(experiment: str, data_type: str, fname: str) -> pd.DataFrame:
+
+    return _common._open(_common._dataset('decryptm')['path'], **locals())
+
+
+def decryptm_experiment(
+        experiment: str,
+        data_type: str = 'Phosphoproteome',
+    ) -> list[pd.DataFrame]:
+    """
+    Tables from one DecrptM experiment of one omics modality.
+
+    Args:
+        experiment:
+            Name of the experiment. For a complete list see
+            `decryptm_datasets()`.
+        data_type:
+            Omics modality of the data. For the available modalities in each
+            experiment, see `decryptm_datasets()`.
+
+    Returns:
+        All tables in the seleted dataset as a list of pandas data frames.
     """
 
-    """
-    save_path = f'./data/decryptm/{experiment}/{data_type}/'
+    datasets = {
+        k: g.fname.tolist()
+        for k, g in decryptm_datasets().groupby(['experiment', 'data_type'])
+    }
+    key = (experiment, data_type)
 
-    curve_files = list_directories(f'decryptm/{experiment}/{data_type}')[1]
+    if key not in datasets:
 
-    curve_files = [
-        os.path.basename(file) for file in curve_files if 'curves' in file
-    ]
-
-    for curve_file in curve_files:
-        if not os.path.exists(save_path + curve_file):
-            download_url(
-                f'https://oc.embl.de/index.php/s/6KsHfeoqJOKLF6B/download?path=%2Fdecryptm%2F{experiment}%2F{data_type}&files={curve_file}',  # noqa: E501
-                save_path + curve_file
-            )  # noqa: E501
-
-    file_list = {}
-    for curve_file in curve_files:
-        df = pd.read_csv(
-            f'./data/decryptm/{experiment}/{data_type}/{curve_file}',
-            sep='\t'
+        raise ValueError(
+            f'No such dataset in DecryptM: `{experiment}/{data_type}`.'
         )
-        file_list[curve_file] = df
 
-    return file_list
+    return [
+        decryptm_load(experiment, data_type, fname)
+        for fname in datasets[key]
+    ]

@@ -4,7 +4,7 @@ omics:
     decryptm:
       name: DecryptM
       description: Drug perturbation proteomics and phosphoproteomics data
-      path: decryptm/{experiment}/{data_type}
+      path: decryptm/{experiment}/{data_type}/{fname}
     panacea:
       name: Panacea
       description: Pancancer Analysis of Chemical Entity Activity RNA-Seq data
