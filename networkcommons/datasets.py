@@ -13,7 +13,6 @@ import shutil
 import requests
 import bs4
 
-
 def get_available_datasets():
     """
     Retrieves a list of available datasets from a specified public link.
@@ -204,16 +203,6 @@ def list_directories(path):
     response = occontents.list(path)
     file_paths = [item.path.strip('/') for item in response]
     return response, file_paths
-
-
-# def define_downloadclient():
-#     GOODBOY = pooch.create(
-#     path=pooch.os_cache("networkcommons"),
-#     base_url="https://oc.embl.de/index.php/s/6KsHfeoqJOKLF6B",
-#     registry={
-#         "stations.zip": None,
-#     },
-# )
 
 
 def _ls(path: str) -> list[str]:
