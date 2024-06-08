@@ -60,6 +60,11 @@ def _baseurl() -> str:
     return _datasets()['baseurl']
 
 
+def _dataset(key: str) -> dict | None:
+
+    return _datasets()['datasets'].get(key.lower(), None)
+
+
 def _download(url: str, path: str) -> None:
 
     timeouts = tuple(_conf.get(f'http_{k}_timout') for k in ('read', 'connect'))
@@ -79,8 +84,9 @@ def _download(url: str, path: str) -> None:
     _log(f'Finished downloading `{url}` to `{path}`.')
 
 
-def _maybe_download(url: str) -> str:
+def _maybe_download(url: str, **kwargs) -> str:
 
+    url = url.format(**kwargs)
     cachedir = _conf.get('cachedir')
     md5 = hashlib.md5(url.encode()).hexdigest()
     fname = os.path.basename(urllib.parse.urlparse(url).path)
@@ -94,10 +100,11 @@ def _maybe_download(url: str) -> str:
 
     return path
 
+
 def _open(
         url: str,
         ftype: str | None = None,
-        df: bool = False,
+        df: bool | dict = False,
         **kwargs
     ) -> IO | pd.DataFrame:
     """
@@ -107,9 +114,11 @@ def _open(
         ftype:
             File type (extension).
         df:
-            If True, read into a pandas DataFrame.
+            Read into a pandas DataFrame. If a dict, will be passed as
+            arguments to the reader.
         **kwargs:
-            Additional keyword arguments to pass to the pandas reader.
+            Values to insert into the URL template. Will be passed to
+            `str.format`.
     """
 
     PANDAS_READERS = {
@@ -120,7 +129,7 @@ def _open(
         'xlsx': pd.read_excel,
     }
 
-    path = _maybe_download(url)
+    path = _maybe_download(url, **kwargs)
     ftype = (ftype or os.path.splitext(path)[1]).lower()
 
     if not ftype:
@@ -128,9 +137,10 @@ def _open(
         raise RuntimeError(f'Cannot determine file type for {url}.')
 
 
-    if df and ftype in PANDAS_READERS:
+    if df is not False and ftype in PANDAS_READERS:
 
-        return PANDAS_READERS[ftype](path, **kwargs)
+        df = df if isinstance(df, dict) else {}
+        return PANDAS_READERS[ftype](path, **df)
 
     elif ftype in {'tsv', 'csv', 'txt'}:
 
