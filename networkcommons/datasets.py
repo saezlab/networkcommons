@@ -10,6 +10,8 @@ from ftplib import FTP
 import re
 import glob
 import shutil
+import requests
+import bs4
 
 
 def get_available_datasets():
@@ -212,3 +214,27 @@ def list_directories(path):
 #         "stations.zip": None,
 #     },
 # )
+
+
+def _ls(path: str) -> list[str]:
+    """
+    List files in a remote directory.
+
+    Args:
+        path:
+            HTTP URL of a directory with standard nginx directory listing.
+    """
+
+    resp = requests.get(path)
+
+    if resp.status_code == 200:
+        soup = bs4.BeautifulSoup(resp.content, 'html.parser')
+        return [
+            href for a in soup.find_all('a')
+            if (href := a['href'].strip('/')) != '..'
+        ]
+
+    else:
+        raise FileNotFoundError(
+            f'URL {path} returned status code {resp.status_code}'
+        )
