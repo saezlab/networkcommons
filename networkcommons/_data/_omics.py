@@ -28,17 +28,23 @@ import shutil
 import requests
 import bs4
 
-def get_available_datasets():
+from ._builtin import _module_data
+
+
+def _datasets() -> dict[str, dict]:
+
+    return _module_data('datasets').get('omics', {}).get('datasets', {})
+
+
+def datasets() -> dict[str, str]:
     """
-    Retrieves a list of available datasets from a specified public link.
+    Built-in omics datasets.
 
     Returns:
-        list: A list of file paths for the available datasets.
+        A dict with dataset labels as keys and descriptions as values.
     """
 
-    owncloud_obj, folders = list_directories('/')
-
-    return folders
+    return {k: v['description'] for k, v in _datasets().items()}
 
 
 def download_dataset(dataset, **kwargs):
