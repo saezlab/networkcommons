@@ -29,6 +29,8 @@ import requests
 import bs4
 
 from ._builtin import _module_data
+from networkcommons import _conf
+from networkcommons._session import _log
 
 
 def _datasets() -> dict[str, dict]:
@@ -45,6 +47,25 @@ def datasets() -> dict[str, str]:
     """
 
     return {k: v['description'] for k, v in _datasets().items()}
+
+
+def _download(url: str, path: str) -> str:
+
+    timeouts = tuple(_conf.get(f'http_{k}_timout') for k in ('read', 'connect'))
+
+    _log(f'Downloading `{url}` to `{path}`.')
+
+    with requests.get(url, timeout = timeouts, stream = True) as r:
+
+        r.raise_for_status()
+
+        with open(path, 'wb') as f:
+
+            for chunk in r.iter_content(chunk_size = 8192):
+
+                f.write(chunk)
+
+    _log(f'Finished downloading `{url}` to `{path}`.')
 
 
 def download_dataset(dataset, **kwargs):

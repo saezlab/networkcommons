@@ -1,1 +1,2 @@
 ncommons_conf_example: something
+http_connect_timeout: 5
