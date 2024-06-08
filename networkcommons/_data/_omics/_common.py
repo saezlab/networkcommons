@@ -29,7 +29,7 @@ import bs4
 import owncloud as oc
 import pandas as pd
 
-from ._builtin import _module_data
+from .._builtin import _module_data
 from networkcommons import _conf
 from networkcommons._session import _log
 
@@ -38,7 +38,7 @@ __all__ = ['datasets']
 
 def _datasets() -> dict[str, dict]:
 
-    return _module_data('datasets').get('omics', {}).get('datasets', {})
+    return _module_data('datasets').get('omics', {})
 
 
 def datasets() -> dict[str, str]:
@@ -49,7 +49,15 @@ def datasets() -> dict[str, str]:
         A dict with dataset labels as keys and descriptions as values.
     """
 
-    return {k: v['description'] for k, v in _datasets().items()}
+    return {
+        k: v['description']
+        for k, v in _datasets().get('datasets', {}).items()
+    }
+
+
+def _baseurl() -> str:
+
+    return _datasets()['baseurl']
 
 
 def _download(url: str, path: str) -> None:
