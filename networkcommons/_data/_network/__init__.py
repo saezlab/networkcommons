@@ -13,9 +13,5 @@
 # https://www.gnu.org/licenses/gpl-3.0.txt
 #
 
-import functools as ft
-from pypath_common import data as _data
-from . import _omics as omics
-from . import _network as network
-
-load = ft.partial(_data.load, module = 'networkcommons')
+from ._omnipath import get_omnipath
+from ._lianaplus import get_lianaplus
