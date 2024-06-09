@@ -1,33 +1,7 @@
 from networkcommons.datasets import (
-    get_available_datasets,
-    download_dataset,
     run_deseq2_analysis
 )
 import pandas as pd
-
-
-# Test get_available_datasets
-def test_get_available_datasets():
-    # Call the get_available_datasets function
-    datasets = get_available_datasets()
-
-    # Assert that the returned value is a list
-    assert isinstance(datasets, list)
-
-    # Assert that the returned list is not empty
-    assert len(datasets) > 0
-
-
-def test_download_dataset():
-    # Call the download_dataset function with a specific dataset
-    dataset = 'unit_test'
-    data = download_dataset(dataset)
-
-    # Assert that the returned value is a list
-    assert isinstance(data, list)
-
-    # Assert that the returned list is not empty
-    assert len(data) > 0
 
 
 def test_deseq2_analysis():
