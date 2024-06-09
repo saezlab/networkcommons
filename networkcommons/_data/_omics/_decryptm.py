@@ -23,7 +23,7 @@ import pandas as pd
 from . import _common
 from networkcommons import _conf
 
-__all__ = ['decryptm_datasets', 'decryptm_load', 'decryptm_experiment']
+__all__ = ['decryptm_datasets', 'decryptm', 'decryptm_experiment']
 
 
 def decryptm_datasets(update: bool = False) -> pd.DataFrame:
@@ -68,7 +68,7 @@ def decryptm_datasets(update: bool = False) -> pd.DataFrame:
     return datasets
 
 
-def decryptm_load(experiment: str, data_type: str, fname: str) -> pd.DataFrame:
+def decryptm(experiment: str, data_type: str, fname: str) -> pd.DataFrame:
 
     return _common._open(
         _common._commons_url('decryptm', **locals()),
@@ -108,6 +108,6 @@ def decryptm_experiment(
         )
 
     return [
-        decryptm_load(experiment, data_type, fname)
+        decryptm(experiment, data_type, fname)
         for fname in datasets[key]
     ]
