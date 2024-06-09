@@ -8,7 +8,7 @@ omics:
     panacea:
       name: Panacea
       description: Pancancer Analysis of Chemical Entity Activity RNA-Seq data
-      path: panacea/panacea_{table}data.tsv
+      path: panacea/panacea__{table}data.tsv
     test:
       name: Test data
       description: Small RNA-Seq data for unit tests
