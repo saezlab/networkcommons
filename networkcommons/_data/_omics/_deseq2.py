@@ -15,14 +15,18 @@
 
 from __future__ import annotations
 
-import pydeseq2
+import _deseq2 as _deseq2
+
+__all__ = ['deseq2']
 
 
-def run_deseq2_analysis(counts,
-                        metadata,
-                        test_group,
-                        ref_group,
-                        covariates=[]):
+def deseq2(
+        counts,
+        metadata,
+        test_group,
+        ref_group,
+        covariates=[]
+    ):
     """
     Runs DESeq2 analysis on the given counts and metadata.
 
@@ -47,8 +51,8 @@ def run_deseq2_analysis(counts,
             covariates = [covariates]
         design_factors += covariates
 
-    inference = pydeseq2.default_inference.DefaultInference(n_cpus = 8)
-    dds = pydeseq2.dds.DeseqDataSet(
+    inference = _deseq2.default_inference.DefaultInference(n_cpus = 8)
+    dds = _deseq2.dds.DeseqDataSet(
         counts=counts.T,
         metadata=metadata,
         design_factors=design_factors,
@@ -57,7 +61,7 @@ def run_deseq2_analysis(counts,
     )
     dds.deseq2()
 
-    results = pydeseq2.ds.DeseqStats(
+    results = _deseq2.ds.DeseqStats(
         dds,
         contrast=["group", test_group, ref_group],
         inference=inference
