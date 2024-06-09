@@ -204,37 +204,6 @@ def download_dataset(dataset, **kwargs):
     return file_list
 
 
-def download_url(url, save_path, chunk_size=128):
-    """
-    Downloads a file from the given URL and saves it to the specified path.
-
-    Args:
-        url (str): The URL of the file to download.
-        save_path (str): The path where the downloaded file will be saved.
-        chunk_size (int, optional): The size of each chunk to download.
-            Defaults to 128.
-    """
-    r = requests.get(url, stream=True)
-    # mkdir if not exists
-    os.makedirs(os.path.dirname(save_path), exist_ok=True)
-    with open(save_path, 'wb') as fd:
-        for chunk in r.iter_content(chunk_size=chunk_size):
-            fd.write(chunk)
-
-
-def list_directories(path):
-    public_link = (
-        "https://oc.embl.de/index.php/s/6KsHfeoqJOKLF6B"
-        "?path=%2Fdecryptm"
-    )
-    password = "networkcommons_datasaezlab"
-    occontents = oc.Client.from_public_link(public_link,
-                                            folder_password=password)
-    response = occontents.list(path)
-    file_paths = [item.path.strip('/') for item in response]
-    return response, file_paths
-
-
 def _ls(path: str) -> list[str]:
     """
     List files in a remote directory.
