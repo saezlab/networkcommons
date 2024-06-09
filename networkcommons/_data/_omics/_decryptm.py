@@ -70,7 +70,10 @@ def decryptm_datasets(update: bool = False) -> pd.DataFrame:
 
 def decryptm_load(experiment: str, data_type: str, fname: str) -> pd.DataFrame:
 
-    return _common._open(_common._dataset('decryptm')['path'], **locals())
+    return _common._open(
+        _common._commons_url('decryptm', **locals()),
+        df = {'sep': '\t'},
+    )
 
 
 def decryptm_experiment(
