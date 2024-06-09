@@ -17,7 +17,7 @@ def tmp_cache():
         for key in ('cachedir', 'pickle_dir')
     }
 
-    nc.config.setup(**tempdirs)
+    nc.config.setup(**{k: t.name for k, t in tempdirs.items()})
 
     yield
 
