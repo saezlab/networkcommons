@@ -17,13 +17,17 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 import multiprocessing
+import importlib
 
 if TYPE_CHECKING:
 
     import pandas as pd
 
 from pypath_common import _misc as _ppcommon
-import _deseq2 as _deseq2
+import pydeseq2 as _deseq2
+
+for _mod in ('default_inference', 'dds', 'ds'):
+    importlib.import_module(f'pydeseq2.{_mod}')
 
 from networkcommons import _conf
 from networkcommons._session import _log
