@@ -69,6 +69,22 @@ def decryptm_datasets(update: bool = False) -> pd.DataFrame:
 
 
 def decryptm(experiment: str, data_type: str, fname: str) -> pd.DataFrame:
+    """
+    One table of omics data from DecryptM.
+
+    Args:
+        experiment:
+            Name of the experiment. For a complete list see
+            `decryptm_datasets()`.
+        data_type:
+            Omics modality of the data. For the available modalities in each
+            experiment, see `decryptm_datasets()`.
+        fname:
+            Name of the table in the experiment.
+
+    Returns:
+        The table as a pandas data frame.
+    """
 
     return _common._open(
         _common._commons_url('decryptm', **locals()),
