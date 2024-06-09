@@ -74,19 +74,34 @@ def _dataset(key: str) -> dict | None:
     return _datasets()['datasets'].get(key.lower(), None)
 
 
+def _requests_session() -> requests.Session:
+
+    ses = requests.Session()
+    retries = requests.adapters.Retry(
+        total = _conf.get('http_retries'),
+        backoff_factor = _conf.get('http_backoff_factor'),
+        status_forcelist = _conf.get('http_status_forcelist'),
+    )
+    ses.mount('http://', requests.adapters.HTTPAdapter(max_retries = retries))
+
+    return ses
+
+
 def _download(url: str, path: str) -> None:
 
     timeouts = tuple(_conf.get(f'http_{k}_timout') for k in ('read', 'connect'))
 
     _log(f'Downloading `{url}` to `{path}`.')
 
-    with requests.get(url, timeout = timeouts, stream = True) as r:
+    ses = _requests_session()
 
-        r.raise_for_status()
+    with ses.get(url, timeout = timeouts, stream = True) as req:
+
+        req.raise_for_status()
 
         with open(path, 'wb') as f:
 
-            for chunk in r.iter_content(chunk_size = 8192):
+            for chunk in req.iter_content(chunk_size = 8192):
 
                 f.write(chunk)
 
@@ -173,16 +188,20 @@ def _ls(path: str) -> list[str]:
             HTTP URL of a directory with standard nginx directory listing.
     """
 
-    resp = requests.get(path)
+    ses = _requests_session()
+    resp = ses.get(path)
 
     if resp.status_code == 200:
+
         soup = bs4.BeautifulSoup(resp.content, 'html.parser')
+
         return [
             href for a in soup.find_all('a')
             if (href := a['href'].strip('/')) != '..'
         ]
 
     else:
+
         raise FileNotFoundError(
             f'URL {path} returned status code {resp.status_code}'
         )
