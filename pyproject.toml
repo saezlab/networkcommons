@@ -52,6 +52,7 @@ decoupler = "^1.6.0"
 requests = "^2.32.3"
 beautifulsoup4 = "^4.12.3"
 pygraphviz = "1.11"
+pypath-omnipath = "^0.16.15"
 
 [tool.poetry.dev-dependencies]
 pytest = ">=6.0"
