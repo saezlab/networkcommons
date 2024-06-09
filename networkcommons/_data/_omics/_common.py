@@ -165,54 +165,6 @@ def _open(
         raise NotImplementedError(f'Can not open file type `{ftype}`.')
 
 
-def download_dataset(dataset, **kwargs):
-    """
-    Downloads a dataset and returns a list of pandas DataFrames.
-
-    Args:
-        dataset (str): The name of the dataset to download.
-        **kwargs: Additional keyword arguments to pass to the decryptm call:
-            - experiment (str): The name of the experiment.
-            - data_type (str): The type of data to download (Phosphoproteome,
-            Full proteome, Acetylome...). Not all data types are available for
-            all experiments.
-
-    Returns:
-        list: A list of pandas DataFrames, each representing a file in
-            the downloaded dataset.
-
-    Raises:
-        ValueError: If the specified dataset is not available.
-
-    """
-    available_datasets = get_available_datasets()
-
-    if dataset not in available_datasets:
-        error_message = f"Dataset {dataset} not available. Check available datasets with get_available_datasets()"  # noqa: E501
-        raise ValueError(error_message)
-    elif dataset == 'decryptm':
-        file_list = decryptm_handler(**kwargs)
-    else:
-        save_path = f'./data/{dataset}.zip'
-        if not os.path.exists(save_path):
-            download_url(f'https://oc.embl.de/index.php/s/6KsHfeoqJOKLF6B/download?path=%2F&files={dataset}', save_path)  # noqa: E501
-
-            # download?path=%2Fdecryptm%2F3_EGFR_Inhibitors%2FFullproteome&files=curves.txt
-
-        # unzip files
-        with zipfile.ZipFile(save_path, 'r') as zip_ref:
-            zip_ref.extractall('./data/')
-
-        # list contents of dir, read them and append to list
-        files = os.listdir(f'./data/{dataset}')
-        file_list = []
-        for file in files:
-            df = pd.read_csv(f'./data/{dataset}/{file}', sep='\t')
-            file_list.append(df)
-
-    return file_list
-
-
 def _ls(path: str) -> list[str]:
     """
     List files in a remote directory.
