@@ -27,8 +27,6 @@ import urllib.parse
 import shutil
 import requests
 import bs4
-import owncloud as oc
-import pandas as pd
 
 from .._builtin import _module_data
 from networkcommons import _conf
