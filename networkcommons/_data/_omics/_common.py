@@ -21,6 +21,7 @@ import os
 import re
 import glob
 import hashlib
+import contextlib
 import urllib.parse
 
 import shutil
@@ -130,7 +131,7 @@ def _open(
     }
 
     path = _maybe_download(url, **kwargs)
-    ftype = (ftype or os.path.splitext(path)[1]).lower()
+    ftype = (ftype or os.path.splitext(path)[1]).lower()[1:]
 
     if not ftype:
 
@@ -144,15 +145,11 @@ def _open(
 
     elif ftype in {'tsv', 'csv', 'txt'}:
 
-        with open(path, 'r') as fp:
-
-            yield fp
+        return contextlib.closing(open(path, 'r'))
 
     elif ftype == 'zip':
 
-        with zipfile.ZipFile(path, 'r') as fp:
-
-            yield fp
+        return contextlib.closing(zipfile.ZipFile(path, 'r'))
 
     else:
 
