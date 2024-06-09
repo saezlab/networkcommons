@@ -15,43 +15,59 @@
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+import multiprocessing
+
+if TYPE_CHECKING:
+
+    import pandas as pd
+
+from pypath_common import _misc as _ppcommon
 import _deseq2 as _deseq2
+
+from networkcommons import _conf
+from networkcommons._session import _log
 
 __all__ = ['deseq2']
 
 
 def deseq2(
-        counts,
-        metadata,
-        test_group,
-        ref_group,
-        covariates=[]
-    ):
+        counts: pd.DataFrame,
+        metadata: pd.DataFrame,
+        test_group: str,
+        ref_group: str,
+        covariates: list | None = None,
+    ) -> pd.DataFrame:
     """
     Runs DESeq2 analysis on the given counts and metadata.
 
     Args:
-        counts (DataFrame): The counts data with gene symbols as index.
-        metadata (DataFrame): The metadata with sample IDs as index.
-        test_group (str): The name of the test group.
-        ref_group (str): The name of the reference group.
-        covariates (list, optional): List of covariates to include in the
-            analysis. Defaults to an empty list.
+        counts:
+            The counts data with gene symbols as index.
+        metadata:
+            The metadata with sample IDs as index.
+        test_group:
+            The name of the test group.
+        ref_group:
+            The name of the reference group.
+        covariates:
+            List of covariates to include in the analysis.
+            Defaults to an empty list.
 
     Returns:
-        DataFrame: The results of the DESeq2 analysis as a DataFrame.
+        The results of the DESeq2 analysis as a data frame.
     """
+
+    _log('Running differential expression analysis using DESeq2.')
+    # TODO: hardcoding these column names in a hidden way not the best
+    # solution:
     counts.set_index('gene_symbol', inplace=True)
     metadata.set_index('sample_ID', inplace=True)
+    design_factors = ['group'] + _ppcommon.to_list(covariates)
 
-    design_factors = ['group']
+    n_cpus = _conf.get('cpu_count', multiprocessing.cpu_count())
+    inference = _deseq2.default_inference.DefaultInference(n_cpus = n_cpus)
 
-    if len(covariates) > 0:
-        if isinstance(covariates, str):
-            covariates = [covariates]
-        design_factors += covariates
-
-    inference = _deseq2.default_inference.DefaultInference(n_cpus = 8)
     dds = _deseq2.dds.DeseqDataSet(
         counts=counts.T,
         metadata=metadata,
@@ -59,12 +75,16 @@ def deseq2(
         refit_cooks=True,
         inference=inference
     )
+
     dds.deseq2()
 
     results = _deseq2.ds.DeseqStats(
         dds,
-        contrast=["group", test_group, ref_group],
+        contrast=['group', test_group, ref_group],
         inference=inference
     )
     results.summary()
-    return results.results_df.astype('float64')
+    result = results.results_df.astype('float64')
+    _log('Finished running DESeq2.')
+
+    return result
