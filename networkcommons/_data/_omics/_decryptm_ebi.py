@@ -16,32 +16,37 @@
 from __future__ import annotations
 
 import os
-import zipfile
-import re
 import shutil
 import glob
+import urllib.parse
+
+from . import _common
+from networkcommons._session import _log
 
 
-def get_decryptm():
-    ftp = FTP('ftp.pride.ebi.ac.uk')
-    ftp.login()
+def get_decryptm(path: str):
+    """
+    Download DecryptM from EBI.
 
-    files = ftp.nlst('pride/data/archive/2023/03/PXD037285/')
+    Args:
+        path:
+            Download the data into this directory.
+    """
 
-    curve_files = [
-        "https://ftp.pride.ebi.ac.uk/" + file
-        for file in files
-        if re.search(r'Curves\.zip', file)
+    os.makedirs(path, exist_ok = True)
+    url = 'https://ftp.pride.ebi.ac.uk/pride/data/archive/2023/03/PXD037285/'
+    files = [f for f in _common._ls(url) if f.endswith('Curves.zip')]
+
+    for fname in files:
+
+        zip_url = urllib.parse.urljoin(url, fname)
+
+        with _common._open(zip_url) as zip_file:
+
+            _log(f'Extracting zip `{zip_file.filename}` to `{path}`.')
+            zip_file.extractall(path)
+
+    _ = [
+        shutil.rmtree(pdfdir)
+        for pdfdir in glob.glob(f'{path}/*/*/*/pdfs', recursive = True)
     ]
-
-    for curve_file in curve_files:
-        download_url(curve_file, f'./tmp/{os.path.basename(curve_file)}')
-
-        with zipfile.ZipFile(f'./tmp/{os.path.basename(curve_file)}', 'r') as zip_ref:  # noqa: E501
-            zip_ref.extractall('./data/')
-
-        pdfs_toremove = glob.glob('./data/*/*/pdfs', recursive=True)
-        for pdf in pdfs_toremove:
-            shutil.rmtree(pdf)
-
-        os.remove(f'./tmp/{os.path.basename(curve_file)}')
