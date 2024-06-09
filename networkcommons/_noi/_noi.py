@@ -35,8 +35,6 @@ Handling nodes of interest for network lookup queries.
 class Noi(collections.abc.Mapping):
 
     _DEFAULTS = {
-        'id_type': 'uniprot',
-        'entity_type': 'protein',
         'organism': 9606,
     }
 
@@ -44,8 +42,8 @@ class Noi(collections.abc.Mapping):
             self,
             noi: Noi | list[str] | list[list[str]] | dict[str, list[str]],
             groups: list[str] | dict[str, str] | None = None,
-            id_type: str | None = 'uniprot',
-            entity_type: str | None = 'protein',
+            id_type: str | None = None,
+            entity_type: str | None = None,
             organism: int | str | None = 9606,
         ):
         """
