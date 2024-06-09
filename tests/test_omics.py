@@ -1,5 +1,7 @@
 from networkcommons._data import _omics
 
+import pandas as pd
+
 
 def test_datasets():
 
@@ -39,6 +41,20 @@ def test_download(tmp_path):
     assert line.startswith('sample_ID\t')
 
 
-def test_open():
+def test_open_df():
 
     url = _omics._common._commons_url('test', table = 'meta')
+    with _omics._common._open(url):
+
+        line = next(fp)
+
+    assert line.startswith('sample_ID\t')
+
+
+def test_open_df():
+
+    url = _omics._common._commons_url('test', table = 'meta')
+    df = _omics._common._open(url, df = {'sep': '\t'})
+
+    assert isinstance(df, pd.DataFrame)
+    assert df.shape == (4, 2)

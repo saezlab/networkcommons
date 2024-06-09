@@ -12,4 +12,4 @@ omics:
     test:
       name: Test data
       description: Small RNA-Seq data for unit tests
-      path: unit_test/test_{table}data.tsv
+      path: unit_test/test__{table}data.tsv
