@@ -27,11 +27,8 @@ def test_deseq2():
     )
 
     assert isinstance(result, pd.DataFrame)
-    assert 'log2FoldChange' in result.columns
-    assert 'lfcSE' in result.columns
-    assert 'stat' in result.columns
-    assert 'pvalue' in result.columns
-    assert 'padj' in result.columns
+    cols_expected = {'log2FoldChange', 'lfcSE', 'stat', 'pvalue', 'padj'}
+    assert cols_expected.issubset(result.columns)
 
     data = {
         'baseMean': [93.233027, 101.285704, 11.793541],
