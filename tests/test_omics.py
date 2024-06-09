@@ -96,3 +96,15 @@ def test_decryptm_experiment(decryptm_args):
     assert all(isinstance(df, pd.DataFrame) for df in dfs)
     assert dfs[3].shape == (15993, 65)
     assert dfs[3].EC50.dtype == 'float64'
+
+
+def test_panacea():
+
+    dfs = _omics._panacea.panacea()
+
+    assert isinstance(dfs, tuple)
+    assert len(dfs) == 2
+    assert all(isinstance(df, pd.DataFrame) for df in dfs)
+    assert dfs[0].shape == (24961, 1217)
+    assert dfs[1].shape == (1216, 2)
+    assert (dfs[0].drop('gene_symbol', axis = 1).dtypes == 'int64').all()
