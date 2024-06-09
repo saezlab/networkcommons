@@ -13,6 +13,10 @@
 # https://www.gnu.org/licenses/gpl-3.0.txt
 #
 
+"""
+Procedures on Nodes of molecular interaction networks.
+"""
+
 from __future__ import annotations
 
 from typing import Generator, Literal, Sequence
@@ -25,10 +29,6 @@ import pypath.utils.mapping as _mapping
 import pypath.utils.orthology as _orthology
 import pypath.inputs.uniprot as _uniprot
 import pypath.inputs.uniprot_db as _uniprot_db
-
-"""
-Procedures on Nodes of molecular interaction networks.
-"""
 
 __all__ = ['Node']
 

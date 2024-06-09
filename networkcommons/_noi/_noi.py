@@ -13,6 +13,10 @@
 # https://www.gnu.org/licenses/gpl-3.0.txt
 #
 
+"""
+Handling nodes of interest for network lookup queries.
+"""
+
 from __future__ import annotations
 
 from typing import Any, Callable, Hashable
@@ -27,10 +31,6 @@ from pypath_common import misc as _common
 from . import _node
 
 __all__ = ['Noi']
-
-"""
-Handling nodes of interest for network lookup queries.
-"""
 
 class Noi(collections.abc.Mapping):
 
