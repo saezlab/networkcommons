@@ -32,3 +32,4 @@ from .visualization import *  # noqa: F401 F403
 from .evaluation import *  # noqa: F401 F403
 from .moon import *  # noqa: F401 F403
 from . import _data as data
+from . import _noi as noi

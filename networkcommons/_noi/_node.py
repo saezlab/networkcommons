@@ -1,9 +1,25 @@
+#!/usr/bin/env python
+
+#
+# This file is part of the `networkcommons` Python module
+#
+# Copyright 2024
+# Heidelberg University Hospital
+#
+# File author(s): Saez Lab (omnipathdb@gmail.com)
+#
+# Distributed under the GPLv3 license
+# See the file `LICENSE` or read a copy at
+# https://www.gnu.org/licenses/gpl-3.0.txt
+#
+
 from __future__ import annotations
 
-from typing import Literal, Sequence
+from typing import Generator, Literal, Sequence
 import re
 import inspect
 
+import pypath_common._misc as _common
 import pypath.utils.taxonomy as _taxonomy
 import pypath.utils.mapping as _mapping
 import pypath.utils.orthology as _orthology
@@ -13,6 +29,9 @@ import pypath.inputs.uniprot_db as _uniprot_db
 """
 Procedures on Nodes of molecular interaction networks.
 """
+
+__all__ = ['Node']
+
 
 _REENS = re.compile(r'ENS[A-Z]*?([A-Z])[0-9]+')
 _RERSQ = re.compile(
@@ -71,7 +90,7 @@ class Node:
         self.identifier = identifier
         self._id_type = id_type
         self.entity_type = entity_type
-        self.organism = _taxonomy.ensure_ncbi_taxid(organism)
+        self.organism = _taxonomy.ensure_ncbi_tax_id(organism)
         self.original_id = original_id or identifier
         self.original_id_type = original_id_type or id_type
         self._label = label
@@ -120,7 +139,7 @@ class Node:
             entity_type = (
                 'smol'
                     if self._is_smol else
-                getattr(self, f'_guess_{entity_type}_id_type')()
+                getattr(self, f'_guess_{self.entity_type}_id_type')()
             )
 
 
@@ -214,15 +233,16 @@ class Node:
             returned.
         """
 
+        # important: here we have to pass `entity_type` once it is implemented
+        # in `map_name`
         for _id in _mapping.map_name(
             self.identifier,
             self.id_type,
             id_type,
-            entity_type = self.entity_type,
             ncbi_tax_id = self.organism,
         ):
 
-            yield self.as(identifier = _id, id_type = id_type)
+            yield self(identifier = _id, id_type = id_type)
 
 
     def as_organism(
@@ -241,7 +261,7 @@ class Node:
             returned.
         """
 
-        organsim = taxonomy.ensure_ncbi_taxid(organism)
+        organsim = _taxonomy.ensure_ncbi_tax_id(organism)
 
         for _id in _orthology.translate(
             self.identifier,
@@ -250,7 +270,7 @@ class Node:
             id_type = self.id_type,
         ):
 
-            yield self.as(identifier = _id, organism = organism)
+            yield self(identifier = _id, organism = organism, label = None)
 
 
     def asdict(self, **kwargs) -> dict:
@@ -268,7 +288,7 @@ class Node:
         return state
 
 
-    def as(self, **kwargs) -> None:
+    def __call__(self, **kwargs) -> Node:
         """
         A copy of this node with certain properties updated.
 
@@ -294,15 +314,17 @@ class Node:
                 (self.original_id, self.original_id_type),
             ):
 
-                self._label = mapping.label(
+                # important: here we have to pass `entity_type` once it is
+                # implemented in `map_name`
+                self._label = _mapping.label(
                     _id,
                     id_type = it,
-                    entity_type = self.entity_type,
                     ncbi_tax_id = self.organism,
                 )
                 if self._label: break
 
 
+    @property
     def label(self) -> str:
 
         return self._label or self.identifier
@@ -325,8 +347,8 @@ class Node:
         return _taxonomy.ensure_common_name(self.organism)
 
 
-    @property
     @classmethod
+    @property
     def _attrs(cls) -> list[str]:
 
         return list(inspect.signature(cls.__init__).parameters.keys())[1:]
