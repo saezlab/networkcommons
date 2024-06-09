@@ -14,3 +14,4 @@
 #
 
 from ._node import Node
+from ._noi import Noi

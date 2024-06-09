@@ -20,8 +20,13 @@ import collections
 import itertools
 import json
 import yaml
+import inspect
 
 from pypath_common import misc as _common
+
+from . import _node
+
+__all__ = ['Noi']
 
 """
 Handling nodes of interest for network lookup queries.
@@ -73,8 +78,8 @@ class Noi(collections.abc.Mapping):
         self.nodes = self._parse(noi, groups)
 
 
-    @staticmethod
     def _parse(
+            self,
             noi: Noi | list[str] | list[list[str]] | dict[str, list[str]],
             groups: list[str] | dict[str, str] | None = None,
             id_type: str | None = 'uniprot',
@@ -108,7 +113,7 @@ class Noi(collections.abc.Mapping):
                 raise ValueError('Nodes and groups are not the same length')
 
             _noi = collections.defaultdict(list)
-            [_noi[g].append(n) for n, g in zip(noi, groups))]
+            [_noi[g].append(n) for n, g in zip(noi, groups)]
 
             groups = dict(_noi)
 
@@ -117,9 +122,9 @@ class Noi(collections.abc.Mapping):
 
     def _parse_node(
             self,
-            node: str | Node | tuple | dict,
+            node: str | _node.Node | tuple | dict,
             attrs: dict,
-        ) -> Node:
+        ) -> _node.Node:
 
         return self.parse_node(node, self._defaults, attrs)
 
@@ -127,9 +132,9 @@ class Noi(collections.abc.Mapping):
     @classmethod
     def parse_node(
             cls,
-            node: str | Node | tuple | dict,
+            node: str | _node.Node | tuple | dict,
             *attrs: dict,
-        ) -> Node:
+        ) -> _node.Node:
         """
         Parse various node notations into Node object.
 
@@ -139,7 +144,9 @@ class Noi(collections.abc.Mapping):
                 priority; elements with None values will be ignored.
         """
 
-        if not isinstance(node, Node):
+        if not isinstance(node, _node.Node):
+
+            node_attrs = _node.Node._attrs
 
             if isinstance(node, str):
 
@@ -147,7 +154,7 @@ class Noi(collections.abc.Mapping):
 
             if isinstance(node, tuple):
 
-                node = dict(zip(Node._attrs, node))
+                node = dict(zip(node_attrs, node))
 
             if isinstance(node, dict):
 
@@ -160,7 +167,7 @@ class Noi(collections.abc.Mapping):
                 _attrs.update({
                     k: v
                     for k, v in (a or {}).items()
-                    if k in cls._DEFAULTS and v
+                    if k in node_attrs and v
                 })
 
             if 'identifier' not in _attrs:
@@ -170,7 +177,7 @@ class Noi(collections.abc.Mapping):
                     f'Could not find identifier for `{node}`.',
                 )
 
-            node = Node(**_attrs)
+            node = _node.Node(**_attrs)
 
         return node
 
@@ -218,6 +225,7 @@ class Noi(collections.abc.Mapping):
             self,
             organism: str | int = 10090,
             source_organism: str | int = 9606,
+            entity_type: str = 'protein',
         ) -> Noi:
         """
         Translate nodes to a certain ID type.
@@ -227,7 +235,7 @@ class Noi(collections.abc.Mapping):
         """
 
         return self.apply(
-            lambda n: n.as_idtype(id_type),
+            lambda n: n.as_organism(organism),
             entity_type = entity_type,
         )
 
