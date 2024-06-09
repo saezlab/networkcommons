@@ -1,8 +1,17 @@
-import networkx as nx
-import logging
+#!/usr/bin/env python
 
-# Configure logging
-#logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+#
+# This file is part of the `networkcommons` Python module
+#
+# Copyright 2024
+# Heidelberg University Hospital
+#
+# File author(s): Saez Lab (omnipathdb@gmail.com)
+#
+# Distributed under the GPLv3 license
+# See the file `LICENSE` or read a copy at
+# https://www.gnu.org/licenses/gpl-3.0.txt
+#
 
 """
 This module contains functions to visualize networks.
@@ -12,6 +21,22 @@ The visualize_network_default() function visualizes the graph with default style
 The visualize_network_sign_consistent() function visualizes the graph considering sign consistency.
 The visualize_network() function is the main function to visualize the graph based on the network type.
 """
+
+import networkx as nx
+
+from networkcommons._session import _log
+
+__all__ = [
+    'get_styles',
+    'set_style_attributes',
+    'merge_styles',
+    'visualize_network',
+    'visualize_network_default',
+    'visualize_network_sign_consistent',
+    'visualize_big_graph',
+    'visualize_graph_split',
+]
+
 
 def get_styles():
     """
@@ -156,7 +181,7 @@ def merge_styles(default_style, custom_style, path=""):
         # Log missing keys in custom_style
         for key in default_style:
             if key not in custom_style:
-                logging.warning(f"Missing key '{path}.{key}' in custom style. Using default value.")
+                _log(f"Missing key '{path}.{key}' in custom style. Using default value.")
 
     return merged_style
 
@@ -277,11 +302,11 @@ def visualize_network(network, source_dict, target_dict, prog='dot', network_typ
         return visualize_network_default(network, source_dict, target_dict, prog, custom_style)
 
 
-def visualise_big_graph():
+def visualize_big_graph():
     return NotImplementedError
 
 
-def visualise_graph_split():
+def visualize_graph_split():
     return NotImplementedError
 
 

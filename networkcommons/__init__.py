@@ -28,8 +28,8 @@ from ._session import log, _log, session
 from ._conf import config, get, setup
 from .utils import *  # noqa: F401 F403
 from .methods import *  # noqa: F401 F403
-from .visualization import *  # noqa: F401 F403
 from .evaluation import *  # noqa: F401 F403
 from .moon import *  # noqa: F401 F403
 from . import _data as data
 from . import _noi as noi
+from . import _visual as visual
