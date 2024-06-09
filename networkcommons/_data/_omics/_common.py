@@ -61,6 +61,15 @@ def _baseurl() -> str:
     return _datasets()['baseurl']
 
 
+def _commons_url(dataset: str, **kwargs) -> str:
+
+    dsets = _datasets()
+    baseurl = dsets['baseurl']
+    path = dsets['datasets'][dataset]['path'].format(**kwargs)
+
+    return urllib.parse.urljoin(baseurl, path)
+
+
 def _dataset(key: str) -> dict | None:
 
     return _datasets()['datasets'].get(key.lower(), None)
