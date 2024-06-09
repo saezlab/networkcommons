@@ -1,6 +1,8 @@
-from networkcommons._data import _omics
+import pytest
 
 import pandas as pd
+
+from networkcommons._data import _omics
 
 
 def test_datasets():
@@ -41,10 +43,11 @@ def test_download(tmp_path):
     assert line.startswith('sample_ID\t')
 
 
-def test_open_df():
+def test_open():
 
     url = _omics._common._commons_url('test', table = 'meta')
-    with _omics._common._open(url):
+
+    with _omics._common._open(url) as fp:
 
         line = next(fp)
 
@@ -58,3 +61,38 @@ def test_open_df():
 
     assert isinstance(df, pd.DataFrame)
     assert df.shape == (4, 2)
+
+
+def test_decryptm_datasets():
+
+    dsets = _omics._decryptm.decryptm_datasets()
+
+    assert isinstance(dsets, pd.DataFrame)
+    assert dsets.shape == (51, 3)
+    assert dsets.fname.str.contains('curves').all()
+
+
+@pytest.fixture
+def decryptm_args():
+
+    return 'KDAC_Inhibitors', 'Acetylome', 'curves_CUDC101.txt'
+
+
+def test_decryptm(decryptm_args):
+
+    df = _omics._decryptm.decryptm(*decryptm_args)
+
+    assert isinstance(df, pd.DataFrame)
+    assert df.shape == (18007, 65)
+    assert df.EC50.dtype == 'float64'
+
+
+def test_decryptm_experiment(decryptm_args):
+
+    dfs = _omics._decryptm.decryptm_experiment(*decryptm_args[:2])
+
+    assert isinstance(dfs, list)
+    assert len(dfs) == 4
+    assert all(isinstance(df, pd.DataFrame) for df in dfs)
+    assert dfs[3].shape == (15993, 65)
+    assert dfs[3].EC50.dtype == 'float64'
