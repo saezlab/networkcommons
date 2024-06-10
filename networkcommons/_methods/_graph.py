@@ -20,7 +20,7 @@ Graph based methods.
 import networkx as nx
 import numpy as np
 
-from networkcommons import _utils import
+from networkcommons import _utils
 from networkcommons._session import session as _session
 
 __all__ = [

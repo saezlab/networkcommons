@@ -22,10 +22,8 @@ __all__ = [
     '__version__',
     '__author__',
     'log',
-    '_log',
     'session',
     'config',
-    'get',
     'setup',
     'data',
     'eval',
@@ -37,7 +35,7 @@ __all__ = [
 
 from ._metadata import __author__, __version__
 from ._session import log, _log, session
-from ._conf import config, get, setup
+from ._conf import config, setup
 
 from . import _data as data
 from . import _eval as eval
