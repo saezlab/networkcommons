@@ -27,7 +27,6 @@ from ._metadata import __author__, __version__
 from ._session import log, _log, session
 from ._conf import config, get, setup
 from .utils import *  # noqa: F401 F403
-from .moon import *  # noqa: F401 F403
 from . import _data as data
 from . import _eval as eval
 from . import _methods as methods

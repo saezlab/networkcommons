@@ -19,3 +19,4 @@ Network based inference methods and network operations.
 
 from . import _graph as graph
 from . import _causal as causal
+from . import _moon as moon
