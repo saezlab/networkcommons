@@ -20,7 +20,7 @@ Graph based methods.
 import networkx as nx
 import numpy as np
 
-from networkcommons.utils import get_subnetwork
+from networkcommons import _utils import
 from networkcommons._session import session as _session
 
 __all__ = [
@@ -69,7 +69,7 @@ def run_shortest_paths(network, source_dict, target_dict, verbose=False):
             except (nx.NetworkXNoPath, nx.NodeNotFound):
                 _session.log_traceback(console = verbose)
 
-    subnetwork = get_subnetwork(network, shortest_paths_res)
+    subnetwork = _utils.get_subnetwork(network, shortest_paths_res)
 
     return subnetwork, shortest_paths_res
 
@@ -109,7 +109,7 @@ def run_sign_consistency(network, paths, source_dict, target_dict):
         if np.sign(source_sign * product_sign) == np.sign(target_sign):
             sign_consistency_res.append(path)
 
-    subnetwork = get_subnetwork(network, sign_consistency_res)
+    subnetwork = _utils.get_subnetwork(network, sign_consistency_res)
 
     return subnetwork, sign_consistency_res
 
@@ -172,7 +172,7 @@ def run_all_paths(network,
         except (nx.NetworkXNoPath, nx.NodeNotFound):
             _session.log_traceback(console = verbose)
 
-    subnetwork = get_subnetwork(network, all_paths_res)
+    subnetwork = _utils.get_subnetwork(network, all_paths_res)
 
     return subnetwork, all_paths_res
 

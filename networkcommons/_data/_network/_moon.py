@@ -16,7 +16,7 @@
 import numpy as np
 import pandas as pd
 
-from networkcommons import utils as _utils
+from networkcommons import _utils
 
 
 def build_moon_regulons(include_liana=False):
