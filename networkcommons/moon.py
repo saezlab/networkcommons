@@ -1,3 +1,23 @@
+#!/usr/bin/env python
+
+#
+# This file is part of the `networkcommons` Python module
+#
+# Copyright 2024
+# Heidelberg University Hospital
+#
+# File author(s): Saez Lab (omnipathdb@gmail.com)
+#
+# Distributed under the GPLv3 license
+# See the file `LICENSE` or read a copy at
+# https://www.gnu.org/licenses/gpl-3.0.txt
+#
+
+"""
+Moon: multi-omics??
+"""
+
+import networkx as nx
 from typing import Counter
 import networkx as nx
 import re
@@ -5,7 +25,7 @@ import pandas as pd
 import decoupler as dc
 import numpy as np
 
-from networkcommons.methods import run_reachability_filter
+from networkcommons._methods import _graph
 from networkcommons._session import _log
 
 
@@ -197,7 +217,7 @@ def keep_controllable_neighbours(source_dict, graph):
     - A dictionary of source nodes that are observable from the graph.
     '''
 
-    return run_reachability_filter(graph, source_dict)
+    return _graph.run_reachability_filter(graph, source_dict)
 
 
 def keep_observable_neighbours(target_dict, graph):
@@ -213,7 +233,7 @@ def keep_observable_neighbours(target_dict, graph):
     - A dictionary of target nodes that are observable from the graph.
     '''
 
-    subnetwork = run_reachability_filter(graph.reverse(), target_dict)
+    subnetwork = _graph.run_reachability_filter(graph.reverse(), target_dict)
 
     return subnetwork.reverse()
 
