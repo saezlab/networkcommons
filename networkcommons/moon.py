@@ -234,32 +234,32 @@ def compress_same_children(uncompressed_graph, sig_input, metab_input):
     graph = uncompressed_graph.copy()
 
     parents = [node for node in graph.nodes if graph.out_degree(node) > 0]
+    parents.sort()
 
-    df_signature = pd.DataFrame(graph.edges, columns=['source', 'target'])
-    sign_dict = nx.get_edge_attributes(graph, 'sign')
-    df_signature['sign'] = df_signature.apply(
-        lambda row: sign_dict.get((row['source'], row['target'])), axis=1
-    )
+    df_signature = nx.to_pandas_edgelist(graph)
+    df_signature = df_signature.sort_values(by=['source', 'target'])
 
     df_signature['target'] = df_signature['target'] + df_signature['sign'].astype(str) # noqa E501
 
-    node_signatures = {}
-    for parent in parents:
-        node_signatures[parent] = 'parent_of_' + '_____'.join(
-            df_signature[df_signature['source'] == parent]['target']
-        )
+    # Create a dictionary to map each parent to its targets
+    parent_to_targets = df_signature.groupby('source')['target'].apply(lambda targets: '_____'.join(targets))
 
-    dubs = [
-        signature for signature, count in Counter(
-            node_signatures.values()
-        ).items() if count > 1 and signature not in metab_input and
-        signature not in sig_input
-    ]
+    # Generate the node signatures
+    node_signatures = {parent: 'parent_of_' + parent_to_targets[parent] for parent in parents}
+
+    # Count the occurrences of each signature
+    node_signatures = {parent: signature for parent, signature in node_signatures.items() 
+                       if parent not in sig_input and 
+                       parent not in metab_input}
+
+    signature_counts = Counter(node_signatures.values())
+
+    # Identify duplicated signatures that are not in metab_input or sig_input
     duplicated_parents = {
         node: signature for node, signature in node_signatures.items()
-        if signature in dubs
+        if signature_counts[signature] > 1
     }
-
+    
     subnetwork = nx.relabel_nodes(graph, duplicated_parents, copy=False).copy()
 
     return subnetwork, node_signatures, duplicated_parents
@@ -297,7 +297,6 @@ def run_moon_core(
         network.
     """
     regulons = nx.to_pandas_edgelist(graph)
-    regulons.rename(columns={"sign": "mor"}, inplace=True)
     regulons = regulons[~regulons["source"].isin(downstream_input.keys())]
 
     decoupler_mat = pd.DataFrame(
@@ -306,14 +305,13 @@ def run_moon_core(
 
     if "wmean" in statistic:
         estimate, norm, corr, pvals = dc.run_wmean(
-            mat=decoupler_mat, net=regulons, times=n_perm, weight=None, min_n=1
+            mat=decoupler_mat, net=regulons, times=n_perm, weight='sign', min_n=1
         )
         if statistic == "norm_wmean":
             estimate = norm
     elif statistic == "ulm":
-        print(decoupler_mat)
         estimate, pvals = dc.run_ulm(
-            mat=decoupler_mat, net=regulons, weight=None, min_n=1
+            mat=decoupler_mat, net=regulons, weight='sign', min_n=1
         )
 
     n_plus_one = estimate.T
@@ -324,8 +322,8 @@ def run_moon_core(
     i = 1
     while len(regulons) > 1 and \
             regulons["target"].isin(res_list[i - 1].index.values).sum() > 1 \
-            and i <= n_layers:
-
+            and i < n_layers:
+        print(f"Iteration count: {i}")
         regulons = regulons[~regulons["source"].isin(res_list[i - 1].index.values)] # noqa E501
         previous_n_plus_one = res_list[i - 1].drop(columns="level").T
 
@@ -334,7 +332,7 @@ def run_moon_core(
                 mat=previous_n_plus_one,
                 net=regulons,
                 times=n_perm,
-                weight=None,
+                weight='sign',
                 min_n=1
             )
             if statistic == "norm_wmean":
@@ -343,7 +341,7 @@ def run_moon_core(
             estimate, pvals = dc.run_ulm(
                 mat=previous_n_plus_one,
                 net=regulons,
-                weight=None,
+                weight='sign',
                 min_n=1
             )
 
@@ -352,7 +350,6 @@ def run_moon_core(
         n_plus_one["level"] = i + 1
         res_list.append(n_plus_one)
         i += 1
-        print(f"Iteration count: {i-1}")
 
     recursive_decoupleRnival_res = pd.concat(res_list)
 
@@ -484,7 +481,7 @@ def decompress_moon_result(
     mapping_table = mapping_table.drop_duplicates()
 
     # Merge the moon_res dataframe with the mapping table
-    moon_res = pd.merge(moon_res, mapping_table, on='source', how='outer')
+    moon_res = pd.merge(moon_res, mapping_table, on='source', how='inner')
 
     # Return the merged dataframe
     return moon_res
@@ -531,7 +528,7 @@ def reduce_solution_network(
             res_network.remove_edge(source, target)
 
     recursive_moon_res.rename(columns={'source_original': 'nodes'},
-                                        inplace=True)
+                              inplace=True)
     recursive_moon_res.drop(columns=['source'], inplace=True)
 
     sig_input_df = pd.DataFrame.from_dict(
