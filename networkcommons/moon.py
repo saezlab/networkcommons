@@ -248,15 +248,15 @@ def compress_same_children(uncompressed_graph, sig_input, metab_input):
     node_signatures = {parent: 'parent_of_' + parent_to_targets[parent] for parent in parents}
 
     # Count the occurrences of each signature
-    node_signatures = {parent: signature for parent, signature in node_signatures.items()
-                       if parent not in sig_input and
-                       parent not in metab_input}
+    filtered_signatures = {parent: signature for parent, signature in node_signatures.items()
+                           if parent not in sig_input and
+                           parent not in metab_input}
 
-    signature_counts = Counter(node_signatures.values())
+    signature_counts = Counter(filtered_signatures.values())
 
     # Identify duplicated signatures that are not in metab_input or sig_input
     duplicated_parents = {
-        node: signature for node, signature in node_signatures.items()
+        node: signature for node, signature in filtered_signatures.items()
         if signature_counts[signature] > 1
     }
 
@@ -481,6 +481,7 @@ def decompress_moon_result(
         duplicated_parents, orient='index', columns=['source']
     )
     duplicated_parents_df['source_original'] = duplicated_parents_df.index
+    duplicated_parents_df.reset_index(drop=True, inplace=True)
 
     # Create a dataframe for addons
     addons = pd.DataFrame(
@@ -508,10 +509,10 @@ def decompress_moon_result(
     mapping_table = mapping_table.drop_duplicates()
 
     # Merge the moon_res dataframe with the mapping table
-    moon_res = pd.merge(moon_res, mapping_table, on='source', how='inner')
+    moon_res_dec = pd.merge(moon_res, mapping_table, on='source', how='inner')
 
     # Return the merged dataframe
-    return moon_res
+    return moon_res_dec
 
 
 def reduce_solution_network(
@@ -548,6 +549,7 @@ def reduce_solution_network(
             recursive_moon_res.source_original.values
         ]
     )
+    len(res_network.edges)
     res_network_edges = res_network.edges(data=True)
     res_network = nx.DiGraph(res_network)
     for source, target, data in res_network_edges:
