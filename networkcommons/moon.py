@@ -248,8 +248,8 @@ def compress_same_children(uncompressed_graph, sig_input, metab_input):
     node_signatures = {parent: 'parent_of_' + parent_to_targets[parent] for parent in parents}
 
     # Count the occurrences of each signature
-    node_signatures = {parent: signature for parent, signature in node_signatures.items() 
-                       if parent not in sig_input and 
+    node_signatures = {parent: signature for parent, signature in node_signatures.items()
+                       if parent not in sig_input and
                        parent not in metab_input}
 
     signature_counts = Counter(node_signatures.values())
@@ -259,8 +259,34 @@ def compress_same_children(uncompressed_graph, sig_input, metab_input):
         node: signature for node, signature in node_signatures.items()
         if signature_counts[signature] > 1
     }
-    
-    subnetwork = nx.relabel_nodes(graph, duplicated_parents, copy=False).copy()
+
+    # Check for edges with different signs and exclude them from compression
+    records = []
+    for original_node, signature in duplicated_parents.items():
+        for parent in graph.predecessors(original_node):
+            sign = graph[parent][original_node]['sign']
+            records.append((signature, original_node, parent, sign))
+
+    df_records = pd.DataFrame(records, columns=['signature', 'original_node', 'parent', 'sign'])
+    # Identify rows with the same signature but different signs
+
+    signature_parent_signs = df_records.groupby(['signature', 'parent'])['sign'].nunique() > 1
+
+    # Filter out the rows where signature-parent pairs have conflicting signs
+    conflicting_pairs = signature_parent_signs[signature_parent_signs].index
+
+    excluded_nodes = []
+    for signature, parent in conflicting_pairs:
+        excluded_nodes.append(df_records[(df_records['signature'] == signature) & (df_records['parent'] == parent)].original_node.values[0])
+        df_records = df_records[~((df_records['signature'] == signature) & (df_records['parent'] == parent))]
+
+    df_records = df_records[~df_records['original_node'].isin(excluded_nodes)]
+
+    # Build new duplicated_signatures_dict
+    new_duplicated_parents = {row['original_node']: row['signature'] for _, row in df_records.iterrows()}
+
+    # Relabel the nodes in the graph based on the new duplicated signatures
+    subnetwork = nx.relabel_nodes(graph, new_duplicated_parents, copy=False).copy()
 
     return subnetwork, node_signatures, duplicated_parents
 
@@ -462,8 +488,9 @@ def decompress_moon_result(
     )
     addons.columns = ['source']
     addons['source_original'] = addons['source']
+    addons.sort_values(by='source', inplace=True)
 
-    # Get final leaves
+    # Get final leaves (nodes with no outgoing edges)
     final_leaves = compressed_meta_network[
         ~compressed_meta_network['target'].isin(
             compressed_meta_network['source']
