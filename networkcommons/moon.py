@@ -242,15 +242,22 @@ def compress_same_children(uncompressed_graph, sig_input, metab_input):
     df_signature['target'] = df_signature['target'] + df_signature['sign'].astype(str) # noqa E501
 
     # Create a dictionary to map each parent to its targets
-    parent_to_targets = df_signature.groupby('source')['target'].apply(lambda targets: '_____'.join(targets))
+    parent_to_targets = df_signature.groupby('source')['target'].apply(
+        lambda targets: '_____'.join(targets)
+    )
 
     # Generate the node signatures
-    node_signatures = {parent: 'parent_of_' + parent_to_targets[parent] for parent in parents}
+    node_signatures = {
+        parent: 'parent_of_' + parent_to_targets[parent]
+        for parent in parents
+    }
 
     # Count the occurrences of each signature
-    filtered_signatures = {parent: signature for parent, signature in node_signatures.items()
-                           if parent not in sig_input and
-                           parent not in metab_input}
+    filtered_signatures = {
+        parent: signature
+        for parent, signature in node_signatures.items()
+        if parent not in sig_input and parent not in metab_input
+    }
 
     signature_counts = Counter(filtered_signatures.values())
 
@@ -267,26 +274,45 @@ def compress_same_children(uncompressed_graph, sig_input, metab_input):
             sign = graph[parent][original_node]['sign']
             records.append((signature, original_node, parent, sign))
 
-    df_records = pd.DataFrame(records, columns=['signature', 'original_node', 'parent', 'sign'])
-    # Identify rows with the same signature but different signs
+    df_records = pd.DataFrame(records, 
+                              columns=['signature',
+                                       'original_node',
+                                       'parent',
+                                       'sign'])
 
-    signature_parent_signs = df_records.groupby(['signature', 'parent'])['sign'].nunique() > 1
+    # Identify rows with the same signature but different signs
+    signature_parent_signs = (
+        df_records.groupby(['signature', 'parent'])['sign'].nunique() > 1
+    )
 
     # Filter out the rows where signature-parent pairs have conflicting signs
     conflicting_pairs = signature_parent_signs[signature_parent_signs].index
 
     excluded_nodes = []
     for signature, parent in conflicting_pairs:
-        excluded_nodes.append(df_records[(df_records['signature'] == signature) & (df_records['parent'] == parent)].original_node.values[0])
-        df_records = df_records[~((df_records['signature'] == signature) & (df_records['parent'] == parent))]
+        excluded_nodes.append(
+            df_records[
+                (df_records['signature'] == signature) &
+                (df_records['parent'] == parent)
+            ].original_node.values[0]
+        )
+        df_records = df_records[
+            ~((df_records['signature'] == signature) &
+              (df_records['parent'] == parent))
+        ]
 
     df_records = df_records[~df_records['original_node'].isin(excluded_nodes)]
 
     # Build new duplicated_signatures_dict
-    new_duplicated_parents = {row['original_node']: row['signature'] for _, row in df_records.iterrows()}
+    new_duplicated_parents = {
+        row['original_node']: row['signature']
+        for _, row in df_records.iterrows()
+    }
 
     # Relabel the nodes in the graph based on the new duplicated signatures
-    subnetwork = nx.relabel_nodes(graph, new_duplicated_parents, copy=False).copy()
+    subnetwork = nx.relabel_nodes(
+        graph, new_duplicated_parents, copy=False
+    ).copy()
 
     return subnetwork, node_signatures, duplicated_parents
 
@@ -331,7 +357,11 @@ def run_moon_core(
 
     if "wmean" in statistic:
         estimate, norm, corr, pvals = dc.run_wmean(
-            mat=decoupler_mat, net=regulons, times=n_perm, weight='sign', min_n=1
+            mat=decoupler_mat,
+            net=regulons,
+            times=n_perm,
+            weight='sign',
+            min_n=1
         )
         if statistic == "norm_wmean":
             estimate = norm
@@ -540,6 +570,7 @@ def reduce_solution_network(
     recursive_moon_res = recursive_moon_res[
         abs(recursive_moon_res['score']) > cutoff
     ]
+
     consistency_vec = recursive_moon_res.set_index(
         'source_original')['score'].to_dict()
 
@@ -549,7 +580,7 @@ def reduce_solution_network(
             recursive_moon_res.source_original.values
         ]
     )
-    len(res_network.edges)
+
     res_network_edges = res_network.edges(data=True)
     res_network = nx.DiGraph(res_network)
     for source, target, data in res_network_edges:
@@ -576,11 +607,14 @@ def reduce_solution_network(
         node: 1 for node in upstream_nodes if node in res_network.nodes
     }
 
-    res_network = keep_controllable_neighbours(upstream_nodes, res_network)
+    res_network = get_ego_graph(res_network, upstream_nodes, 7)
 
     moon_scores = recursive_moon_res.set_index(
         'nodes')['score'].to_dict()
-    nx.set_node_attributes(G=res_network, values=moon_scores, name='moon_score')
+
+    nx.set_node_attributes(G=res_network,
+                           values=moon_scores,
+                           name='moon_score')
 
     att = recursive_moon_res[
         recursive_moon_res['nodes'].isin(res_network.nodes)
@@ -597,7 +631,33 @@ def reduce_solution_network(
     return res_network, att
 
 
-def translate_res(network, att, mapping_dict):
+def get_ego_graph(G, sources, depth_limit=7):
+    """
+    Returns the ego graph of the given network graph G, centered around the
+    specified sources.
+
+    Parameters:
+        G (networkx.DiGraph): The network graph.
+        sources (list): The list of source nodes.
+        depth_limit (int, optional): The depth limit for collecting
+        descendants. Default is 7.
+
+    Returns:
+        networkx.DiGraph: The ego graph centered around the sources.
+    """
+    reached_nodes = set()
+    for source in sources:
+        descendant_dict = nx.ego_graph(G,
+                                       source,
+                                       radius=depth_limit,
+                                       center=False,
+                                       undirected=False)
+        reached_nodes.update(descendant_dict.nodes)
+
+    return G.subgraph(reached_nodes).copy()
+
+
+def translate_res(untranslated_network, att, mapping_dict):
     """
     Translates the network and attribute table based on the given mapping
     dataframe.
@@ -612,22 +672,35 @@ def translate_res(network, att, mapping_dict):
         network (networkx.DiGraph): The translated network.
         att (pandas.DataFrame): The translated attribute table.
     """
+    network = untranslated_network.copy()
+    att = att.copy()
     to_rename = att.nodes.values
     renamed = {}
+    suffixes = {}
 
     for name in to_rename:
         name_changed = re.sub("Metab__", "", name)
         name_changed = re.sub("^Gene", "Enzyme", name_changed)
         suffix = re.search("_[a-z]$", name_changed)
         name_changed = re.sub("_[a-z]$", "", name_changed)
+
         if name_changed in mapping_dict:
             name_changed = mapping_dict[name_changed]
             name_changed = "Metab__" + name_changed + suffix.group() \
                 if suffix else "Metab__" + name_changed
+            suffixes[name] = ""
+        elif suffix:
+            suffixes[name] = suffix.group()
+        else:
+            suffixes[name] = ""
+
         renamed[name] = name_changed
 
-    att['nodes'] = att['nodes'].map(renamed)
+    network = nx.relabel_nodes(network, renamed, copy=False)
 
-    network = nx.relabel_nodes(network, renamed, copy=True)
+    renamed = {k: v + suffixes[k] for k, v in renamed.items()}
+
+    print(renamed['Metab__7thf_c'])
+    att['nodes'] = att['nodes'].map(renamed)
 
     return network, att
