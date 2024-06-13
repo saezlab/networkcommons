@@ -113,6 +113,10 @@ def run_deseq2_analysis(counts,
     counts.set_index('gene_symbol', inplace=True)
     metadata.set_index('sample_ID', inplace=True)
 
+    # Replace _ with - in test_group and ref_group
+    test_group = test_group.replace('_', '-')
+    ref_group = ref_group.replace('_', '-')
+
     design_factors = ['group']
 
     if len(covariates) > 0:
