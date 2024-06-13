@@ -24,13 +24,17 @@ def test_download_dataset():
     data = download_dataset(dataset)
 
     # Assert that the returned value is a list
-    assert isinstance(data, list)
+    assert isinstance(data, dict)
+    assert 'test__countdata' in data
+    assert 'test__metadata' in data
+    assert isinstance(data['test__countdata'], pd.DataFrame)
+    assert isinstance(data['test__metadata'], pd.DataFrame)
 
     # Assert that the returned list is not empty
     assert len(data) > 0
 
 
-def test_deseq2_analysis():
+def test_run_deseq2_analysis():
     # Create dummy dataset for testing, samples as colnames, genes as rownames
     counts = pd.DataFrame({
         'gene_symbol': ['Gene1', 'Gene2', 'Gene3'],

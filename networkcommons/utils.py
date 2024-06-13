@@ -34,7 +34,8 @@ def read_network_from_file(file_path,
 def network_from_df(network_df,
                     source_col='source',
                     target_col='target',
-                    directed=True):
+                    directed=True,
+                    multigraph=False):
     """
     Create a network from a DataFrame.
 
@@ -48,6 +49,9 @@ def network_from_df(network_df,
         nx.Graph or nx.DiGraph: The network.
     """
     network_type = nx.DiGraph if directed else nx.Graph
+
+    if multigraph:
+        network_type = nx.MultiDiGraph if directed else nx.MultiGraph
 
     if list(network_df.columns) == list([source_col, target_col]):
         network = nx.from_pandas_edgelist(network_df,
@@ -109,7 +113,7 @@ def decoupler_formatter(df,
     return df_f
 
 
-def targetlayer_formatter(df, source, n_elements=25):
+def targetlayer_formatter(df, n_elements=25):
     """
     Format dataframe to be used by the network methods.
     It converts the df values to 1, -1 and 0, and outputs a dictionary.
@@ -122,9 +126,6 @@ def targetlayer_formatter(df, source, n_elements=25):
         A dictionary of dictionaries {source: {target: sign}}
     """
     df.columns = ['sign']
-    df.reset_index(inplace=True)
-    df.rename(columns={'index': 'target'}, inplace=True)
-    df.insert(0, 'source', source)
 
     # Sort the DataFrame by the absolute value of the
     # 'sign' column and get top n elements
@@ -135,6 +136,6 @@ def targetlayer_formatter(df, source, n_elements=25):
     df['sign'] = df['sign'].apply(lambda x: 1 if x > 0 else -1 if x < 0 else 0)
 
     # Pivot wider
-    df = df.pivot(index='target', columns='source', values='sign')
-    dict_df = df.to_dict()
+    dict_df = df['sign'].to_dict()
+
     return dict_df

@@ -22,6 +22,9 @@ def get_available_datasets():
 
     owncloud_obj, folders = list_directories('/')
 
+    # Exclude dataset named 'unit_test'
+    folders = [folder for folder in folders if folder != 'unit_test']
+
     return folders
 
 
@@ -47,7 +50,7 @@ def download_dataset(dataset, **kwargs):
     """
     available_datasets = get_available_datasets()
 
-    if dataset not in available_datasets:
+    if dataset not in available_datasets and dataset != 'unit_test':
         error_message = f"Dataset {dataset} not available. Check available datasets with get_available_datasets()"  # noqa: E501
         raise ValueError(error_message)
     elif dataset == 'decryptm':
@@ -65,10 +68,11 @@ def download_dataset(dataset, **kwargs):
 
         # list contents of dir, read them and append to list
         files = os.listdir(f'./data/{dataset}')
-        file_list = []
+        file_list = {}
         for file in files:
+            file_name, file_extension = os.path.splitext(file)
             df = pd.read_csv(f'./data/{dataset}/{file}', sep='\t')
-            file_list.append(df)
+            file_list[file_name] = df
 
     return file_list
 
@@ -112,6 +116,10 @@ def run_deseq2_analysis(counts,
     """
     counts.set_index('gene_symbol', inplace=True)
     metadata.set_index('sample_ID', inplace=True)
+
+    # Replace _ with - in test_group and ref_group
+    test_group = test_group.replace('_', '-')
+    ref_group = ref_group.replace('_', '-')
 
     design_factors = ['group']
 
