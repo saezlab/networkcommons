@@ -22,6 +22,9 @@ def get_available_datasets():
 
     owncloud_obj, folders = list_directories('/')
 
+    # Exclude dataset named 'unit_test'
+    folders = [folder for folder in folders if folder != 'unit_test']
+
     return folders
 
 
