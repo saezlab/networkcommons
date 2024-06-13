@@ -314,7 +314,7 @@ def compress_same_children(uncompressed_graph, sig_input, metab_input):
         graph, new_duplicated_parents, copy=False
     ).copy()
 
-    return subnetwork, node_signatures, duplicated_parents
+    return subnetwork, node_signatures, new_duplicated_parents
 
 
 def run_moon_core(
@@ -407,7 +407,7 @@ def run_moon_core(
         res_list.append(n_plus_one)
         i += 1
 
-    recursive_decoupleRnival_res = pd.concat(res_list)
+    recursive_moon_res = pd.concat(res_list)
 
     downstream_names = pd.DataFrame.from_dict(
         downstream_input, orient="index", columns=["score"]
@@ -417,8 +417,8 @@ def run_moon_core(
     ]
     downstream_names["level"] = 0
 
-    recursive_decoupleRnival_res = pd.concat(
-        [recursive_decoupleRnival_res, downstream_names]
+    recursive_moon_res = pd.concat(
+        [recursive_moon_res, downstream_names]
     )
 
     if upstream_input is not None:
@@ -426,21 +426,21 @@ def run_moon_core(
             upstream_input, orient="index", columns=["real_score"]
         )
         upstream_input_df = upstream_input_df.join(
-            recursive_decoupleRnival_res, how='right'
+            recursive_moon_res, how='right'
         )
         upstream_input_df = upstream_input_df[
             (np.sign(upstream_input_df["real_score"]) ==
              np.sign(upstream_input_df["score"])) |
             (np.isnan(upstream_input_df["real_score"]))
         ]
-        recursive_decoupleRnival_res = upstream_input_df.drop(
+        recursive_moon_res = upstream_input_df.drop(
             columns="real_score"
         )
 
-    recursive_decoupleRnival_res.reset_index(inplace=True)
-    recursive_decoupleRnival_res.rename(columns={"index": "source"}, inplace=True) # noqa E501
+    recursive_moon_res.reset_index(inplace=True)
+    recursive_moon_res.rename(columns={"index": "source"}, inplace=True) # noqa E501
 
-    return recursive_decoupleRnival_res
+    return recursive_moon_res
 
 
 def filter_incoherent_TF_target(
@@ -650,7 +650,7 @@ def get_ego_graph(G, sources, depth_limit=7):
         descendant_dict = nx.ego_graph(G,
                                        source,
                                        radius=depth_limit,
-                                       center=False,
+                                       center=True,
                                        undirected=False)
         reached_nodes.update(descendant_dict.nodes)
 
@@ -700,7 +700,6 @@ def translate_res(untranslated_network, att, mapping_dict):
 
     renamed = {k: v + suffixes[k] for k, v in renamed.items()}
 
-    print(renamed['Metab__7thf_c'])
     att['nodes'] = att['nodes'].map(renamed)
 
     return network, att
