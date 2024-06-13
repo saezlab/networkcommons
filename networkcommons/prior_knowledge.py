@@ -23,16 +23,17 @@ def get_omnipath(genesymbols=True,
                             'target_genesymbol': 'target'},
                    inplace=True)
 
-    # get only directed and signed interactions
+    # get only directed and signed interactions, with curation effort >2
+    network = network[network['curation_effort'] >= 2]
+
     if directed_signed:
         network = network[(network['consensus_direction']) &
                           (
                               (network['consensus_stimulation']) |
                               (network['consensus_inhibition'])
-                          ) &
-                          (network['curation_effort'] >= 2)]
+                          )]
 
-    network['sign'] = np.where(network['consensus_stimulation'] is True, 1, -1)
+    network['sign'] = np.where(network['consensus_stimulation'], 1, -1)
 
     # write the resulting omnipath network in networkx format
     network = network[['source', 'target', 'sign']].reset_index(drop=True)
