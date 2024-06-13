@@ -68,10 +68,11 @@ def download_dataset(dataset, **kwargs):
 
         # list contents of dir, read them and append to list
         files = os.listdir(f'./data/{dataset}')
-        file_list = []
+        file_list = {}
         for file in files:
+            file_name, file_extension = os.path.splitext(file)
             df = pd.read_csv(f'./data/{dataset}/{file}', sep='\t')
-            file_list.append(df)
+            file_list[file_name] = df
 
     return file_list
 
