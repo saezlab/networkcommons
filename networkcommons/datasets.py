@@ -50,7 +50,7 @@ def download_dataset(dataset, **kwargs):
     """
     available_datasets = get_available_datasets()
 
-    if dataset not in available_datasets:
+    if dataset not in available_datasets and dataset != 'unit_test':
         error_message = f"Dataset {dataset} not available. Check available datasets with get_available_datasets()"  # noqa: E501
         raise ValueError(error_message)
     elif dataset == 'decryptm':
