@@ -13,6 +13,7 @@ from networkcommons.moon import (
     filter_incoherent_TF_target,
     decompress_moon_result,
     reduce_solution_network,
+    get_ego_graph,
     translate_res
 )
 
@@ -48,14 +49,34 @@ def test_prepare_metab_inputs():
 
 
 def test_is_expressed():
-    expressed_genes = ['Gene1', 'Gene2', 'Gene3']
+    expressed_genes_entrez = ["GENE1", "GENE2", "GENE3"]
 
-    assert is_expressed('Gene1', expressed_genes) == 'Gene1'
-    assert is_expressed('Gene4', expressed_genes) is None
-    assert is_expressed('Metab__something', expressed_genes) == \
-        'Metab__something'
-    assert is_expressed('orphanReac__something', expressed_genes) == \
-        'orphanReac__something'
+    # Test case for matching "Gene[0-9]+__[A-Z0-9_]+$"
+    assert is_expressed("Gene123__GENE1", expressed_genes_entrez) == "Gene123__GENE1", "Test case 1 failed"
+    assert is_expressed("Gene123__GENE4", expressed_genes_entrez) is None, "Test case 2 failed"
+
+    # Test case for matching "Gene[0-9]+__[^_][a-z]"
+    assert is_expressed("Gene456__Aa", expressed_genes_entrez) == "Gene456__Aa", "Test case 3 failed"
+    assert is_expressed("Gene789__Bb", expressed_genes_entrez) == "Gene789__Bb", "Test case 4 failed"
+    assert is_expressed("Gene456__Ab", expressed_genes_entrez) == "Gene456__Ab", "Test case 5 failed"
+    assert is_expressed("Gene789__Cz", expressed_genes_entrez) == "Gene789__Cz", "Test case 6 failed"
+
+    # Test case for matching "Gene[0-9]+__[A-Z0-9_]+reverse"
+    expressed_genes_entrez = ["GENE1", "GENE2"]
+    assert is_expressed("Gene111__GENE1_GENE2_reverse", expressed_genes_entrez) == "Gene111__GENE1_GENE2_reverse", "Test case 7 failed"
+    assert is_expressed("Gene222__GENE1_GENE4_reverse", expressed_genes_entrez) is None, "Test case 8 failed"
+
+    # Test case for matching exact gene names in expressed_genes_entrez
+    expressed_genes_entrez = ["Gene1", "Gene2", "Gene3"]
+    assert is_expressed("Gene1", expressed_genes_entrez) == "Gene1", "Test case 9 failed"
+    assert is_expressed("Gene4", expressed_genes_entrez) is None, "Test case 10 failed"
+
+    # Test case for non-Metab and non-orphanReac strings that don't match any regex
+    assert is_expressed("RandomGene", expressed_genes_entrez) is None, "Test case 11 failed"
+
+    # Test case for "Metab" and "orphanReac" strings which should return the input itself
+    assert is_expressed("Metab1", expressed_genes_entrez) == "Metab1", "Test case 12 failed"
+    assert is_expressed("orphanReac1", expressed_genes_entrez) == "orphanReac1", "Test case 13 failed"
 
 
 def test_filter_pkn_expressed_genes():
@@ -119,9 +140,9 @@ def test_compress_same_children():
     graph = nx.DiGraph()
     graph.add_edges_from([
         ('A', 'B', {'sign': 1}),
-        ('A', 'C', {'sign': -1}),
-        ('D', 'B', {'sign': 1}),
-        ('D', 'C', {'sign': -1}),
+        ('A', 'C', {'sign': 1}),
+        ('B', 'D', {'sign': 1}),
+        ('C', 'D', {'sign': 1}),
     ])
     sig_input = []
     metab_input = []
@@ -131,8 +152,27 @@ def test_compress_same_children():
     )
 
     assert len(subnetwork.nodes) == 3, "Unexpected number of nodes in subnetwork" # noqa E501
+    assert len(node_signatures) == 3, "Unexpected number of node signatures" # noqa E501
     assert len(duplicated_parents) == 2, "Unexpected number of duplicated parents" # noqa E501
-    assert duplicated_parents['D'] == node_signatures['D'], "Duplicated parents mismatch" # noqa E501
+    assert duplicated_parents['B'] == node_signatures['B'], "Duplicated parents mismatch" # noqa E501
+
+    graph = nx.DiGraph()
+    graph.add_edges_from([
+        ('A', 'B', {'sign': 1}),
+        ('A', 'C', {'sign': -1}),
+        ('B', 'D', {'sign': 1}),
+        ('C', 'D', {'sign': -1}),
+    ])
+    sig_input = []
+    metab_input = []
+
+    subnetwork, node_signatures, duplicated_parents = compress_same_children(
+        graph, sig_input, metab_input
+    )
+
+    assert len(subnetwork.nodes) == 4, "Unexpected number of nodes in subnetwork" # noqa E501
+    assert len(node_signatures) == 3, "Unexpected number of node signatures" # noqa E501
+    assert len(duplicated_parents) == 0, "Duplicated parents mismatch" # noqa E501
 
 
 def test_run_moon_core():
@@ -211,21 +251,83 @@ def test_reduce_solution_network():
     assert len(nx.get_node_attributes(res_network, 'moon_score')) != 0, \
         "Missing moon_score attribute in network"
     assert 'score' in att.columns, "Missing score column in attributes"
+    print(res_network.nodes)
     assert len(res_network.nodes) == 2, "Unexpected number of nodes"
 
 
+def test_get_ego_graph():
+    # Create a sample directed graph
+    G = nx.DiGraph()
+    G.add_edges_from([("A", "B"), ("A", "C"), ("B", "D"), ("C", "E"), ("D", "F"), ("E", "G")])
+
+    # Define the sources and depth limit
+    sources = ["A"]
+    depth_limit = 2
+
+    # Call the function
+    ego_graph = get_ego_graph(G, sources, depth_limit)
+
+    # Define expected nodes and edges in the ego graph
+    expected_nodes = {"A", "B", "C", "D", "E"}
+    expected_edges = [("A", "B"), ("A", "C"), ("B", "D"), ("C", "E")]
+
+    # Perform assertions
+    assert set(ego_graph.nodes()) == expected_nodes, "Ego graph nodes are incorrect"
+    assert set(ego_graph.edges()) == set(expected_edges), "Ego graph edges are incorrect"
+
+    # Test with a different source and depth limit
+    sources = ["B"]
+    depth_limit = 1
+    ego_graph = get_ego_graph(G, sources, depth_limit)
+
+    # Define expected nodes and edges in the ego graph for new source and depth
+    expected_nodes = {"B", "D"}
+    expected_edges = [("B", "D")]
+
+    # Perform assertions
+    assert set(ego_graph.nodes()) == expected_nodes, "Ego graph nodes are incorrect for source 'B'"
+    assert set(ego_graph.edges()) == set(expected_edges), "Ego graph edges are incorrect for source 'B'"
+
+
 def test_translate_res():
-    network = nx.DiGraph()
-    network.add_edge('Metab__HMDB179392', 'B')
-    att = pd.DataFrame({'nodes': ['Metab__HMDB179392', 'B']})
-    mapping_dict = {'HMDB179392': 'A'}
+    G = nx.DiGraph()
+    G.add_edges_from([
+        ("Metab__HMDB1_a", "Metab__HMDB2_b"),
+        ("Metab__HMDB3_b", "GeneC_c")
+    ])
 
-    translated_network, translated_att = translate_res(
-        network, att, mapping_dict
-    )
+    att_data = {
+        "nodes": [
+            "Metab__HMDB1_a",
+            "Metab__HMDB2_b",
+            "Metab__HMDB3_b",
+            "GeneC_c"
+        ],
+        "score": [1, 2, 3, 4]
+    }
+    att_df = pd.DataFrame(att_data)
 
-    assert 'Metab__A' in translated_network.nodes, "Translation failed"
-    assert 'Metab__A' in translated_att['nodes'].values, \
-        "Translation failed in attributes"
+    mapping_dict = {
+        "HMDB1": "Alpha",
+        "HMDB2": "Beta",
+        "HMDB3": "Gamma"
+    }
+
+    translated_network, translated_att = translate_res(G, att_df, mapping_dict)
+
+    expected_edges = [
+        ("Metab__Alpha_a", "Metab__Beta_b"),
+        ("Metab__Gamma_b", "EnzymeC")
+    ]
+    expected_att_nodes = [
+        "Metab__Alpha_a",
+        "Metab__Beta_b",
+        "Metab__Gamma_b",
+        "EnzymeC_c"
+    ]
+
+    assert set(translated_network.edges()) == set(expected_edges), "Translated network edges are incorrect"
+    assert translated_att['nodes'].tolist() == expected_att_nodes, "Translated attribute table nodes are incorrect"
+
 
 

@@ -30,7 +30,7 @@ def test_download_dataset():
     assert len(data) > 0
 
 
-def test_deseq2_analysis():
+def test_run_deseq2_analysis():
     # Create dummy dataset for testing, samples as colnames, genes as rownames
     counts = pd.DataFrame({
         'gene_symbol': ['Gene1', 'Gene2', 'Gene3'],
