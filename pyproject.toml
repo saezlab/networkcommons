@@ -1,0 +1,180 @@
+[build-system]
+requires = ["poetry_core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.poetry]
+name = "networkcommons"
+version = "0.2.0"
+description = "Integrated framework for network inference and evaluation using prior knowledge and omics data"
+license = "gpl-3.0-only"
+authors = [
+    "Saez Lab <omnipathdb@gmail.com>"
+]
+packages = [
+    { include = "networkcommons" }
+]
+classifiers = [
+    "Development Status :: 2 - Pre-Alpha",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python",
+    "Natural Language :: English",
+    "Topic :: Scientific/Engineering :: Bio-Informatics"
+]
+keywords = [
+    "systems biology", "molecular biology", "signaling network",
+    "transcriptomics", "modeling", "mechanistic modeling",
+    "network inference", "molecular network", "omics",
+    "biomedicine"
+]
+repository = "https://github.com/saezlab/networkcommons"
+homepage = "https://github.com/saezlab/networkcommons"
+documentation = "https://networkcommons.readthedocs.io/"
+readme = "README.md"
+
+[[tool.poetry.source]]
+name = "pypi-public"
+url = "https://pypi.org/simple/"
+
+[tool.poetry.dependencies]
+python = "^3.9"
+toml = "*"
+networkx = "*"
+pandas = "*"
+corneto = { git = "https://github.com/deeenes/corneto.git", branch = "main" }
+liana = { git = "https://github.com/deeenes/liana-py.git", branch = "main" }
+pypath-common = "^0.2.2"
+pydeseq2 = "^0.4.9"
+omnipath = "^1.0.8"
+decoupler = "^1.6.0"
+requests = "^2.32.3"
+beautifulsoup4 = "^4.12.3"
+pygraphviz = "1.11"
+pypath-omnipath = "^0.16.15"
+
+[tool.poetry.dev-dependencies]
+pytest = ">=6.0"
+tox = ">=3.20.1"
+pre-commit = ">=2.17.0"
+bump2version = "*"
+coverage = ">=6.0"
+distlib = "*"
+sphinx = "^7.0.0"
+sphinx-last-updated-by-git = ">=0.3"
+sphinx-autodoc-typehints = ">=1.18.0"
+sphinxcontrib-fulltoc = ">=1.2.0"
+sphinxcontrib-bibtex = "*"
+sphinx-copybutton = "*"
+myst-parser = "*"
+myst-nb = "*"
+jupyterlab = "*"
+pydata-sphinx-theme = "*"
+sphinx-remove-toctrees = "*"
+jupyter-contrib-nbextensions = { git = "https://github.com/deeenes/jupyter_contrib_nbextensions.git", branch = "master" }
+nbsphinx = { git = "https://github.com/deeenes/nbsphinx.git", branch = "timings" }
+
+[tool.poetry.urls]
+"Bug Tracker" = "https://github.com/saezlab/networkcommons/issues"
+
+[tool.poetry.group.dev.dependencies]
+picos = "^2.4.17"
+cvxpy = "^1.5.1"
+
+[tool.black]
+line-length = 80
+target-version = ['py31*']
+include = '\.pyi?$'
+exclude = '''
+(
+  /(
+      \.eggs
+    | \.git
+    | \.hg
+    | \.mypy_cache
+    | \.tox
+    | \.venv
+    | _build
+    | buck-out
+    | build
+    | dist
+  )/
+)
+'''
+
+[tool.isort]
+from_first = true
+line_length = 80
+multi_line_output = 3
+include_trailing_comma = true
+use_parentheses = true
+known_num="numpy,pandas"
+sections = "FUTURE,STDLIB,THIRDPARTY,NUM,FIRSTPARTY,LOCALFOLDER"
+no_lines_before="LOCALFOLDER"
+balanced_wrapping = true
+force_grid_wrap = 0
+length_sort = "1"
+indent = "    "
+skip = []
+
+[tool.flake8]
+extend-select = ["CE101"]
+ignore = [
+  "D200", "D202", "D401", "D105",
+  "W503", "W504",
+  "E731", "E131", "E251", "E303"
+]
+per-file-ignores = [
+    "docs/src/conf.py:D100",
+    "tests/*:D100,D101,D102",
+    "*/__init__.py:F401"
+]
+max-line-length = 80
+count = true
+exclude = [
+    ".git",
+    "__pycache__",
+    "build",
+    "docs/_build",
+    "dist"
+]
+
+[tool.yapf]
+based_on_style = "facebook"
+split_penalty_before_if_expr = 0
+split_penalty_import_names = 0
+split_penalty_comprehension = 0
+split_penalty_for_added_line_split = 0
+split_penalty_after_opening_bracket = 0
+split_before_first_argument = true
+split_before_named_assigns = true
+split_complex_comprehension = true
+
+[tool.rstcheck]
+report_level = "INFO"
+ignore_directives = [
+    "automodule",
+    "toctree",
+]
+ignore_roles = ["ref"]
+ignore_messages = '(Unknown target name:.*|No (directive|role) entry for "(auto)?(class|method|property|function|func|mod|attr)" in module "docutils\.parsers\.rst\.languages\.en"\.)'
+
+[tool.coverage.run]
+source = ["networkcommons"]
+omit = [
+	"**/test_*.py",
+]
+
+[tool.pytest.ini_options]
+testpaths = [
+  "tests",
+]
+xfail_strict = true
+addopts = [
+    # "-Werror",  # if 3rd party libs raise DeprecationWarnings, just use filterwarnings below
+    "--import-mode=importlib",  # allow using test files with same name
+]
+filterwarnings = [
+    # "ignore:.*U.*mode is deprecated:DeprecationWarning",
+]

@@ -1,12 +1,37 @@
+#!/usr/bin/env python
+
+#
+# This file is part of the `networkcommons` Python module
+#
+# Copyright 2024
+# Heidelberg University Hospital
+#
+# File author(s): Saez Lab (omnipathdb@gmail.com)
+#
+# Distributed under the GPLv3 license
+# See the file `LICENSE` or read a copy at
+# https://www.gnu.org/licenses/gpl-3.0.txt
+#
+
+"""
+Graph based methods.
+"""
+
 import networkx as nx
-from networkcommons.utils import get_subnetwork
 import numpy as np
-import corneto as cn
-from corneto.contrib.networkx import (
-    networkx_to_corneto_graph,
-    corneto_graph_to_networkx
-)
-from corneto.methods.carnival import get_selected_edges
+
+from networkcommons import _utils
+from networkcommons._session import session as _session
+
+__all__ = [
+    'run_shortest_paths',
+    'run_sign_consistency',
+    'run_reachability_filter',
+    'run_all_paths',
+    'compute_all_paths',
+    'add_pagerank_scores',
+    'compute_ppr_overlap',
+]
 
 
 def run_shortest_paths(network, source_dict, target_dict, verbose=False):
@@ -41,14 +66,10 @@ def run_shortest_paths(network, source_dict, target_dict, verbose=False):
                     target=target_node,
                     weight='weight'
                 )])
-            except nx.NetworkXNoPath as e:
-                if verbose:
-                    print(f"Warning: {e}")
-            except nx.NodeNotFound as e:
-                if verbose:
-                    print(f"Warning: {e}")
+            except (nx.NetworkXNoPath, nx.NodeNotFound):
+                _session.log_traceback(console = verbose)
 
-    subnetwork = get_subnetwork(network, shortest_paths_res)
+    subnetwork = _utils.get_subnetwork(network, shortest_paths_res)
 
     return subnetwork, shortest_paths_res
 
@@ -88,7 +109,7 @@ def run_sign_consistency(network, paths, source_dict, target_dict):
         if np.sign(source_sign * product_sign) == np.sign(target_sign):
             sign_consistency_res.append(path)
 
-    subnetwork = get_subnetwork(network, sign_consistency_res)
+    subnetwork = _utils.get_subnetwork(network, sign_consistency_res)
 
     return subnetwork, sign_consistency_res
 
@@ -148,14 +169,10 @@ def run_all_paths(network,
                                                    source,
                                                    targets,
                                                    depth_cutoff))
-        except nx.NetworkXNoPath as e:
-            if verbose:
-                print(f"Warning: {e}")
-        except nx.NodeNotFound as e:
-            if verbose:
-                print(f"Warning: {e}")
+        except (nx.NetworkXNoPath, nx.NodeNotFound):
+            _session.log_traceback(console = verbose)
 
-    subnetwork = get_subnetwork(network, all_paths_res)
+    subnetwork = _utils.get_subnetwork(network, all_paths_res)
 
     return subnetwork, all_paths_res
 
@@ -296,62 +313,3 @@ def compute_ppr_overlap(network, percentage=20):
     subnetwork = network.subgraph(nodes_to_include)
 
     return subnetwork
-
-
-def convert_cornetograph(graph):
-    """
-    Convert a networkx graph to a corneto graph, if needed.
-
-    Args:
-        graph (nx.Graph or nx.DiGraph): The corneto graph.
-
-    Returns:
-        cn.Graph: The corneto graph.
-    """
-    if isinstance(graph, cn._graph.Graph):
-        corneto_graph = graph
-    elif isinstance(graph, (nx.Graph, nx.DiGraph)):
-        corneto_graph = networkx_to_corneto_graph(graph)
-
-    return corneto_graph
-
-
-def run_corneto_carnival(network,
-                         source_dict,
-                         target_dict,
-                         betaWeight=0.2,
-                         solver=None,
-                         verbose=True):
-    """
-    Run the Vanilla Carnival algorithm via CORNETO.
-
-    Args:
-        network (nx.Graph): The network.
-        source_dict (dict): A dictionary containing the sources and sign
-            of perturbation.
-        target_dict (dict): A dictionary containing the targets and sign
-            of measurements.
-
-    Returns:
-        nx.Graph: The subnetwork containing the paths found by CARNIVAL.
-        list: A list containing the paths found by CARNIVAL.
-    """
-    corneto_net = convert_cornetograph(network)
-
-    problem, graph = cn.methods.runVanillaCarnival(
-        perturbations=source_dict,
-        measurements=target_dict,
-        priorKnowledgeNetwork=corneto_net,
-        betaWeight=betaWeight,
-        solver=solver,
-        verbose=verbose
-    )
-
-    network_sol = graph.edge_subgraph(get_selected_edges(problem, graph))
-
-    network_nx = corneto_graph_to_networkx(network_sol,
-                                           skip_unsupported_edges=True)
-
-    network_nx.remove_nodes_from(['_s', '_pert_c0', '_meas_c0'])
-
-    return network_nx

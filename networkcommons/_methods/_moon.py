@@ -1,14 +1,52 @@
+#!/usr/bin/env python
+
+#
+# This file is part of the `networkcommons` Python module
+#
+# Copyright 2024
+# Heidelberg University Hospital
+#
+# File author(s): Saez Lab (omnipathdb@gmail.com)
+#
+# Distributed under the GPLv3 license
+# See the file `LICENSE` or read a copy at
+# https://www.gnu.org/licenses/gpl-3.0.txt
+#
+
+"""
+Moon: multi-omics??
+"""
+
 from typing import Counter
-import networkx as nx
 import re
-from networkcommons.methods import run_reachability_filter
+
+import networkx as nx
 import pandas as pd
 import decoupler as dc
 import numpy as np
 
+from networkcommons._methods import _graph
+from networkcommons._session import _log
+
+__all__ = [
+    'meta_network_cleanup',
+    'prepare_metab_inputs',
+    'is_expressed',
+    'filter_pkn_expressed_genes',
+    'filter_input_nodes_not_in_pkn',
+    'keep_controllable_neighbours',
+    'keep_observable_neighbours',
+    'compress_same_children',
+    'run_moon_core',
+    'filter_incoherent_TF_target',
+    'decompress_moon_result',
+    'reduce_solution_network',
+    'translate_res',
+]
+
 
 def meta_network_cleanup(graph):
-    '''
+    """
     This function cleans up a meta network graph by removing self-interactions,
     calculating the mean interaction values for duplicated source-target pairs,
     and keeping only interactions with values of 1 or -1.
@@ -18,7 +56,7 @@ def meta_network_cleanup(graph):
 
     Returns:
     - A cleaned up meta network graph.
-    '''
+    """
     # Clean up the meta network
     # Remove self-interactions
     pre_graph = graph.copy()
@@ -55,14 +93,14 @@ def prepare_metab_inputs(metab_input, compartment_codes):
 
     ignored = [code for code in compartment_codes if code not in comps]
     if ignored:
-        print("The following compartment codes are not found in the PKN and "
+        _log("The following compartment codes are not found in the PKN and "
               "will be ignored:")
-        print(ignored)
+        _log(ignored)
 
     compartment_codes = [code for code in compartment_codes if code in comps]
 
     if not compartment_codes:
-        print("There are no valid compartments left. No compartment codes "
+        _log("There are no valid compartments left. No compartment codes "
               "will be added.")
         metab_input = {
             f"Metab__{name}": value for name, value in metab_input.items()
@@ -71,7 +109,7 @@ def prepare_metab_inputs(metab_input, compartment_codes):
         return metab_input
 
     else:
-        print("Adding compartment codes.")
+        _log("Adding compartment codes.")
 
         metab_input_list = []
 
@@ -116,7 +154,7 @@ def is_expressed(x, expressed_genes_entrez):
                 return None
             return x
         if re.search("Gene[0-9]+__[^_][a-z]", x):
-            print(x)
+            _log(x)
             return x
         if re.search("Gene[0-9]+__[A-Z0-9_]+reverse", x):
             genes = re.sub("_reverse", "", re.sub("Gene[0-9]+__", "", x)).split("_") # noqa E501
@@ -139,7 +177,7 @@ def filter_pkn_expressed_genes(expressed_genes_entrez, unfiltered_graph):
     Returns:
         nx.DiGraph: Filtered PKN graph with unexpressed nodes removed.
     """
-    print("MOON: removing unexpressed nodes from PKN...")
+    _log("MOON: removing unexpressed nodes from PKN...")
 
     graph = unfiltered_graph.copy()
 
@@ -151,7 +189,7 @@ def filter_pkn_expressed_genes(expressed_genes_entrez, unfiltered_graph):
 
     graph.remove_nodes_from(nodes_to_remove)
 
-    print(f"MOON: {len(nodes_to_remove)} nodes removed")
+    _log(f"MOON: {len(nodes_to_remove)} nodes removed")
 
     return graph
 
@@ -176,14 +214,14 @@ def filter_input_nodes_not_in_pkn(data, pkn):
             node for node in data.keys() if node not in new_data.keys()
         ]
 
-        print(f"COSMOS: {len(removed_nodes)} input/measured nodes are not in"
+        _log(f"COSMOS: {len(removed_nodes)} input/measured nodes are not in"
               f"PKN anymore: {removed_nodes}")
 
     return new_data
 
 
 def keep_controllable_neighbours(source_dict, graph):
-    '''
+    """
     This function filters out nodes from a dictionary of source nodes that are
     not controllable from the graph.
 
@@ -193,13 +231,13 @@ def keep_controllable_neighbours(source_dict, graph):
 
     Returns:
     - A dictionary of source nodes that are observable from the graph.
-    '''
+    """
 
-    return run_reachability_filter(graph, source_dict)
+    return _graph.run_reachability_filter(graph, source_dict)
 
 
 def keep_observable_neighbours(target_dict, graph):
-    '''
+    """
     This function filters out nodes from a dictionary of target nodes that are
     not observable from the graph.
 
@@ -209,9 +247,9 @@ def keep_observable_neighbours(target_dict, graph):
 
     Returns:
     - A dictionary of target nodes that are observable from the graph.
-    '''
+    """
 
-    subnetwork = run_reachability_filter(graph.reverse(), target_dict)
+    subnetwork = _graph.run_reachability_filter(graph.reverse(), target_dict)
 
     return subnetwork.reverse()
 
@@ -274,7 +312,7 @@ def compress_same_children(uncompressed_graph, sig_input, metab_input):
             sign = graph[parent][original_node]['sign']
             records.append((signature, original_node, parent, sign))
 
-    df_records = pd.DataFrame(records, 
+    df_records = pd.DataFrame(records,
                               columns=['signature',
                                        'original_node',
                                        'parent',
@@ -366,6 +404,7 @@ def run_moon_core(
         if statistic == "norm_wmean":
             estimate = norm
     elif statistic == "ulm":
+        _log(decoupler_mat)
         estimate, pvals = dc.run_ulm(
             mat=decoupler_mat, net=regulons, weight='sign', min_n=1
         )
@@ -406,6 +445,7 @@ def run_moon_core(
         n_plus_one["level"] = i + 1
         res_list.append(n_plus_one)
         i += 1
+        _log(f"Iteration count: {i-1}")
 
     recursive_moon_res = pd.concat(res_list)
 

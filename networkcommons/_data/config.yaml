@@ -1,0 +1,4 @@
+http_connect_timeout: 5
+http_retries: 5
+http_backoff_factor: 0.1
+http_status_forcelist: [500, 502, 503, 504]
