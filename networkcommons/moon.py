@@ -443,6 +443,65 @@ def run_moon_core(
     return recursive_moon_res
 
 
+def run_moon(network,
+             sig_input,
+             metab_input,
+             tf_regn,
+             rna_input,
+             n_layers=6,
+             method='ulm',
+             max_iter=10):
+    """
+    Runs the MOON algorithm on the given network.
+
+    Args:
+        network (NetworkX graph): The input network.
+        sig_input (numpy array): The input signal data.
+        metab_input (numpy array): The input metabolite data.
+        tf_regn (numpy array): The transcription factor regulation data.
+        rna_input (numpy array): The input RNA data.
+        n_layers (int, optional): The number of layers in the MOON algorithm.
+            Defaults to 6.
+        method (str, optional): The decoupleR method used in the MOON
+            algorithm. Defaults to 'ulm'.
+        max_iter (int, optional): The maximum number of iterations for the
+            MOON algorithm. Defaults to 10.
+
+    Returns:
+        tuple: A tuple containing the MOON scores and the modified network.
+    """
+    moon_network = network.copy()
+
+    before = 1
+    after = 0
+    i = 0
+
+    while before != after and i < max_iter:
+        before = len(moon_network.edges)
+        moon_res = run_moon_core(sig_input,
+                                 metab_input,
+                                 moon_network,
+                                 n_layers=n_layers,
+                                 statistic=method)
+
+        moon_network = filter_incoherent_TF_target(moon_res,
+                                                   tf_regn,
+                                                   moon_network,
+                                                   rna_input)
+
+        after = len(moon_network.edges)
+        i += 1
+        print(f'Optimisation iteration {i} - Before: {before}, After: {after}')
+
+    if i == max_iter:
+        print("MOON: Maximum number of iterations reached."
+              "Solution might not have converged")
+    else:
+        print("MOON: Solution converged after", i, "iterations")
+
+    return moon_res, moon_network
+
+
 def filter_incoherent_TF_target(
         moon_res, TF_reg_net, meta_network, RNA_input
 ):
