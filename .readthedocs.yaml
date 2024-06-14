@@ -16,7 +16,7 @@ build:
 
 python:
     install:
-    -   method: git
+    -   method: pip
         path: .
         extra_requirements:
         -   docs
