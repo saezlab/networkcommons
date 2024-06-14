@@ -117,6 +117,10 @@ html_context = {
 # so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = ['_static']
 
+html_show_sphinx = False
+html_logo = 'nc_logo.png'
+html_favicon = 'nc_logo.png'
+
 nitpick_ignore = [
     # If building the documentation fails because
     # of a missing link that is outside your control,
