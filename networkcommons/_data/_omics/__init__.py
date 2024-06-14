@@ -17,3 +17,4 @@ from ._decryptm import *
 from ._decryptm_ebi import get_decryptm as _get_decryptm
 from ._deseq2 import *
 from ._panacea import *
+from ._moon import *

@@ -13,3 +13,11 @@ omics:
       name: Test data
       description: Small RNA-Seq data for unit tests
       path: unit_test/test__{table}data.tsv
+    moon:
+      name: MOON
+      description: Database files for running MOON
+      path: moon/{table}_input.tsv
+    cosmos:
+      name: COSMOS
+      description: Database files for running COSMOS (MetaPKN)
+      path: moon/net/meta_network.sif
