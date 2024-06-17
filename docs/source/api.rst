@@ -13,4 +13,4 @@ Data reprocessing:
 .. autosummary::
    :toctree: generated
 
-   run_deseq2
+   _data._omics.run_deseq2
