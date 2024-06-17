@@ -1,9 +1,7 @@
 NetworkCommons
 ==============================================================
 
-|MainBuild| |Issues| |PyPIDownloads| |Docs| |Codecov|
-
-|Conda| |CondaDownloads|
+.. |MainBuild| |Codecov|
 
 .. |MainBuild| image:: https://github.com/saezlab/networkcommons/actions/workflows/main.yml/badge.svg
    :target: https://github.com/saezlab/networkcommons/actions
@@ -72,13 +70,5 @@ The data redistributed by OmniPath does not have a license, each original resour
    :hidden:
    :caption: Vignettes
 
-   notebooks/a_simple_example
-   notebooks/MOON
-   notebooks/progeny
-   notebooks/dorothea
-   notebooks/msigdb
-   notebooks/pseudobulk
-   notebooks/spatial
-   notebooks/bulk
-   notebooks/benchmark
-   notebooks/translate
+   vignettes/a_simple_example
+   vignettes/MOON
