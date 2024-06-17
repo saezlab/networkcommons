@@ -47,8 +47,8 @@ corneto = { git = "https://github.com/deeenes/corneto.git", branch = "main" }
 liana = { git = "https://github.com/deeenes/liana-py.git", branch = "main" }
 pypath-common = "^0.2.2"
 pydeseq2 = "^0.4.9"
-omnipath = "^1.0.8"
-decoupler = { git = "https://github.com/saezlab/decoupler-py.git", branch = "main" }
+omnipath = { git = "https://github.com/saezlab/omnipath.git", branch = "main" }
+decoupler = { git = "https://github.com/saezlab/decoupler-py.git", rev = "refs/pull/134/merge" }
 requests = "^2.32.3"
 beautifulsoup4 = "^4.12.3"
 pypath-omnipath = "^0.16.15"
