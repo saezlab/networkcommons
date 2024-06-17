@@ -73,13 +73,12 @@ pydata-sphinx-theme = "*"
 sphinx-remove-toctrees = "*"
 jupyter-contrib-nbextensions = { git = "https://github.com/deeenes/jupyter_contrib_nbextensions.git", branch = "master" }
 nbsphinx = { git = "https://github.com/deeenes/nbsphinx.git", branch = "timings" }
+picos = "^2.4.17"
+cvxpy = "^1.5.1"
+pygraphviz = "1.11"
 
 [tool.poetry.urls]
 "Bug Tracker" = "https://github.com/saezlab/networkcommons/issues"
-
-[tool.poetry.group.dev.dependencies]
-picos = "^2.4.17"
-cvxpy = "^1.5.1"
 
 [tool.black]
 line-length = 80
