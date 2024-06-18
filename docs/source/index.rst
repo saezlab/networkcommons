@@ -1,5 +1,7 @@
+.. image:: nc_banner.png
+
 ##############
-NetworkCommons
+Bridging the gap between data, methods and knowledge in network inference
 ##############
 
 |MainBuild| |Codecov| |Docs|
