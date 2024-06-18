@@ -8,14 +8,6 @@ Import networkcommons as::
 
    import networkcommons as nc
 
-.. toctree::
-   :maxdepth: 4
-
-   networkcommons.metadata
-   networkcommons._metadata
-   networkcommons.methods
-   networkcommons._methods
-
 Module contents
 --------------
 

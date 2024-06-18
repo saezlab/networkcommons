@@ -62,13 +62,11 @@ The data redistributed by OmniPath does not have a license, each original resour
 
    installation
    api
-   release_notes
-   reference
 
 .. toctree::
-   :maxdepth: 4
+   :maxdepth: 1
    :hidden:
    :caption: Vignettes
 
-   vignettes/a_simple_example
-   vignettes/MOON
+   vignettes/1_simple_example
+   vignettes/2_moon
