@@ -34,6 +34,19 @@ templates_path = ['_templates']
 # -- Options for HTML output
 master_doc = 'contents'
 
+autosummary_generate = True
+autodoc_member_order = "alphabetical"
+autodoc_typehints = "signature"
+autodoc_docstring_signature = True
+autodoc_follow_wrapped = False
+napoleon_google_docstring = True
+napoleon_numpy_docstring = False
+napoleon_include_init_with_doc = False
+napoleon_use_rtype = True
+napoleon_use_param = True
+napoleon_custom_sections = [("Params", "Parameters")]
+todo_include_todos = False
+
 html_theme = 'sphinx_rtd_theme'
 html_static_path = ["_static"]
 html_theme_options = dict(
