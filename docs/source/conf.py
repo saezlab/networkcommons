@@ -1,5 +1,6 @@
 import os
 import sys
+from datetime import datetime
 sys.path.insert(0, os.path.abspath('../../networkcommons'))
 
 # -- Project information
@@ -8,6 +9,7 @@ project = 'NetworkCommons'
 author = 'SaezLab'
 release = 'alpha'
 version = '0.0.1'
+copyright = f"{datetime.now():%Y}, NetworkCommons developers"
 
 # -- General configuration
 
