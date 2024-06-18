@@ -61,7 +61,7 @@ The data redistributed by OmniPath does not have a license, each original resour
    :caption: Main
 
    installation
-   api
+   api/index
 
 .. toctree::
    :maxdepth: 1
