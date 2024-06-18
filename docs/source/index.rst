@@ -1,7 +1,8 @@
+##############
 NetworkCommons
-==============================================================
+##############
 
-.. |MainBuild| |Codecov|
+|MainBuild| |Codecov| |Docs|
 
 .. |MainBuild| image:: https://github.com/saezlab/networkcommons/actions/workflows/main.yml/badge.svg
    :target: https://github.com/saezlab/networkcommons/actions
@@ -12,8 +13,8 @@ NetworkCommons
 .. .. |PyPIDownloads| image:: https://static.pepy.tech/badge/decoupler
 ..    :target: https://pepy.tech/project/decoupler
    
-.. .. |Docs| image:: https://readthedocs.org/projects/networkcommons/badge/?version=latest
-..    :target: https://networkcommons.readthedocs.io/en/latest/?badge=latest
+.. |Docs| image:: https://readthedocs.org/projects/networkcommons/badge/?version=latest
+   :target: https://networkcommons.readthedocs.io/en/22-add-documentation/?badge=22-add-documentation
 
 .. |Codecov| image:: https://codecov.io/github/saezlab/networkcommons/graph/badge.svg?token=RH438ALJC2
    :target: https://codecov.io/gh/saezlab/networkcommons
@@ -45,7 +46,7 @@ NetworkCommons
 .. For more information check the link.
 
 License
--------
+=======
 The data redistributed by OmniPath does not have a license, each original resource carries their own. 
 `Here <https://omnipathdb.org/info>`_ one can find the license information of all the resources in OmniPath.
 
@@ -55,18 +56,3 @@ The data redistributed by OmniPath does not have a license, each original resour
 .. Ramirez Flores R.O. and Saez-Rodriguez J. 2022. decoupleR: ensemble of computational methods to infer biological activities 
 .. from omics data. Bioinformatics Advances. https://doi.org/10.1093/bioadv/vbac016
 
-.. toctree::
-   :maxdepth: 4
-   :hidden:
-   :caption: Main
-
-   installation
-   api/index
-
-.. toctree::
-   :maxdepth: 1
-   :hidden:
-   :caption: Vignettes
-
-   vignettes/1_simple_example
-   vignettes/2_moon
