@@ -14,7 +14,7 @@ Currently, it can be installed from GitHub:
 
 
 Setting a conda environment
------
+---------------------------
 
 All required dependencies have been packed in a conda environment file. To create a new conda environment with all the dependencies, you can use the following command:
 
