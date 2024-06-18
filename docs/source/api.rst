@@ -11,7 +11,7 @@ Import networkcommons as::
 Moon
 --------------
 
-.. automodule:: networkcommons.methods.moon
+.. automodule:: networkcommons._methods._moon
    :members:
    :undoc-members:
    :show-inheritance:
