@@ -56,7 +56,7 @@ The data redistributed by OmniPath does not have a license, each original resour
 .. from omics data. Bioinformatics Advances. https://doi.org/10.1093/bioadv/vbac016
 
 .. toctree::
-   :maxdepth: 1
+   :maxdepth: 4
    :hidden:
    :caption: Main
 
@@ -66,7 +66,7 @@ The data redistributed by OmniPath does not have a license, each original resour
    reference
 
 .. toctree::
-   :maxdepth: 1
+   :maxdepth: 4
    :hidden:
    :caption: Vignettes
 

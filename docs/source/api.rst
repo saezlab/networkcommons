@@ -8,10 +8,18 @@ Import networkcommons as::
 
    import networkcommons as nc
 
-Moon
+.. toctree::
+   :maxdepth: 4
+
+   networkcommons.metadata
+   networkcommons._metadata
+   networkcommons.methods
+   networkcommons._methods
+
+Module contents
 --------------
 
-.. automodule:: networkcommons._methods._moon
+.. automodule:: networkcommons
    :members:
    :undoc-members:
    :show-inheritance:
