@@ -8,9 +8,10 @@ Import networkcommons as::
 
    import networkcommons as nc
 
-Data reprocessing:
+Moon
 --------------
-.. autosummary::
-   :toctree: generated
 
-   _data._omics.run_deseq2
+.. automodule:: networkcommons.methods.moon
+   :members:
+   :undoc-members:
+   :show-inheritance:
