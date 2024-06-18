@@ -33,6 +33,7 @@ networkcommons.data.omics.panacea
 Prior knowledge resources
 =========================
 
+
 networkcommons.data.network.omnipath
 ------------------------------------
 .. automodule:: networkcommons._data._network._omnipath
@@ -40,15 +41,17 @@ networkcommons.data.network.omnipath
    :undoc-members:
    :show-inheritance:
 
+
 networkcommons.data.network.moon
--------------------------------
+--------------------------------
 .. automodule:: networkcommons._data._network._moon
    :members:
    :undoc-members:
    :show-inheritance:
 
+
 networkcommons.data.network.lianaplus
----------------------------------
+-------------------------------------
 .. automodule:: networkcommons._data._network._lianaplus
    :members:
    :undoc-members:
