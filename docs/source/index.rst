@@ -16,7 +16,7 @@ Bridging the gap between data, methods and knowledge in network inference
 ..    :target: https://pepy.tech/project/decoupler
    
 .. |Docs| image:: https://readthedocs.org/projects/networkcommons/badge/?version=22-add-documentation
-   :target: https://networkcommons.readthedocs.io/en/22-add-documentation/?badge=22-add-documentation
+   :target: https://networkcommons.readthedocs.io/en/22-add-documentation/
 
 .. |Codecov| image:: https://codecov.io/github/saezlab/networkcommons/graph/badge.svg?token=RH438ALJC2
    :target: https://codecov.io/gh/saezlab/networkcommons
