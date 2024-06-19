@@ -1,10 +1,10 @@
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 4
    :caption: Main
    
    index
    installation
-   data
+   api
 
 
 .. toctree::
