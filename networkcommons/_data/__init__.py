@@ -14,5 +14,5 @@
 #
 
 from ._builtin import _module_data
-from . import omics as omics
-from . import network as network
+from .omics import *
+from .network import *
