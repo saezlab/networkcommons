@@ -1,7 +1,7 @@
 import os
 import sys
 from datetime import datetime
-sys.path.insert(0, os.path.abspath('../../networkcommons'))
+sys.path.insert(0, os.path.abspath('../..'))
 
 # -- Project information
 
@@ -38,6 +38,7 @@ master_doc = 'contents'
 
 autosummary_generate = True
 autodoc_member_order = "alphabetical"
+
 autodoc_typehints = "signature"
 autodoc_docstring_signature = True
 autodoc_follow_wrapped = False
