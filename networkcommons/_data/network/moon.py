@@ -22,17 +22,17 @@ from networkcommons import _utils
 def build_moon_regulons(include_liana=False):
 
     import decoupler as dc
-    from . import _omnipath
+    from . import omnipath
 
     dorothea_df = dc.get_collectri()
 
     TFs = np.unique(dorothea_df['source'])
 
-    full_pkn = _omnipath.get_omnipath(genesymbols=True, directed_signed=True)
+    full_pkn = omnipath.get_omnipath(genesymbols=True, directed_signed=True)
 
     if include_liana:
-        from . import _lianaplus
-        ligrec_resource = _lianaplus.get_lianaplus()
+        from . import lianaplus
+        ligrec_resource = lianaplus.get_lianaplus()
 
         full_pkn = pd.concat([full_pkn, ligrec_resource])
         full_pkn['edgeID'] = full_pkn['source'] + '_' + full_pkn['target']

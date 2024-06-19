@@ -20,7 +20,7 @@ import shutil
 import glob
 import urllib.parse
 
-from . import _common
+from . import common
 from networkcommons._session import _log
 
 
@@ -35,13 +35,13 @@ def get_decryptm(path: str):
 
     os.makedirs(path, exist_ok = True)
     url = 'https://ftp.pride.ebi.ac.uk/pride/data/archive/2023/03/PXD037285/'
-    files = [f for f in _common._ls(url) if f.endswith('Curves.zip')]
+    files = [f for f in common._ls(url) if f.endswith('Curves.zip')]
 
     for fname in files:
 
         zip_url = urllib.parse.urljoin(url, fname)
 
-        with _common._open(zip_url) as zip_file:
+        with common._open(zip_url) as zip_file:
 
             _log(f'Extracting zip `{zip_file.filename}` to `{path}`.')
             zip_file.extractall(path)

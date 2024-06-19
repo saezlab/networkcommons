@@ -17,7 +17,7 @@ from __future__ import annotations
 
 import pandas as pd
 
-from . import _common
+from . import common
 
 __all__ = ['panacea']
 
@@ -31,8 +31,8 @@ def panacea() -> tuple[pd.DataFrame]:
     """
 
     return tuple(
-        _common._open(
-            _common._commons_url('panacea', table = table),
+        common._open(
+            common._commons_url('panacea', table = table),
             df = {'sep': '\t'},
         )
         for table in ('count', 'meta')

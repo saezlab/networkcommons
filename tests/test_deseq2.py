@@ -1,6 +1,6 @@
 import pandas as pd
 
-from networkcommons._data._omics._deseq2 import deseq2
+from networkcommons._data.omics.deseq2 import deseq2
 
 
 def test_deseq2():

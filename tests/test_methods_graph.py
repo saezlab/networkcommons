@@ -3,7 +3,7 @@ import pytest
 import pandas as pd
 import networkx as nx
 
-from networkcommons._methods import _graph
+from networkcommons._methods import graph
 
 
 def _network(weights: bool = False, signs: bool = False) -> nx.DiGraph:
@@ -77,7 +77,7 @@ def test_run_shortest_paths(net_weighted):
     source_dict = {'A': 1}
     target_dict = {'D': 1}
 
-    subnetwork, shortest_paths_res = _graph.run_shortest_paths(
+    subnetwork, shortest_paths_res = graph.run_shortest_paths(
         net_weighted,
         source_dict,
         target_dict,
@@ -102,7 +102,7 @@ def test_run_sign_consistency(net_signed):
 
     paths = [['A', 'B', 'C', 'D']]
 
-    subnetwork, sign_consistency_res = _graph.run_sign_consistency(
+    subnetwork, sign_consistency_res = graph.run_sign_consistency(
         net_signed,
         paths,
         source_dict,
@@ -117,7 +117,7 @@ def test_run_reachability_filter(net):
 
     source_dict = {'B': 1}
 
-    subnetwork = _graph.run_reachability_filter(net, source_dict)
+    subnetwork = graph.run_reachability_filter(net, source_dict)
 
     assert list(subnetwork.edges) == [('B', 'C'), ('C', 'D')]
 
@@ -127,7 +127,7 @@ def test_run_all_paths(net_weighted):
     source_dict = {'A': 1}
     target_dict = {'D': 1}
 
-    subnetwork, all_paths_res = _graph.run_all_paths(
+    subnetwork, all_paths_res = graph.run_all_paths(
         net_weighted,
         source_dict,
         target_dict,
@@ -144,13 +144,13 @@ def test_add_pagerank_scores(net2):
 
     network, source_dict, target_dict = net2
 
-    network_with_pagerank = _graph.add_pagerank_scores(
+    network_with_pagerank = graph.add_pagerank_scores(
         network,
         source_dict,
         target_dict,
         personalize_for='source',
     )
-    network_with_pagerank = _graph.add_pagerank_scores(
+    network_with_pagerank = graph.add_pagerank_scores(
         network,
         source_dict,
         target_dict,
@@ -218,7 +218,7 @@ def test_compute_ppr_overlap(net2):
     network.nodes['Y']['pagerank_from_sources'] = 0.0
     network.nodes['Y']['pagerank_from_targets'] = 0.1272304403645429
 
-    subnetwork = _graph.compute_ppr_overlap(network)
+    subnetwork = graph.compute_ppr_overlap(network)
 
     test_network = nx.DiGraph()
     test_network.add_edge('A', 'D', weight=10)

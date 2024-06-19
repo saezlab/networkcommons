@@ -1,7 +1,7 @@
 import networkx as nx
 import corneto as cn
 
-from networkcommons._methods import _causal
+from networkcommons._methods import causal
 
 
 def test_run_corneto_carnival():
@@ -19,7 +19,7 @@ def test_run_corneto_carnival():
     source_dict = {'I1': 1}
     target_dict = {'M1': 1, 'M2': 1}
 
-    result_network = _causal.run_corneto_carnival(
+    result_network = causal.run_corneto_carnival(
         network,
         source_dict,
         target_dict,

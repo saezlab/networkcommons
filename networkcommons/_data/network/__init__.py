@@ -13,7 +13,5 @@
 # https://www.gnu.org/licenses/gpl-3.0.txt
 #
 
-from ._decryptm import *
-from ._decryptm_ebi import get_decryptm as _get_decryptm
-from ._deseq2 import *
-from ._panacea import *
+from .omnipath import get_omnipath
+from .lianaplus import get_lianaplus

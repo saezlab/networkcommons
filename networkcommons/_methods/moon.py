@@ -25,7 +25,7 @@ import pandas as pd
 import decoupler as dc
 import numpy as np
 
-from networkcommons._methods import _graph
+from networkcommons._methods import graph
 from networkcommons._session import _log
 
 __all__ = [
@@ -233,7 +233,7 @@ def keep_controllable_neighbours(source_dict, graph):
     - A dictionary of source nodes that are observable from the graph.
     """
 
-    return _graph.run_reachability_filter(graph, source_dict)
+    return graph.run_reachability_filter(graph, source_dict)
 
 
 def keep_observable_neighbours(target_dict, graph):
@@ -249,7 +249,7 @@ def keep_observable_neighbours(target_dict, graph):
     - A dictionary of target nodes that are observable from the graph.
     """
 
-    subnetwork = _graph.run_reachability_filter(graph.reverse(), target_dict)
+    subnetwork = graph.run_reachability_filter(graph.reverse(), target_dict)
 
     return subnetwork.reverse()
 
