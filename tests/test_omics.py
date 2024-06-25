@@ -7,7 +7,7 @@ from networkcommons._data import omics
 
 def test_datasets():
 
-    dsets = omics._common._datasets()
+    dsets = omics.common._datasets()
 
     assert 'baseurl' in dsets
     assert isinstance(dsets['datasets'], dict)
@@ -16,23 +16,23 @@ def test_datasets():
 
 def test_datasets_2():
 
-    dsets = omics._common.datasets()
+    dsets = omics.common.datasets()
 
     assert 'decryptm' in dsets
 
 
 def test_commons_url():
 
-    url = omics._common._commons_url('test', table = 'meta')
+    url = omics.common._commons_url('test', table = 'meta')
 
     assert 'metadata' in url
 
 
 def test_download(tmp_path):
 
-    url = omics._common._commons_url('test', table = 'meta')
+    url = omics.common._commons_url('test', table = 'meta')
     path = tmp_path / 'test_download.tsv'
-    omics._common._download(url, path)
+    omics.common._download(url, path)
 
     assert path.exists()
 
@@ -45,9 +45,9 @@ def test_download(tmp_path):
 
 def test_open():
 
-    url = omics._common._commons_url('test', table = 'meta')
+    url = omics.common._commons_url('test', table = 'meta')
 
-    with omics._common._open(url) as fp:
+    with omics.common._open(url) as fp:
 
         line = next(fp)
 
@@ -56,8 +56,8 @@ def test_open():
 
 def test_open_df():
 
-    url = omics._common._commons_url('test', table = 'meta')
-    df = omics._common._open(url, df = {'sep': '\t'})
+    url = omics.common._commons_url('test', table = 'meta')
+    df = omics.common._open(url, df = {'sep': '\t'})
 
     assert isinstance(df, pd.DataFrame)
     assert df.shape == (4, 2)
@@ -78,9 +78,9 @@ def decryptm_args():
     return 'KDAC_Inhibitors', 'Acetylome', 'curves_CUDC101.txt'
 
 
-def test_decryptm(decryptm_args):
+def test_decryptm_table(decryptm_args):
 
-    df = omics.decryptm.decryptm(*decryptm_args)
+    df = omics.decryptm.decryptm_table(*decryptm_args)
 
     assert isinstance(df, pd.DataFrame)
     assert df.shape == (18007, 65)
@@ -100,7 +100,7 @@ def test_decryptm_experiment(decryptm_args):
 
 def test_panacea():
 
-    dfs = omics.panacea.panacea()
+    dfs = omics.panacea()
 
     assert isinstance(dfs, tuple)
     assert len(dfs) == 2

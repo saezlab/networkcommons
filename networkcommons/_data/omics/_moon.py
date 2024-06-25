@@ -21,7 +21,7 @@ from __future__ import annotations
 
 import pandas as pd
 
-from . import _common
+from . import common
 
 __all__ = ['moon']
 
