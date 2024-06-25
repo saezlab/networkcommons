@@ -17,4 +17,4 @@
 Visualization methods for networks and analyses.
 """
 
-from ._networkx import *
+from . import networkx as networkx

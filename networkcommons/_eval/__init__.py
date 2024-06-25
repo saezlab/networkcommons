@@ -17,4 +17,4 @@
 Network metrics and analysis methods.
 """
 
-from . import _graph as graph
+from . import metrics as metrics

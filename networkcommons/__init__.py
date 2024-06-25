@@ -27,7 +27,7 @@ __all__ = [
     'setup',
     'data',
     'eval',
-    'methods',
+    '_methods',
     'noi',
     'utils',
     'visual',
@@ -39,7 +39,7 @@ from ._conf import config, setup
 
 from . import _data as data
 from . import _eval as eval
-from . import _methods as methods
+from . import _methods as _methods
 from . import _noi as noi
 from . import _utils as utils
 from . import _visual as visual

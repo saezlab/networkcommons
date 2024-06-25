@@ -52,6 +52,8 @@ decoupler = { git = "https://github.com/saezlab/decoupler-py.git", rev = "refs/p
 requests = "^2.32.3"
 beautifulsoup4 = "^4.12.3"
 pypath-omnipath = "^0.16.15"
+numpydoc = "^1.7.0"
+sphinx-rtd-theme = "^2.0.0"
 
 [tool.poetry.dev-dependencies]
 pytest = ">=6.0"
