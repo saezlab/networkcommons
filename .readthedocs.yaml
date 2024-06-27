@@ -1,7 +1,7 @@
 version: 2
 
 sphinx:
-    configuration: docs/source/conf.py
+    configuration: docs/src/conf.py
 
 build:
     os: ubuntu-22.04
@@ -12,4 +12,4 @@ python:
     install:
     -   method: pip
         path: .
-    -   requirements: docs/source/requirements.txt
+    -   requirements: docs/src/requirements.txt
