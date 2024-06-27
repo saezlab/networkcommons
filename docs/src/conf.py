@@ -61,7 +61,7 @@ html_context = dict(
     github_user='saezlab',  # Username
     github_repo='networkcommons',  # Repo name
     github_version='master',  # Version
-    conf_py_path='/docs/source/',  # Path in the checkout to the docs root
+    conf_py_path='/docs/src/',  # Path in the checkout to the docs root
 )
 html_show_sphinx = False
 html_logo = 'nc_logo.png'
