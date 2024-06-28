@@ -19,6 +19,8 @@ extensions = [
     'sphinx.ext.autodoc',
     'sphinx.ext.autosummary',
     'sphinx.ext.intersphinx',
+    'sphinx.ext.napoleon',
+    'sphinx_autodoc_typehints',
     'sphinx.ext.autosectionlabel',
     'numpydoc',
     'nbsphinx',
@@ -37,6 +39,7 @@ templates_path = ['_templates']
 master_doc = 'contents'
 
 autosummary_generate = True
+autosummary_imported_members = False
 autodoc_member_order = "alphabetical"
 
 autodoc_typehints = "signature"

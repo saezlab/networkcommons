@@ -46,20 +46,15 @@ def deseq2(
     Runs DESeq2 analysis on the given counts and metadata.
 
     Args:
-        counts:
-            The counts data with gene symbols as index.
-        metadata:
-            The metadata with sample IDs as index.
-        test_group:
-            The name of the test group.
-        ref_group:
-            The name of the reference group.
-        covariates:
-            List of covariates to include in the analysis.
-            Defaults to an empty list.
+        counts (pd.DataFrame): The counts data with gene symbols as index.
+        metadata (pd.DataFrame): The metadata with sample IDs as index.
+        test_group (str): The name of the test group.
+        ref_group (str): The name of the reference group.
+        covariates (list, optional): List of covariates to include in the analysis.
+            Defaults to None.
 
     Returns:
-        The results of the DESeq2 analysis as a data frame.
+        pd.DataFrame: The results of the DESeq2 analysis as a data frame.
     """
 
     _log('Running differential expression analysis using DESeq2.')
