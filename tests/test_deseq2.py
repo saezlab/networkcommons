@@ -1,8 +1,11 @@
+import pytest
+
 import pandas as pd
 
 from networkcommons._data.omics.deseq2 import deseq2
 
 
+@pytest.mark.slow
 def test_deseq2():
 
     # Create dummy dataset for testing, samples as colnames, genes as rownames

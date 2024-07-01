@@ -28,6 +28,7 @@ def test_commons_url():
     assert 'metadata' in url
 
 
+@pytest.mark.slow
 def test_download(tmp_path):
 
     url = omics.common._commons_url('test', table = 'meta')
@@ -43,6 +44,7 @@ def test_download(tmp_path):
     assert line.startswith('sample_ID\t')
 
 
+@pytest.mark.slow
 def test_open():
 
     url = omics.common._commons_url('test', table = 'meta')
@@ -63,6 +65,7 @@ def test_open_df():
     assert df.shape == (4, 2)
 
 
+@pytest.mark.slow
 def test_decryptm_datasets():
 
     dsets = omics.decryptm.decryptm_datasets()
@@ -78,6 +81,7 @@ def decryptm_args():
     return 'KDAC_Inhibitors', 'Acetylome', 'curves_CUDC101.txt'
 
 
+@pytest.mark.slow
 def test_decryptm_table(decryptm_args):
 
     df = omics.decryptm.decryptm_table(*decryptm_args)
@@ -87,6 +91,7 @@ def test_decryptm_table(decryptm_args):
     assert df.EC50.dtype == 'float64'
 
 
+@pytest.mark.slow
 def test_decryptm_experiment(decryptm_args):
 
     dfs = omics.decryptm.decryptm_experiment(*decryptm_args[:2])
@@ -98,6 +103,7 @@ def test_decryptm_experiment(decryptm_args):
     assert dfs[3].EC50.dtype == 'float64'
 
 
+@pytest.mark.slow
 def test_panacea():
 
     dfs = omics.panacea()

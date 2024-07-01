@@ -173,9 +173,13 @@ testpaths = [
   "tests",
 ]
 xfail_strict = true
+markers = [
+    "slow: marks tests as slow (deselect with '-m \"not slow\"')"
+]
 addopts = [
     # "-Werror",  # if 3rd party libs raise DeprecationWarnings, just use filterwarnings below
     "--import-mode=importlib",  # allow using test files with same name
+    "-m not slow",
 ]
 filterwarnings = [
     # "ignore:.*U.*mode is deprecated:DeprecationWarning",
