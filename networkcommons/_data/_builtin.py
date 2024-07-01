@@ -17,3 +17,11 @@ import functools as ft
 from pypath_common import data as _data
 
 _module_data = ft.partial(_data.load, module = 'networkcommons')
+
+
+def urls() -> dict[str, str]:
+    """
+    Built-in resource URLs.
+    """
+
+    return _module_data('urls')
