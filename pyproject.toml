@@ -182,5 +182,7 @@ addopts = [
     "-m not slow",
 ]
 filterwarnings = [
-    # "ignore:.*U.*mode is deprecated:DeprecationWarning",
+    "ignore: .*fitting did not converge.*:UserWarning",
+    "ignore: .*especially asymmetric.*:UserWarning",
+    "ignore: .*machine precision times.*:FutureWarning",
 ]
