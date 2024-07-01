@@ -18,3 +18,4 @@ Visualization methods for networks and analyses.
 """
 
 from . import networkx as networkx
+from . import yfiles as yfiles

@@ -23,291 +23,216 @@ The visualize_network() function is the main function to visualize the graph bas
 """
 
 import networkx as nx
+import matplotlib.pyplot as plt
+from _aux import wrap_node_name
 
 from networkcommons._session import _log
 
-__all__ = [
-    'get_styles',
-    'set_style_attributes',
-    'merge_styles',
-    'visualize_network',
-    'visualize_network_default',
-    'visualize_network_sign_consistent',
-    'visualize_big_graph',
-    'visualize_graph_split',
-]
+#TODO
+# __all__ = [
+#     'get_styles',
+#     'set_style_attributes',
+#     'merge_styles',
+#     'visualize_network',
+#     'visualize_network_default',
+#     'visualize_network_sign_consistent',
+#     'visualize_big_graph',
+#     'visualize_graph_split',
+# ]
 
 
-def get_styles():
-    """
-    Return a dictionary containing styles for different types of networks.
-    """
-    styles = {
-        'default': {
-            'nodes': {
-                'sources': {
-                    'shape': 'circle',
-                    'color': 'steelblue',
-                    'style': 'filled',
-                    'fillcolor': 'steelblue',
-                    'label': '',
-                    'penwidth': 3
-                },
-                'targets': {
-                    'shape': 'circle',
-                    'color': 'mediumpurple1',
-                    'style': 'filled',
-                    'fillcolor': 'mediumpurple1',
-                    'label': '',
-                    'penwidth': 3
-                },
-                'other': {
-                    'shape': 'circle',
-                    'color': 'gray',
-                    'style': 'filled',
-                    'fillcolor': 'gray',
-                    'label': ''
-                }
-            },
-            'edges': {
-                'neutral': {
-                    'color': 'gray30',
-                    'penwidth': 2
-                }
-            }
-        },
-        'sign_consistent': {
-            'nodes': {
-                'sources': {
-                    'default': {
-                        'shape': 'circle',
-                        'style': 'filled',
-                        'fillcolor': 'steelblue',
-                        'label': '',
-                        'penwidth': 3,
-                        'color': 'steelblue'
-                    },
-                    'positive_consistent': {
-                        'color': 'forestgreen'
-                    },
-                    'negative_consistent': {
-                        'color': 'tomato3'
-                    }
-                },
-                'targets': {
-                    'default': {
-                        'shape': 'circle',
-                        'style': 'filled',
-                        'fillcolor': 'mediumpurple1',
-                        'label': '',
-                        'penwidth': 3,
-                        'color': 'mediumpurple1'
-                    },
-                    'positive_consistent': {
-                        'color': 'forestgreen'
-                    },
-                    'negative_consistent': {
-                        'color': 'tomato3'
-                    }
-                },
-                'other': {
-                    'default': {
-                        'shape': 'circle',
-                        'color': 'gray',
-                        'style': 'filled',
-                        'fillcolor': 'gray',
-                        'label': ''
-                    }
-                }
-            },
-            'edges': {
-                'positive': {
-                    'color': 'forestgreen',
-                    'penwidth': 2
-                },
-                'negative': {
-                    'color': 'tomato3',
-                    'penwidth': 2
-                },
-                'neutral': {
-                    'color': 'gray30',
-                    'penwidth': 2
-                }
-            }
-        },
-        # Add more network styles here
+class NetworkXVisualizer:
+
+    _default_edge_colors = {
+        'stimulation': 'green',
+        'inhibition': 'red',
+        'form complex': 'blue'
     }
 
-    return styles
+    _default_node_colors = {
+        'initial_node': 'lightyellow',
+        'noi': 'lightblue',
+        'highlight': 'lightyellow',
+        'default': 'lightgray'
+    }
 
+    def __init__(self, network, color_by="Effect", edge_colors=None):
+        self.network = network.copy()
+        self.color_by = color_by
 
-def set_style_attributes(item, base_style, condition_style=None):
-    """
-    Set attributes for a graph item (node or edge) based on the given styles.
-
-    Args:
-        item (node or edge): The item to set attributes for.
-        base_style (dict): The base style dictionary with default attribute settings.
-        condition_style (dict, optional): A dictionary of attribute settings for specific conditions. Defaults to None.
-    """
-    for attr, value in base_style.items():
-        item.attr[attr] = value
-
-    if condition_style:
-        for attr, value in condition_style.items():
-            item.attr[attr] = value
-
-
-def merge_styles(default_style, custom_style, path=""):
-    """
-    Merge custom styles with default styles to ensure all necessary fields are present.
-
-    Args:
-        default_style (dict): The default style dictionary.
-        custom_style (dict): The custom style dictionary.
-        path (str): The path in the dictionary hierarchy for logging purposes.
-
-    Returns:
-        dict: The merged style dictionary.
-    """
-    merged_style = default_style.copy()
-    if custom_style is not None:
-        for key, value in custom_style.items():
-            if isinstance(value, dict) and key in merged_style:
-                merged_style[key] = merge_styles(merged_style[key], value, f"{path}.{key}" if path else key)
-            else:
-                merged_style[key] = value
-
-        # Log missing keys in custom_style
-        for key in default_style:
-            if key not in custom_style:
-                _log(f"Missing key '{path}.{key}' in custom style. Using default value.")
-
-    return merged_style
-
-
-def visualize_network_default(network, source_dict, target_dict, prog='dot', custom_style=None):
-    """
-    Core function to visualize the graph.
-
-    Args:
-        network (nx.Graph): The network to visualize.
-        source_dict (dict): A dictionary containing the sources and sign of perturbation.
-        target_dict (dict): A dictionary containing the targets and sign of measurements.
-        prog (str, optional): The layout program to use. Defaults to 'dot'.
-        custom_style (dict, optional): The custom style to apply. If None, the default style is used.
-    """
-    default_style = get_styles()['default']
-    style = merge_styles(default_style, custom_style)
-
-    A = nx.nx_agraph.to_agraph(network)
-    A.graph_attr['ratio'] = '1.2'
-
-    sources = set(source_dict.keys())
-    target_dict_flat = {sub_key: sub_value for key, value in target_dict.items() for sub_key, sub_value in value.items()}
-    targets = set(target_dict_flat.keys())
-
-    for node in A.nodes():
-        n = node.get_name()
-        if n in sources:
-            base_style = style['nodes']['sources']
-        elif n in targets:
-            base_style = style['nodes']['targets']
+        if edge_colors:
+            self.edge_colors = edge_colors
         else:
-            base_style = style['nodes']['other']
+            self.edge_colors = self._default_edge_colors
 
-        set_style_attributes(node, base_style)
+    def set_custom_edge_colors(self, custom_edge_colors):
+        self.edge_colors.update(custom_edge_colors)
 
-    for edge in A.edges():
-        edge_style = style['edges']['neutral']
-        set_style_attributes(edge, edge_style)
+    def color_nodes(self):
+        nodes = self.network.nodes
+        for node in nodes:
+            nodes.update_node_property(node, type="color", value="lightgray")
 
-    A.layout(prog=prog)
-    return A
+            if nodes[node].get("initial_node"):
+                self.network.update_node_property(node,
+                                                  type="color",
+                                                  value="lightyellow")
+    def color_edges(self, edge, color):
+        self.network.update_edge_property(edge, type="color", color=color)
+        #TODO add arrowheads too
 
+    def visualize_network_default(self, network, source_dict, target_dict, prog='dot', custom_style=None):
+        """
+        Core function to visualize the graph.
 
-def visualize_network_sign_consistent(network, source_dict, target_dict, prog='dot', custom_style=None):
-    """
-    Visualize the graph considering sign consistency.
+        Args:
+            network (nx.Graph): The network to visualize.
+            source_dict (dict): A dictionary containing the sources and sign of perturbation.
+            target_dict (dict): A dictionary containing the targets and sign of measurements.
+            prog (str, optional): The layout program to use. Defaults to 'dot'.
+            custom_style (dict, optional): The custom style to apply. If None, the default style is used.
+        """
+        default_style = get_styles()['default']
+        style = merge_styles(default_style, custom_style)
 
-    Args:
-        network (nx.Graph): The network to visualize.
-        source_dict (dict): A dictionary containing the sources and sign of perturbation.
-        target_dict (dict): A dictionary containing the targets and sign of measurements.
-        prog (str, optional): The layout program to use. Defaults to 'dot'.
-        custom_style (dict, optional): The custom style to apply. Defaults to None.
-    """
-    default_style = get_styles()['sign_consistent']
-    style = merge_styles(default_style, custom_style)
+        A = nx.nx_agraph.to_agraph(network)
+        A.graph_attr['ratio'] = '1.2'
 
-    # Call the core visualization function
-    A = visualize_network_default(network, source_dict, target_dict, prog, style)
+        sources = set(source_dict.keys())
+        target_dict_flat = {sub_key: sub_value for key, value in target_dict.items() for sub_key, sub_value in
+                            value.items()}
+        targets = set(target_dict_flat.keys())
 
-    sources = set(source_dict.keys())
-    target_dict_flat = {sub_key: sub_value for key, value in target_dict.items() for sub_key, sub_value in value.items()}
-    targets = set(target_dict_flat.keys())
+        for node in A.nodes():
+            n = node.get_name()
+            if n in sources:
+                base_style = style['nodes']['sources']
+            elif n in targets:
+                base_style = style['nodes']['targets']
+            else:
+                base_style = style['nodes']['other']
 
-    for node in A.nodes():
-        n = node.get_name()
-        condition_style = None
-        sign_value = target_dict_flat.get(n, 1)
+            set_style_attributes(node, base_style)
 
-        if n in sources:
-            nodes_type = "sources"
-        elif n in targets:
-            nodes_type = "targets"
+        for edge in A.edges():
+            edge_style = style['edges']['neutral']
+            set_style_attributes(edge, edge_style)
 
-        if sign_value > 0:
+        A.layout(prog=prog)
+        return A
+
+    def visualize_network_sign_consistent(network, source_dict, target_dict, prog='dot', custom_style=None):
+        """
+        Visualize the graph considering sign consistency.
+
+        Args:
+            network (nx.Graph): The network to visualize.
+            source_dict (dict): A dictionary containing the sources and sign of perturbation.
+            target_dict (dict): A dictionary containing the targets and sign of measurements.
+            prog (str, optional): The layout program to use. Defaults to 'dot'.
+            custom_style (dict, optional): The custom style to apply. Defaults to None.
+        """
+        default_style = get_styles()['sign_consistent']
+        style = merge_styles(default_style, custom_style)
+
+        # Call the core visualization function
+        A = visualize_network_default(network, source_dict, target_dict, prog, style)
+
+        sources = set(source_dict.keys())
+        target_dict_flat = {sub_key: sub_value for key, value in target_dict.items() for sub_key, sub_value in
+                            value.items()}
+        targets = set(target_dict_flat.keys())
+
+        for node in A.nodes():
+            n = node.get_name()
+            condition_style = None
+            sign_value = target_dict_flat.get(n, 1)
+
+            if n in sources:
+                nodes_type = "sources"
+            elif n in targets:
+                nodes_type = "targets"
+
+            if sign_value > 0:
                 condition_style = style['nodes'][nodes_type].get('positive_consistent')
-        elif sign_value < 0:
+            elif sign_value < 0:
                 condition_style = style['nodes'][nodes_type].get('negative_consistent')
 
-        if condition_style:
-            set_style_attributes(node, {}, condition_style)  # Apply condition style without overwriting base style
+            if condition_style:
+                set_style_attributes(node, {}, condition_style)  # Apply condition style without overwriting base style
 
-    for edge in A.edges():
-        u, v = edge
-        edge_data = network.get_edge_data(u, v)
-        if 'interaction' in edge_data:
-            edge_data['sign'] = edge_data.pop('interaction')
+        for edge in A.edges():
+            u, v = edge
+            edge_data = network.get_edge_data(u, v)
+            if 'interaction' in edge_data:
+                edge_data['sign'] = edge_data.pop('interaction')
 
-        if edge_data['sign'] == 1:
-            edge_style = style['edges']['positive']
-        elif edge_data['sign'] == -1:
-            edge_style = style['edges']['negative']
+            if edge_data['sign'] == 1:
+                edge_style = style['edges']['positive']
+            elif edge_data['sign'] == -1:
+                edge_style = style['edges']['negative']
+            else:
+                edge_style = style['edges']['neutral']
+
+            set_style_attributes(edge, edge_style)
+
+        return A
+
+    def visualize_network(self,
+                          network,
+                          source_dict,
+                          target_dict,
+                          prog='dot',
+                          network_type='default',
+                          custom_style=None):
+        """
+        Main function to visualize the graph based on the network type.
+
+        Args:
+            network (nx.Graph): The network to visualize.
+            source_dict (dict): A dictionary containing the sources and sign of perturbation.
+            target_dict (dict): A dictionary containing the targets and sign of measurements.
+            prog (str, optional): The layout program to use. Defaults to 'dot'.
+            network_type (str, optional): The type of visualization to use. Defaults to "default".
+            custom_style (dict, optional): The custom style to apply. Defaults to None.
+        """
+        if network_type == 'sign_consistent':
+            return visualize_network_sign_consistent(network, source_dict, target_dict, prog, custom_style)
         else:
-            edge_style = style['edges']['neutral']
-
-        set_style_attributes(edge, edge_style)
-
-    return A
+            default_style = get_styles().get(network_type, get_styles()['default'])
+            return visualize_network_default(network, source_dict, target_dict, prog, custom_style)
 
 
-def visualize_network(network, source_dict, target_dict, prog='dot', network_type='default', custom_style=None):
-    """
-    Main function to visualize the graph based on the network type.
+    def visualise(self, output_file='network.png', render=False, highlight_nodes=None, style=None):
+        plt.figure(figsize=(12, 12))
+        network = self.network
+        pos = nx.spring_layout(network)
 
-    Args:
-        network (nx.Graph): The network to visualize.
-        source_dict (dict): A dictionary containing the sources and sign of perturbation.
-        target_dict (dict): A dictionary containing the targets and sign of measurements.
-        prog (str, optional): The layout program to use. Defaults to 'dot'.
-        network_type (str, optional): The type of visualization to use. Defaults to "default".
-        custom_style (dict, optional): The custom style to apply. Defaults to None.
-    """
-    if network_type == 'sign_consistent':
-        return visualize_network_sign_consistent(network, source_dict, target_dict, prog, custom_style)
-    else:
-        default_style = get_styles().get(network_type, get_styles()['default'])
-        return visualize_network_default(network, source_dict, target_dict, prog, custom_style)
+        node_colors = [network.nodes[node].get('fillcolor', 'lightgray') for node in network.nodes]
+        edge_colors = [network.edges[edge].get('color', 'black') for edge in network.edges]
 
+        nx.draw(network, pos, node_color=node_colors, edge_color=edge_colors, with_labels=True)
 
-def visualize_big_graph():
-    return NotImplementedError
+        if highlight_nodes:
+            if style.get('highlight_color'):
+                highlight_color = style['highlight_color']
+            else:
+                highlight_color = self._default_node_colors['highlight']
+            highlight_nodes = [wrap_node_name(node) for node in highlight_nodes]
+            nx.draw_networkx_nodes(self.network, pos, nodelist=highlight_nodes, node_color=highlight_color)
 
+        if render:
+            plt.show()
+        else:
+            plt.savefig(output_file)
+            plt.close()
 
-def visualize_graph_split():
-    return NotImplementedError
+    def visualize_big_graph():
+        return NotImplementedError
+
+    def visualize_graph_split():
+        return NotImplementedError
+
 
 
 #-----------------------------
