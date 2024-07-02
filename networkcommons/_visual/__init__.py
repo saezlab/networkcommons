@@ -17,5 +17,5 @@
 Visualization methods for networks and analyses.
 """
 
-from . import vis_networkx as networkx
-from . import yfiles as yfiles
+from . import vis_networkx as vis_networkx
+from . import yfiles as vis_yfiles

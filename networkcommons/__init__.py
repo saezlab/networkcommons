@@ -33,7 +33,7 @@ __all__ = [
     'visual',
 ]
 
-#import lazy_import
+import lazy_import
 
 from ._metadata import __author__, __version__
 from ._session import log, _log, session
@@ -49,6 +49,6 @@ _MODULES = [
     'visual',
 ]
 
-#for _mod in _MODULES:
+for _mod in _MODULES:
 
-#    globals()[_mod] = lazy_import.lazy_module(f'{__name__}.{_mod}')
+    globals()[_mod] = lazy_import.lazy_module(f'{__name__}.{_mod}')
