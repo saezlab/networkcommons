@@ -55,6 +55,7 @@ pypath-omnipath = "^0.16.15"
 numpydoc = "^1.7.0"
 sphinx-rtd-theme = "^2.0.0"
 lazy-import = { git = "https://github.com/mnmelo/lazy_import.git", branch = "master" }
+anndata = "^0.10.8"
 
 [tool.poetry.dev-dependencies]
 pytest = ">=6.0"
