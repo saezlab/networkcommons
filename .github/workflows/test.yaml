@@ -20,7 +20,7 @@ jobs:
         strategy:
             fail-fast: false
             matrix:
-                python: [3.9, 3.10, 3.11]
+                python: ['3.9', '3.10', '3.11']
                 os: [ubuntu-latest, macos-latest]
 
         env:
@@ -30,9 +30,22 @@ jobs:
         steps:
         -   name: Check out
             uses: actions/checkout@main
-        -   uses: tlylt/install-graphviz@v1
-        -   name: Setup Python
+        -   name: Install graphviz headers
+            if: ${{ matrix.os == 'ubuntu-latest' }}
+            run: |
+              sudo apt-get update
+              sudo apt-get install -y graphviz graphviz-dev
+        -   name: Install graphviz headers
+            if: ${{ matrix.os == 'macos-latest' }}
+            run: |
+              brew install graphviz
+              echo "PATH=\"$(brew --prefix graphviz)/bin:$PATH\"" >> "$GITHUB_ENV"
+              echo "CFLAGS=\"-I$(brew --prefix graphviz)/include\"" >> "$GITHUB_ENV"
+              echo "LDFLAGS=\"-L$(brew --prefix graphviz)/lib\"" >> "$GITHUB_ENV"
+        -   name: Setup Python ${{ matrix.python }}
             uses: actions/setup-python@v5
+            with:
+              python-version: ${{ matrix.python }}
         -   name: Install Poetry
             uses: snok/install-poetry@v1
             with:
@@ -44,25 +57,28 @@ jobs:
             uses: actions/cache@v4
             with:
                 path: .venv
-                key: venv-${{ runner.os }}-${{ steps.setup-python.outputs.python-version }}-${{ hashFiles('**/poetry.lock') }}
+                key: venv-${{ runner.os }}-${{ matrix.python }}-${{ hashFiles('**/poetry.lock') }}
         -   name: Install dependencies
             if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
-            run: poetry install --no-interaction --no-root
+            run: |
+              echo "Env variables:\n\r"
+              echo -e "$PATH\n\r"
+              echo -e "$CFLAGS\n\r"
+              echo -e "$LDFLAGS\n\r"
+              poetry install --no-interaction --no-root
         -   name: Install library
             run: poetry install --no-interaction
         -   name: Tests and coverage
             if: ${{ github.event_name == 'push' }}
             run: |
-                pytest -v --cov --color=yes --durations=0
+                poetry run pytest -v --cov --color=yes --durations=0
         -   name: Tests
             if: ${{ github.event_name == 'pull_request' }}
             run: |
-                pytest -v --cov --color=yes --durations=0
+                poetry run pytest -v --cov --color=yes --durations=0
         -   name: Upload coverage reports to Codecov
             if: ${{ github.event_name == 'push' }}
             env:
                 CODECOV_NAME: ${{ matrix.python }}-${{ matrix.os }}
             run: |
-                curl -Os https://uploader.codecov.io/latest/linux/codecov
-                chmod +x codecov
-                ./codecov --no-color --required -F fast -t ${{ secrets.CODECOV_TOKEN }}
+                poetry run codecovcli --no-color --required -F fast -t ${{ secrets.CODECOV_TOKEN }}
