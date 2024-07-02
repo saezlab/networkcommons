@@ -60,7 +60,12 @@ jobs:
                 key: venv-${{ runner.os }}-${{ matrix.python }}-${{ hashFiles('**/poetry.lock') }}
         -   name: Install dependencies
             if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
-            run: poetry install --no-interaction --no-root
+            run:
+              echo "Env variables:"
+              echo "$PATH"
+              echo "$CFLAGS"
+              echo "$LDFLAGS"
+              poetry install --no-interaction --no-root
         -   name: Install library
             run: poetry install --no-interaction
         -   name: Tests and coverage
