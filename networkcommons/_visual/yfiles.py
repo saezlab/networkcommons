@@ -11,6 +11,7 @@ from yfiles_styles import (get_styles,
                            #set_custom_edge_color,
                            get_edge_color, get_comparison_color)
 
+
 class YFilesVisualizer:
 
     def __init__(self, network):
