@@ -2115,6 +2115,32 @@ url = "https://pypi.org/simple"
 reference = "pypi-public"
 
 [[package]]
+name = "ipywidgets"
+version = "8.1.3"
+description = "Jupyter interactive widgets"
+optional = false
+python-versions = ">=3.7"
+files = [
+    {file = "ipywidgets-8.1.3-py3-none-any.whl", hash = "sha256:efafd18f7a142248f7cb0ba890a68b96abd4d6e88ddbda483c9130d12667eaf2"},
+    {file = "ipywidgets-8.1.3.tar.gz", hash = "sha256:f5f9eeaae082b1823ce9eac2575272952f40d748893972956dc09700a6392d9c"},
+]
+
+[package.dependencies]
+comm = ">=0.1.3"
+ipython = ">=6.1.0"
+jupyterlab-widgets = ">=3.0.11,<3.1.0"
+traitlets = ">=4.3.1"
+widgetsnbextension = ">=4.0.11,<4.1.0"
+
+[package.extras]
+test = ["ipykernel", "jsonschema", "pytest (>=3.6.0)", "pytest-cov", "pytz"]
+
+[package.source]
+type = "legacy"
+url = "https://pypi.org/simple"
+reference = "pypi-public"
+
+[[package]]
 name = "isoduration"
 version = "20.11.0"
 description = "Operations with ISO 8601 durations"
@@ -2656,6 +2682,22 @@ requests = ">=2.31"
 docs = ["autodoc-traits", "jinja2 (<3.2.0)", "mistune (<4)", "myst-parser", "pydata-sphinx-theme", "sphinx", "sphinx-copybutton", "sphinxcontrib-openapi (>0.8)"]
 openapi = ["openapi-core (>=0.18.0,<0.19.0)", "ruamel-yaml"]
 test = ["hatch", "ipykernel", "openapi-core (>=0.18.0,<0.19.0)", "openapi-spec-validator (>=0.6.0,<0.8.0)", "pytest (>=7.0,<8)", "pytest-console-scripts", "pytest-cov", "pytest-jupyter[server] (>=0.6.2)", "pytest-timeout", "requests-mock", "ruamel-yaml", "sphinxcontrib-spelling", "strict-rfc3339", "werkzeug"]
+
+[package.source]
+type = "legacy"
+url = "https://pypi.org/simple"
+reference = "pypi-public"
+
+[[package]]
+name = "jupyterlab-widgets"
+version = "3.0.11"
+description = "Jupyter interactive widgets for JupyterLab"
+optional = false
+python-versions = ">=3.7"
+files = [
+    {file = "jupyterlab_widgets-3.0.11-py3-none-any.whl", hash = "sha256:78287fd86d20744ace330a61625024cf5521e1c012a352ddc0a3cdc2348becd0"},
+    {file = "jupyterlab_widgets-3.0.11.tar.gz", hash = "sha256:dd5ac679593c969af29c9bed054c24f26842baa51352114736756bc035deee27"},
+]
 
 [package.source]
 type = "legacy"
@@ -7189,6 +7231,22 @@ url = "https://pypi.org/simple"
 reference = "pypi-public"
 
 [[package]]
+name = "widgetsnbextension"
+version = "4.0.11"
+description = "Jupyter interactive widgets for Jupyter Notebook"
+optional = false
+python-versions = ">=3.7"
+files = [
+    {file = "widgetsnbextension-4.0.11-py3-none-any.whl", hash = "sha256:55d4d6949d100e0d08b94948a42efc3ed6dfdc0e9468b2c4b128c9a2ce3a7a36"},
+    {file = "widgetsnbextension-4.0.11.tar.gz", hash = "sha256:8b22a8f1910bfd188e596fe7fc05dcbd87e810c8a4ba010bdb3da86637398474"},
+]
+
+[package.source]
+type = "legacy"
+url = "https://pypi.org/simple"
+reference = "pypi-public"
+
+[[package]]
 name = "wrapt"
 version = "1.16.0"
 description = "Module for decorators, wrappers and monkey patching."
@@ -7323,6 +7381,25 @@ url = "https://pypi.org/simple"
 reference = "pypi-public"
 
 [[package]]
+name = "yfiles-jupyter-graphs"
+version = "1.7.2"
+description = "A diagram visualization extension for JupyterLab and Jupyter Notebooks powered by yFiles for HTML"
+optional = false
+python-versions = ">=3.9"
+files = [
+    {file = "yfiles_jupyter_graphs-1.7.2-py3-none-any.whl", hash = "sha256:a95cb03cba9cd580c9cf5fd60ca3701c88531cf2a976442a4e4e035ed4deb260"},
+    {file = "yfiles_jupyter_graphs-1.7.2.tar.gz", hash = "sha256:77896845595f6bb3e3471181a95971b762c41b6f92ab40182623f512d17786b7"},
+]
+
+[package.dependencies]
+ipywidgets = ">=8.0.0"
+
+[package.source]
+type = "legacy"
+url = "https://pypi.org/simple"
+reference = "pypi-public"
+
+[[package]]
 name = "zipp"
 version = "3.19.2"
 description = "Backport of pathlib-compatible object wrapper for zip files"
@@ -7345,4 +7422,4 @@ reference = "pypi-public"
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.9"
-content-hash = "6ab2b699b102a1cd754badfac3723c8a507944a35a632377160afef456dcc61f"
+content-hash = "85db07b4cc66b46835d77331cfc9b2e03dc7b67cf0072732d6bca7375d68ed00"
