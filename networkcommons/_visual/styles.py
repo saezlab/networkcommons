@@ -1,3 +1,5 @@
+from networkcommons._session import _log
+
 def get_styles():
     """
     Return a dictionary containing styles for different types of networks.
@@ -100,6 +102,7 @@ def get_styles():
 
     return styles
 
+
 def set_style_attributes(item, base_style, condition_style=None):
     """
     Set attributes for a graph item (node or edge) based on the given styles.
@@ -115,6 +118,8 @@ def set_style_attributes(item, base_style, condition_style=None):
     if condition_style:
         for attr, value in condition_style.items():
             item.attr[attr] = value
+
+    return item
 
 
 def merge_styles(default_style, custom_style, path=""):

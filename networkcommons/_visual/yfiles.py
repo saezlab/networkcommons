@@ -1,174 +1,127 @@
-import pandas as pd
-import networkx as nx
-import matplotlib.pyplot as plt
 from yfiles_jupyter_graphs import GraphWidget
+from typing import Dict
 from IPython.display import display
-from typing import Dict, List
-from pypath.utils import mapping
 from _aux import wrap_node_name
+import pandas as pd
 
-
-
+from yfiles_styles import (get_styles,
+                           apply_node_style,
+                           apply_edge_style,
+                           #set_custom_node_color,
+                           #set_custom_edge_color,
+                           get_edge_color, get_comparison_color)
 
 class YFilesVisualizer:
 
     def __init__(self, network):
         self.network = network.copy()
+        self.styles = get_styles()
 
-    def yfiles_visual(
-            self,
-            graph_layout,
-            directed,
-    ):
+    def yfiles_visual(self, graph_layout, directed):
         # creating empty object for visualization
         w = GraphWidget()
 
         # filling w with nodes
         objects = []
-        for idx, item in self.dataframe_nodes.iterrows():
-            obj = {
-                "id": self.dataframe_nodes["Uniprot"].loc[idx],
-                "properties": {"label": self.dataframe_nodes["Genesymbol"].loc[idx]},
-                "color": "#ffffff",
-                "styles": {"backgroundColor": "#ffffff"}
-            }
-            objects.append(obj)
+
+        for node in self.network.nodes:
+            node_props = {"label": node}
+            node = apply_node_style(node_props, self.styles['default']['nodes'])
+            objects.append({
+                "id": node,
+                "properties": node,
+                "color": node['color'],
+                "styles": {"backgroundColor": node['fillcolor']}
+            })
+
         w.nodes = objects
 
         # filling w with edges
         objects = []
-        for index, row in self.dataframe_edges.iterrows():
-            obj = {
-                "id": self.dataframe_edges["Effect"].loc[index],
-                "start": self.dataframe_edges["source"].loc[index],
-                "end": self.dataframe_edges["target"].loc[index],
-                "properties": {"references": self.dataframe_edges["References"].loc[index]}}
-            objects.append(obj)
+
+        for edge in self.network.edges:
+            edge_props = {"color": get_edge_color(edge[2]['effect'], self.styles)}
+            edge = apply_edge_style(edge_props, self.styles['default']['edges'])
+            objects.append({
+                "id": edge,
+                "start": edge[0],
+                "end": edge[1],
+                "properties": edge
+            })
+
         w.edges = objects
 
-        def custom_edge_color_mapping(edge: Dict):
-            """let the edge be red if the interaction is an inhibition, else green"""
-            return ("#fa1505" if edge['id'] == "inhibition" else "#05e60c")
-
-        w.set_edge_color_mapping(custom_edge_color_mapping)
-
-        def custom_node_color_mapping(node: Dict):
-            return {"color": "#ffffff"}
-
-        w.set_node_styles_mapping(custom_node_color_mapping)
-
-        def custom_factor_mapping(node: Dict):
-            """choose random factor"""
-            return 5
-
-        w.set_node_scale_factor_mapping(custom_factor_mapping)
-
-        def custom_label_styles_mapping(node: Dict):
-            """let the label be the negated purple big index"""
-            return {
-                'text': node["properties"]["label"],
-                'backgroundColor': None,
-                'fontSize': 40,
-                'color': '#030200',
-                'shape': 'round-rectangle',
-                'textAlignment': 'center'
-            }
-
-        w.set_node_label_mapping(custom_label_styles_mapping)
+        w.set_edge_color_mapping(self.custom_edge_color_mapping)
+        w.set_node_styles_mapping(self.custom_node_color_mapping)
+        w.set_node_scale_factor_mapping(self.custom_factor_mapping)
+        w.set_node_label_mapping(self.custom_label_styles_mapping)
 
         w.directed = directed
         w.graph_layout = graph_layout
 
         display(w)
 
-    def vis_comparison(
-            self,
-            int_comparison,
-            node_comparison,
-            graph_layout,
-            directed,
-    ):
+    def vis_comparison(self, int_comparison, node_comparison, graph_layout, directed):
         # creating empty object for visualization
         w = GraphWidget()
 
         objects = []
         for idx, item in node_comparison.iterrows():
-            obj = {
-                "id": node_comparison["node"].loc[idx],
-                "properties": {"label": node_comparison["node"].loc[idx],
-                               "comparison": node_comparison["comparison"].loc[idx], },
-                "color": "#ffffff",
-                #       "styles":{"backgroundColor":"#ffffff"}
-            }
-            objects.append(obj)
+            node_props = {"label": item["node"], "comparison": item["comparison"]}
+            node = apply_node_style(node_props, self.styles['default']['nodes'])
+            node = set_custom_node_color(node, get_comparison_color(item["comparison"], self.styles, 'nodes'))
+            objects.append({
+                "id": item["node"],
+                "properties": node,
+                "color": node['color'],
+                "styles": {"backgroundColor": node['fillcolor']}
+            })
         w.nodes = objects
 
         # filling w with edges
         objects = []
         for index, row in int_comparison.iterrows():
-            obj = {
-                "id": int_comparison["comparison"].loc[index],
-                "properties": {
-                    "comparison": int_comparison["comparison"].loc[index]},
-                "start": int_comparison["source"].loc[index],
-                "end": int_comparison["target"].loc[index]
-            }
-            objects.append(obj)
+            edge_props = {"comparison": row["comparison"]}
+            edge = apply_edge_style(edge_props, self.styles['default']['edges'])
+            edge = set_custom_edge_color(edge, get_comparison_color(row["comparison"], self.styles, 'edges'))
+            objects.append({
+                "id": row["comparison"],
+                "start": row["source"],
+                "end": row["target"],
+                "properties": edge
+            })
         w.edges = objects
 
-        def custom_node_color_mapping(node: Dict):
-            if node['properties']['comparison'] == "Unique to Network 1":
-                return {"color": "#f5f536"}
-            elif node['properties']['comparison'] == "Unique to Network 2":
-                return {"color": "#36f55f"}
-            elif node['properties']['comparison'] == "Common":
-                return {"color": "#3643f5"}
-
-        w.set_node_styles_mapping(custom_node_color_mapping)
-
-        def custom_factor_mapping(node: Dict):
-            """choose random factor"""
-            return 5
-
-        w.set_node_scale_factor_mapping(custom_factor_mapping)
-
-        def custom_label_styles_mapping(node: Dict):
-            """let the label be the negated purple big index"""
-            return {
-                'text': node["id"],
-                'backgroundColor': None,
-                'fontSize': 20,
-                'color': '#030200',
-                'position': 'center',
-                'maximumWidth': 130,
-                'wrapping': 'word',
-                'textAlignment': 'center'
-            }
-
-        w.set_node_label_mapping(custom_label_styles_mapping)
-
-        def custom_edge_color_mapping(edge: Dict):
-            if edge['id'] == "Unique to Network 1":
-                return "#e3941e"
-            elif edge['id'] == "Unique to Network 2":
-                return "#36f55f"
-            elif edge['id'] == "Common":
-                return "#3643f5"
-            elif edge['id'] == "Conflicting":
-                return "#ffcc00"
-
-        w.set_edge_color_mapping(custom_edge_color_mapping)
+        w.set_edge_color_mapping(self.custom_edge_color_mapping)
+        w.set_node_styles_mapping(self.custom_node_color_mapping)
+        w.set_node_scale_factor_mapping(self.custom_factor_mapping)
+        w.set_node_label_mapping(self.custom_label_styles_mapping)
 
         w.directed = directed
         w.graph_layout = graph_layout
 
         display(w)
 
+    @staticmethod
+    def custom_edge_color_mapping(edge: Dict):
+        return edge["properties"]["color"]
+
+    @staticmethod
+    def custom_node_color_mapping(node: Dict):
+        return {"color": node["color"]}
+
+    @staticmethod
+    def custom_factor_mapping(node: Dict):
+        return 5
+
+    @staticmethod
+    def custom_label_styles_mapping(node: Dict):
+        label_style = get_styles()['default']['labels'].copy()
+        label_style['text'] = node["properties"]["label"]
+        return label_style
+
 
 # Example usage
-# network is assumed to be a custom object with edges, nodes, and initial_nodes attributes.
-# Here is a mock example of how to create such an object. You should replace it with your actual network data.
-
 # class MockNetwork:
 #     def __init__(self):
 #         self.edges = pd.DataFrame({
@@ -183,5 +136,5 @@ class YFilesVisualizer:
 #         self.initial_nodes = ['A', 'B']
 #
 # network = MockNetwork()
-# visualizer = NetworkXVisualizer(network)
-# visualizer.render(view=True)
+# visualizer = YFilesVisualizer(network)
+# visualizer.yfiles_visual(graph_layout="hierarchic", directed=True)
