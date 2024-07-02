@@ -189,4 +189,5 @@ filterwarnings = [
     "ignore: .*fitting did not converge.*:UserWarning",
     "ignore: .*especially asymmetric.*:UserWarning",
     "ignore: .*machine precision times.*:FutureWarning",
+    "ignore: .*invalid escape sequence.*:DeprecationWarning",
 ]
