@@ -9,14 +9,9 @@ jobs:
         -   name: Check out main
             uses: actions/checkout@main
         -   name: Install graphviz headers
-            if: ${{ matrix.os == 'ubuntu-latest' }}
             run: |
               sudo apt-get update
               sudo apt-get install -y graphviz graphviz-dev
-        -   name: Install graphviz headers
-            if: ${{ matrix.os == 'macos-latest' }}
-            run: |
-              brew install graphviz
         -   name: Setup Python
             uses: actions/setup-python@v5
             with:
