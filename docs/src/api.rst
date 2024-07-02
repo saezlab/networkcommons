@@ -8,7 +8,7 @@ Import NetworkCommons as::
 Methods
 ~~~~~~~~
 
-.. module::networkcommons.methods
+.. module::networkcommons._methods
 .. currentmodule:: networkcommons
 
 .. autosummary::
@@ -22,7 +22,7 @@ Methods
 Data
 ~~~~~~~~
 
-.. module::networkcommons.data
+.. module::networkcommons._data
 .. currentmodule:: networkcommons
 
 .. autosummary::
@@ -36,7 +36,7 @@ Data
 Evaluation
 ~~~~~~~~~~
 
-.. module::networkcommons.eval
+.. module::networkcommons._eval
 .. currentmodule:: networkcommons
 
 .. autosummary::
@@ -49,7 +49,7 @@ Evaluation
 Visualization
 ~~~~~~~~~~~~~
 
-.. module::networkcommons.visual
+.. module::networkcommons._visual
 .. currentmodule:: networkcommons
 
 .. autosummary::
