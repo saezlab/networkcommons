@@ -24,7 +24,7 @@ def get_styles():
                     'label': '',
                     'penwidth': 3
                 },
-                'other': {
+                'default': {
                     'shape': 'circle',
                     'color': 'gray',
                     'style': 'filled',
@@ -33,7 +33,15 @@ def get_styles():
                 }
             },
             'edges': {
-                'neutral': {
+                'positive': {
+                    'color': 'forestgreen',
+                    'penwidth': 2
+                },
+                'negative': {
+                    'color': 'tomato3',
+                    'penwidth': 2
+                },
+                'default': {
                     'color': 'gray30',
                     'penwidth': 2
                 }
@@ -97,8 +105,7 @@ def get_styles():
                     'penwidth': 2
                 }
             }
-        },
-        # Add more network styles here
+        }
     }
 
     return styles

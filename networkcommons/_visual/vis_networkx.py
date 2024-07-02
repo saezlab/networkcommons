@@ -24,64 +24,56 @@ The visualize_network() function is the main function to visualize the graph bas
 
 import networkx as nx
 import matplotlib.pyplot as plt
-from ._aux import wrap_node_name
-
-from networkcommons._session import _log
-
-#TODO
-# __all__ = [
-#     'get_styles',
-#     'set_style_attributes',
-#     'merge_styles',
-#     'visualize_network',
-#     'visualize_network_default',
-#     'visualize_network_sign_consistent',
-#     'visualize_big_graph',
-#     'visualize_graph_split',
-# ]
+from ._aux import wrap_node_name  # Ensure this exists in your package
+from networkcommons._session import _log  # Ensure this exists in your package
+from networkcommons._visual.styles import (get_styles, set_style_attributes, merge_styles)
 
 
 class NetworkXVisualizer:
 
-    _default_edge_colors = {
-        'stimulation': 'green',
-        'inhibition': 'red',
-        'form complex': 'blue'
-    }
-
-    _default_node_colors = {
-        'initial_node': 'lightyellow',
-        'noi': 'lightblue',
-        'highlight': 'lightyellow',
-        'default': 'lightgray'
-    }
-
-    def __init__(self, network, color_by="Effect", edge_colors=None):
+    def __init__(self, network, color_by="effect", edge_colors=None):
         self.network = network.copy()
         self.color_by = color_by
 
         if edge_colors:
             self.edge_colors = edge_colors
         else:
-            self.edge_colors = self._default_edge_colors
+            self.edge_colors = get_styles()['default']['edges']
 
     def set_custom_edge_colors(self, custom_edge_colors):
         self.edge_colors.update(custom_edge_colors)
 
     def color_nodes(self):
+        default_node_colors = get_styles()['default']['nodes']['default']
+        source_node_color = default_node_colors['sources']
+        target_node_color = default_node_colors['targets']
         nodes = self.network.nodes
         for node in nodes:
-            nodes.update_node_property(node, type="color", value="lightgray")
+            nodes[node]['color'] = default_node_colors
 
-            if nodes[node].get("initial_node"):
-                self.network.update_node_property(node,
-                                                  type="color",
-                                                  value="lightyellow")
-    def color_edges(self, edge, color):
-        self.network.update_edge_property(edge, type="color", color=color)
-        #TODO add arrowheads too
+            if nodes[node].get("type") == "source":
+                nodes[node]['color'] = source_node_color
 
-    def visualize_network_default(self, network, source_dict, target_dict, prog='dot', custom_style=None):
+            if nodes[node].get("type") == "target":
+                nodes[node]['color'] = target_node_color
+
+    def color_edges(self):
+        edge_colors = get_styles()['default']['edges']
+        for edge in self.network.edges:
+            u, v = edge
+            edge_data = self.network.get_edge_data(u, v)
+            if self.color_by in edge_data:
+                color = edge_colors[edge_data[self.color_by]]
+            else:
+                color = edge_colors['default']
+            edge_data['color'] = color
+
+    def visualize_network_default(self,
+                                  network,
+                                  source_dict,
+                                  target_dict,
+                                  prog='dot',
+                                  custom_style=None):
         """
         Core function to visualize the graph.
 
@@ -99,8 +91,7 @@ class NetworkXVisualizer:
         A.graph_attr['ratio'] = '1.2'
 
         sources = set(source_dict.keys())
-        target_dict_flat = {sub_key: sub_value for key, value in target_dict.items() for sub_key, sub_value in
-                            value.items()}
+        target_dict_flat = {sub_key: sub_value for key, value in target_dict.items() for sub_key, sub_value in value.items()}
         targets = set(target_dict_flat.keys())
 
         for node in A.nodes():
@@ -121,7 +112,12 @@ class NetworkXVisualizer:
         A.layout(prog=prog)
         return A
 
-    def visualize_network_sign_consistent(network, source_dict, target_dict, prog='dot', custom_style=None):
+    def visualize_network_sign_consistent(self,
+                                          network,
+                                          source_dict,
+                                          target_dict,
+                                          prog='dot',
+                                          custom_style=None):
         """
         Visualize the graph considering sign consistency.
 
@@ -136,11 +132,10 @@ class NetworkXVisualizer:
         style = merge_styles(default_style, custom_style)
 
         # Call the core visualization function
-        A = visualize_network_default(network, source_dict, target_dict, prog, style)
+        A = self.visualize_network_default(network, source_dict, target_dict, prog, style)
 
         sources = set(source_dict.keys())
-        target_dict_flat = {sub_key: sub_value for key, value in target_dict.items() for sub_key, sub_value in
-                            value.items()}
+        target_dict_flat = {sub_key: sub_value for key, value in target_dict.items() for sub_key, sub_value in value.items()}
         targets = set(target_dict_flat.keys())
 
         for node in A.nodes():
@@ -197,11 +192,10 @@ class NetworkXVisualizer:
             custom_style (dict, optional): The custom style to apply. Defaults to None.
         """
         if network_type == 'sign_consistent':
-            return visualize_network_sign_consistent(network, source_dict, target_dict, prog, custom_style)
+            return self.visualize_network_sign_consistent(network, source_dict, target_dict, prog, custom_style)
         else:
             default_style = get_styles().get(network_type, get_styles()['default'])
-            return visualize_network_default(network, source_dict, target_dict, prog, custom_style)
-
+            return self.visualize_network_default(network, source_dict, target_dict, prog, custom_style)
 
     def visualise(self, output_file='network.png', render=False, highlight_nodes=None, style=None):
         plt.figure(figsize=(12, 12))
@@ -227,12 +221,11 @@ class NetworkXVisualizer:
             plt.savefig(output_file)
             plt.close()
 
-    def visualize_big_graph():
-        return NotImplementedError
+    def visualize_big_graph(self):
+        raise NotImplementedError
 
-    def visualize_graph_split():
-        return NotImplementedError
-
+    def visualize_graph_split(self):
+        raise NotImplementedError
 
 
 #-----------------------------

@@ -10,7 +10,7 @@ import os
 from pypath.utils import mapping
 
 from _aux import wrap_node_name
-import yfiles
+import vis_yfiles
 
 class NetworkMock:
 
@@ -57,7 +57,7 @@ class NetworkMock:
         return self.color_map
 
     def draw(self, filepath=None, render=False):
-        networkx_vis = yfiles.NetworkXVisualizer()
+        networkx_vis = vis_yfiles.NetworkXVisualizer()
         networkx_vis.visualise(render=render)
 
     def mapping_node_identifier(self, node: str) -> List[str]:

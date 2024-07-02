@@ -72,7 +72,6 @@ def get_styles():
             'undefined': 'gray',
             'default': 'black'
         }
-        # Additional styles can be added here
     }
 
     return styles
