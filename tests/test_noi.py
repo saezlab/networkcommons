@@ -1,3 +1,5 @@
+import pytest
+
 from networkcommons import _noi
 
 
@@ -14,6 +16,7 @@ SAMPLE_PROTEINS_HUMAN = {
 }
 
 
+@pytest.mark.slow
 def test_noi_str():
 
     noi = _noi.Noi('EGFR')
