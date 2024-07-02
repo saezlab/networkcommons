@@ -56,4 +56,4 @@ Visualization
     :toctree: api
     :recursive:
 
-    visual.networkx
+    visual.vis_networkx
