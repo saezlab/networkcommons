@@ -53,6 +53,7 @@ def human_protein_ids() -> list[str]:
     return list(SAMPLE_HUMAN_PROTEINS.keys())
 
 
+@pytest.mark.slow
 def test_node_human_protein(human_protein_ids):
 
     for _id in human_protein_ids:
@@ -62,6 +63,7 @@ def test_node_human_protein(human_protein_ids):
         assert node.asdict() == SAMPLE_HUMAN_PROTEINS[_id]
 
 
+@pytest.mark.slow
 def test_node_id_translation(human_protein_ids):
 
     upc1_ensg = human_protein_ids[2]
@@ -73,6 +75,7 @@ def test_node_id_translation(human_protein_ids):
     assert list(upc1.as_idtype('uniprot'))[0].asdict() == upc1_uniprot_attrs
 
 
+@pytest.mark.slow
 def test_node_mouse_protein():
 
     egfr_m = _node.Node('Egfr', organism = 'mouse')
@@ -80,6 +83,7 @@ def test_node_mouse_protein():
     assert egfr_m.asdict() == SAMPLE_MOUSE_PROTEINS['Egfr']
 
 
+@pytest.mark.slow
 def test_node_orthology_translation():
 
     egfr_m_o_attrs = SAMPLE_MOUSE_PROTEINS['Egfr'].copy()

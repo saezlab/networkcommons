@@ -1,6 +1,7 @@
 import pytest
 
 import pandas as pd
+import anndata as ad
 
 from networkcommons._data import omics
 
@@ -28,6 +29,7 @@ def test_commons_url():
     assert 'metadata' in url
 
 
+@pytest.mark.slow
 def test_download(tmp_path):
 
     url = omics.common._commons_url('test', table = 'meta')
@@ -43,6 +45,7 @@ def test_download(tmp_path):
     assert line.startswith('sample_ID\t')
 
 
+@pytest.mark.slow
 def test_open():
 
     url = omics.common._commons_url('test', table = 'meta')
@@ -63,6 +66,7 @@ def test_open_df():
     assert df.shape == (4, 2)
 
 
+@pytest.mark.slow
 def test_decryptm_datasets():
 
     dsets = omics.decryptm.decryptm_datasets()
@@ -78,6 +82,7 @@ def decryptm_args():
     return 'KDAC_Inhibitors', 'Acetylome', 'curves_CUDC101.txt'
 
 
+@pytest.mark.slow
 def test_decryptm_table(decryptm_args):
 
     df = omics.decryptm.decryptm_table(*decryptm_args)
@@ -87,6 +92,7 @@ def test_decryptm_table(decryptm_args):
     assert df.EC50.dtype == 'float64'
 
 
+@pytest.mark.slow
 def test_decryptm_experiment(decryptm_args):
 
     dfs = omics.decryptm.decryptm_experiment(*decryptm_args[:2])
@@ -98,6 +104,7 @@ def test_decryptm_experiment(decryptm_args):
     assert dfs[3].EC50.dtype == 'float64'
 
 
+@pytest.mark.slow
 def test_panacea():
 
     dfs = omics.panacea()
@@ -108,3 +115,39 @@ def test_panacea():
     assert dfs[0].shape == (24961, 1217)
     assert dfs[1].shape == (1216, 2)
     assert (dfs[0].drop('gene_symbol', axis = 1).dtypes == 'int64').all()
+
+
+@pytest.mark.slow
+def test_scperturb_metadata():
+
+    m = omics.scperturb_metadata()
+
+    assert isinstance(m, dict)
+    assert len(m['files']['entries']) == 50
+    assert m['versions'] == {'index': 4, 'is_latest': True}
+
+
+@pytest.mark.slow
+def test_scperturb_datasets():
+
+    example_url = (
+        'https://zenodo.org/api/records/10044268/files/'
+        'XuCao2023.h5ad/content'
+    )
+    dsets = omics.scperturb_datasets()
+
+    assert isinstance(dsets, dict)
+    assert len(dsets) == 50
+    assert dsets['XuCao2023.h5ad'] == example_url
+
+
+@pytest.mark.slow
+def test_scperturb():
+
+    var_cols = ('ensembl_id', 'ncounts', 'ncells')
+    adata = omics.scperturb('AdamsonWeissman2016_GSM2406675_10X001.h5ad')
+
+    assert isinstance(adata, ad.AnnData)
+    assert tuple(adata.var.columns) == var_cols
+    assert 'UMI count' in adata.obs.columns
+    assert adata.shape == (5768, 35635)

@@ -154,7 +154,7 @@ def _open(
     }
 
     path = _maybe_download(url, **kwargs)
-    ftype = (ftype or os.path.splitext(path)[1]).lower()[1:]
+    ftype = (ftype or os.path.splitext(path)[1]).lower().strip('.')
 
     if not ftype:
 
@@ -173,6 +173,14 @@ def _open(
     elif ftype == 'zip':
 
         return contextlib.closing(zipfile.ZipFile(path, 'r'))
+
+    elif ftype in {'html', 'htm'}:
+
+        with open(path, 'r') as fp:
+
+            html = fp.read()
+
+        return bs4.BeautifulSoup(html, 'html.parser')
 
     else:
 

@@ -27,19 +27,28 @@ __all__ = [
     'setup',
     'data',
     'eval',
-    '_methods',
+    'methods',
     'noi',
     'utils',
     'visual',
 ]
 
+import lazy_import
+
 from ._metadata import __author__, __version__
 from ._session import log, _log, session
 from ._conf import config, setup
 
-from . import _data as data
-from . import _eval as eval
-from . import _methods as _methods
-from . import _noi as noi
 from . import _utils as utils
-from . import _visual as visual
+
+_MODULES = [
+    'data',
+    'eval',
+    'methods',
+    'noi',
+    'visual',
+]
+
+for _mod in _MODULES:
+
+    globals()[_mod] = lazy_import.lazy_module(f'{__name__}.{_mod}')

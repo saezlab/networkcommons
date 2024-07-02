@@ -8,6 +8,7 @@ jobs:
         steps:
         -   name: Check out main
             uses: actions/checkout@main
+        -   uses: tlylt/install-graphviz@v1
         -   name: Setup Python
             uses: actions/setup-python@v5
         -   name: Install Poetry

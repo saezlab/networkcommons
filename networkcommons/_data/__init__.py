@@ -13,6 +13,6 @@
 # https://www.gnu.org/licenses/gpl-3.0.txt
 #
 
-from ._builtin import _module_data
+from ._builtin import _module_data, urls
 from .omics import *
 from .network import *
