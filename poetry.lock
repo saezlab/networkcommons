@@ -4741,13 +4741,13 @@ reference = "pypi-public"
 
 [[package]]
 name = "pypath-omnipath"
-version = "0.16.15"
+version = "0.16.16"
 description = "Molecular signaling prior knowledge processing"
 optional = false
 python-versions = ">=3.9,<4.0"
 files = [
-    {file = "pypath_omnipath-0.16.15-py3-none-any.whl", hash = "sha256:43890a83168fb2b6c264a885c8e95ee0e0b158d2a54eb47e07aa1c83c0fa4163"},
-    {file = "pypath_omnipath-0.16.15.tar.gz", hash = "sha256:8c188376e39298a37c6b97312f257e5143a187ad4f8dc2a16f0e675204f9f9af"},
+    {file = "pypath_omnipath-0.16.16-py3-none-any.whl", hash = "sha256:5431ec162bc3368b92ad8ae8124e8c8bbf9313b72cb4f0bf7ad632f6eef708db"},
+    {file = "pypath_omnipath-0.16.16.tar.gz", hash = "sha256:2bb8a8c753f915870b68cf1db47e537387a7a81638c906f398bd6063e8caf93b"},
 ]
 
 [package.dependencies]
@@ -7345,4 +7345,4 @@ reference = "pypi-public"
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.9"
-content-hash = "551d0d0f4b6d8bd8447ab5c221d85b3953a5fbdaf87d51c2180bac595317eb96"
+content-hash = "6ab2b699b102a1cd754badfac3723c8a507944a35a632377160afef456dcc61f"
