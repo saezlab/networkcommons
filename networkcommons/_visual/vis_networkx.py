@@ -24,7 +24,7 @@ The visualize_network() function is the main function to visualize the graph bas
 
 import networkx as nx
 import matplotlib.pyplot as plt
-from _aux import wrap_node_name
+from ._aux import wrap_node_name
 
 from networkcommons._session import _log
 

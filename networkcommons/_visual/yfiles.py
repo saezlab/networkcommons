@@ -1,15 +1,16 @@
 from yfiles_jupyter_graphs import GraphWidget
 from typing import Dict
 from IPython.display import display
-from _aux import wrap_node_name
+from ._aux import wrap_node_name
 import pandas as pd
 
-from yfiles_styles import (get_styles,
-                           apply_node_style,
-                           apply_edge_style,
-                           #set_custom_node_color,
-                           #set_custom_edge_color,
-                           get_edge_color, get_comparison_color)
+from .yfiles_styles import (get_styles,
+                            apply_node_style,
+                            apply_edge_style,
+                            #set_custom_node_color,
+                            #set_custom_edge_color,
+                            get_edge_color,
+                            get_comparison_color)
 
 
 class YFilesVisualizer:
