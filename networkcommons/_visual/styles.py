@@ -1,5 +1,6 @@
 from networkcommons._session import _log
 
+
 def get_styles():
     """
     Return a dictionary containing styles for different types of networks.

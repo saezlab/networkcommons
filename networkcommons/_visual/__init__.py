@@ -19,3 +19,5 @@ Visualization methods for networks and analyses.
 
 from . import vis_networkx as vis_networkx
 from . import yfiles as vis_yfiles
+from . import rnaseq as vis_rnaseq
+from . import network_stats as vis_network_stat
