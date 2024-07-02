@@ -39,9 +39,9 @@ jobs:
             if: ${{ matrix.os == 'macos-latest' }}
             run: |
               brew install graphviz
-              echo "PATH=\"$(brew --prefix graphviz):$PATH\"" >> $GITHUB_ENV
-              echo "CFLAGS=\"-I $(brew --prefix graphviz)/include\"" >> $GITHUB_ENV
-              echo "LDFLAGS=\"-L $(brew --prefix graphviz)/lib\"" >> $GITHUB_ENV
+              echo "PATH=\"$(brew --prefix graphviz)/bin:$PATH\"" >> "$GITHUB_ENV"
+              echo "CFLAGS=\"-I$(brew --prefix graphviz)/include\"" >> "$GITHUB_ENV"
+              echo "LDFLAGS=\"-L$(brew --prefix graphviz)/lib\"" >> "$GITHUB_ENV"
         -   name: Setup Python ${{ matrix.python }}
             uses: actions/setup-python@v5
             with:
@@ -60,11 +60,11 @@ jobs:
                 key: venv-${{ runner.os }}-${{ matrix.python }}-${{ hashFiles('**/poetry.lock') }}
         -   name: Install dependencies
             if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
-            run:
-              echo "Env variables:"
-              echo "$PATH"
-              echo "$CFLAGS"
-              echo "$LDFLAGS"
+            run: |
+              echo "Env variables:\n\r"
+              echo -e "$PATH\n\r"
+              echo -e "$CFLAGS\n\r"
+              echo -e "$LDFLAGS\n\r"
               poetry install --no-interaction --no-root
         -   name: Install library
             run: poetry install --no-interaction
