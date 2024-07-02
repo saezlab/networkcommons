@@ -19,6 +19,7 @@ from typing import Any
 import json
 
 import bs4
+import anndata as ad
 
 from . import common
 
@@ -36,7 +37,7 @@ def scperturb_datasets() -> dict[str, Any]:
     meta = scperturb_metadata()
 
     return {
-        k: v['links']['self']
+        k: v['links']['content']
         for k, v in meta['files']['entries'].items()
     }
 
@@ -53,3 +54,24 @@ def scperturb_metadata() -> dict[str, Any]:
     data = soup.find(id = 'recordCitation').attrs['data-record']
 
     return json.loads(data)
+
+
+def scperturb(dataset: str) -> ad.AnnData:
+    """
+    Access an scPerturb dataset.
+
+    Args:
+        dataset:
+            Name of the dataset (which is the same as the original file name).
+            It should be a key in the dictionary returned by
+            `scperturb_datasets()`.
+
+    Downloads (or retrieves from cache) one h5ad (HDF5 AnnData) file from the
+    scPerturb repository. For a complete list of available datasets, see
+    `scperturb_datasets()`.
+    """
+
+    urls = scperturb_datasets()
+    path = common._maybe_download(urls[dataset])
+
+    return ad.read_h5ad(path)
