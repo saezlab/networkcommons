@@ -57,6 +57,7 @@ sphinx-rtd-theme = "^2.0.0"
 lazy-import = { git = "https://github.com/mnmelo/lazy_import.git", branch = "master" }
 anndata = "^0.10.8"
 pytest = "^8.2.2"
+yfiles-jupyter-graphs = "^1.7.2"
 
 [tool.poetry.dev-dependencies]
 pytest = ">=6.0"
