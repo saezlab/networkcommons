@@ -1,14 +1,17 @@
 from yfiles_jupyter_graphs import GraphWidget
 from typing import Dict
 from IPython.display import display
+import matplotlib.pyplot as plt
 from ._aux import wrap_node_name
+#from _aux import wrap_node_name
 import pandas as pd
 
+#from yfiles_styles import (get_styles,
 from .yfiles_styles import (get_styles,
                             apply_node_style,
                             apply_edge_style,
-                            #set_custom_node_color,
-                            #set_custom_edge_color,
+                            update_node_property,
+                            update_edge_property,
                             get_edge_color,
                             get_comparison_color)
 
@@ -19,39 +22,38 @@ class YFilesVisualizer:
         self.network = network.copy()
         self.styles = get_styles()
 
-    def yfiles_visual(self, graph_layout, directed):
+    def visualise(self, graph_layout, directed, filepath="yfiles_visualization.png"):
         # creating empty object for visualization
         w = GraphWidget()
 
         # filling w with nodes
-        objects = []
+        node_objects = []
 
         for node in self.network.nodes:
-            node_props = {"label": node}
-            node = apply_node_style(node_props, self.styles['default']['nodes'])
-            objects.append({
+            styled_node = apply_node_style(node, self.styles['default']['nodes'])
+            node_objects.append({
                 "id": node,
-                "properties": node,
-                "color": node['color'],
-                "styles": {"backgroundColor": node['fillcolor']}
+                "properties": {'label': node},
+                "color": styled_node['color'],
+                "styles": {"backgroundColor": styled_node['fillcolor']}
             })
 
-        w.nodes = objects
+        w.nodes = node_objects
 
         # filling w with edges
-        objects = []
+        edge_objects = []
 
-        for edge in self.network.edges:
+        for edge in self.network.edges(data=True):
             edge_props = {"color": get_edge_color(edge[2]['effect'], self.styles)}
-            edge = apply_edge_style(edge_props, self.styles['default']['edges'])
-            objects.append({
-                "id": edge,
+            styled_edge = apply_edge_style(edge_props, self.styles['default']['edges'])
+            edge_objects.append({
+                "id": (edge[0], edge[1]),
                 "start": edge[0],
                 "end": edge[1],
-                "properties": edge
+                "properties": styled_edge
             })
 
-        w.edges = objects
+        w.edges = edge_objects
 
         w.set_edge_color_mapping(self.custom_edge_color_mapping)
         w.set_node_styles_mapping(self.custom_node_color_mapping)
@@ -71,7 +73,8 @@ class YFilesVisualizer:
         for idx, item in node_comparison.iterrows():
             node_props = {"label": item["node"], "comparison": item["comparison"]}
             node = apply_node_style(node_props, self.styles['default']['nodes'])
-            node = set_custom_node_color(node, get_comparison_color(item["comparison"], self.styles, 'nodes'))
+            node = update_node_property(node, type="color",
+                                        value=get_comparison_color(item["comparison"], self.styles))
             objects.append({
                 "id": item["node"],
                 "properties": node,
@@ -85,7 +88,8 @@ class YFilesVisualizer:
         for index, row in int_comparison.iterrows():
             edge_props = {"comparison": row["comparison"]}
             edge = apply_edge_style(edge_props, self.styles['default']['edges'])
-            edge = set_custom_edge_color(edge, get_comparison_color(row["comparison"], self.styles, 'edges'))
+            edge = update_edge_property(edge, type="color",
+                                        value=get_comparison_color(row["comparison"], self.styles))
             objects.append({
                 "id": row["comparison"],
                 "start": row["source"],
@@ -114,7 +118,8 @@ class YFilesVisualizer:
 
     @staticmethod
     def custom_factor_mapping(node: Dict):
-        return 5
+        #TODO
+        return 3
 
     @staticmethod
     def custom_label_styles_mapping(node: Dict):
@@ -124,19 +129,14 @@ class YFilesVisualizer:
 
 
 # Example usage
-# class MockNetwork:
-#     def __init__(self):
-#         self.edges = pd.DataFrame({
-#             'source': ['A', 'B', 'C'],
-#             'target': ['B', 'C', 'D'],
-#             'Effect': ['stimulation', 'inhibition', 'form complex']
-#         })
-#         self.nodes = pd.DataFrame({
-#             'Genesymbol': ['A', 'B', 'C', 'D'],
-#             'Uniprot': ['P1', 'P2', 'P3', 'P4']
-#         })
-#         self.initial_nodes = ['A', 'B']
+# create a network
+# import networkx as nx
+# network = nx.DiGraph()
+# network.add_nodes_from(["A", "B", "C", "D"])
+# network.add_edges_from([("A", "B", {"effect": "activation"}), ("B", "C", {"effect": "inhibition"}),
+#                         ("C", "D", {"effect": "activation"})])
 #
-# network = MockNetwork()
+#
 # visualizer = YFilesVisualizer(network)
-# visualizer.yfiles_visual(graph_layout="hierarchic", directed=True)
+# visualizer.visualise(graph_layout="hierarchic", directed=True)
+

@@ -65,7 +65,7 @@ def get_styles():
             }
         },
         'effects': {
-            'stimulation': 'green',
+            'activation': 'green',
             'inhibition': 'red',
             'form complex': 'blue',
             'bimodal': 'purple',
@@ -88,6 +88,11 @@ def apply_node_style(node, style):
     for attr, value in style.items():
         node[attr] = value
     return node
+
+
+def update_node_property(node, type="color", value="blue"):
+    style = {type: value}
+    return apply_node_style(node, style)
 
 
 def apply_edge_style(edge, style):
@@ -116,6 +121,9 @@ def get_edge_color(effect, styles):
     """
     return styles['effects'].get(effect, styles['effects']['default'])
 
+def update_edge_property(edge, type="color", value="blue"):
+    style = {type: value}
+    return apply_edge_style(edge, style)
 
 def get_comparison_color(category, styles, element_type='nodes'):
     """

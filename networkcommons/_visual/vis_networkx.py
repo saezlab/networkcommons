@@ -24,21 +24,18 @@ The visualize_network() function is the main function to visualize the graph bas
 
 import networkx as nx
 import matplotlib.pyplot as plt
-from ._aux import wrap_node_name  # Ensure this exists in your package
-from networkcommons._session import _log  # Ensure this exists in your package
+from _aux import wrap_node_name
+#from ._aux import wrap_node_name
+from networkcommons._session import _log
 from networkcommons._visual.styles import (get_styles, set_style_attributes, merge_styles)
 
 
 class NetworkXVisualizer:
 
-    def __init__(self, network, color_by="effect", edge_colors=None):
+    def __init__(self, network, color_by="effect"):
         self.network = network.copy()
         self.color_by = color_by
-
-        if edge_colors:
-            self.edge_colors = edge_colors
-        else:
-            self.edge_colors = get_styles()['default']['edges']
+        self.edge_colors = get_styles()['default']['edges']
 
     def set_custom_edge_colors(self, custom_edge_colors):
         self.edge_colors.update(custom_edge_colors)

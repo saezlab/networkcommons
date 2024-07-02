@@ -1,16 +1,12 @@
-from graphviz import Digraph
-from IPython.display import display
-from yfiles_jupyter_graphs import GraphWidget
 from typing import Dict, List
 import networkx as nx
 import pandas as pd
-import matplotlib.pyplot as plt
-import datetime
-import os
 from pypath.utils import mapping
 
-from _aux import wrap_node_name
+from ._aux import wrap_node_name
 import vis_yfiles
+import vis_networkx
+
 
 class NetworkMock:
 
@@ -24,17 +20,22 @@ class NetworkMock:
         """
         with open(filepath, 'r') as f:
             for line in f:
-                source, target = line.strip().split()
+                source, effect, target = line.strip().split()
                 self.network.add_edge(source, target)
+                self.update_edge_property((source, target), type="effect", value=effect)
+
+
         return self.network
 
     def add_nodes(self, nodes):
-        # add nodes to networkx
         self.network.add_nodes_from(nodes)
         return self.network
 
-    def set_initial_nodes(self, initial_nodes):
-        self.update_node_property(initial_nodes, type="initial_node")
+    def set_source_nodes(self, source_nodes):
+        self.update_node_property(source_nodes, type="source", value="1")
+
+    def set_target_nodes(self, target_nodes):
+        self.update_node_property(target_nodes, type="target", value="1")
 
     def set_nodes_of_interest(self, nodes):
         self.update_node_property(nodes, type="noi", value="1")
@@ -50,15 +51,25 @@ class NetworkMock:
             self.network.nodes[node]["initial_node"] = True
         return self.color_map
 
-    def update_edge_property(self, edge, type="color", color="blue"):
+    def update_edge_property(self, edge, type="color", value="blue"):
         # add color to the edge in networkx
         if type == "color":
-            self.color_map[edge] = color
+            self.color_map[edge] = value
+        elif type == "effect":
+            self.network.edges[edge]["effect"] = value
+        else:
+            raise ValueError("Invalid edge property")
         return self.color_map
 
-    def draw(self, filepath=None, render=False):
-        networkx_vis = vis_yfiles.NetworkXVisualizer()
-        networkx_vis.visualise(render=render)
+    def visualise(self, filepath=None, render=False, visualiser="networkx"):
+        if visualiser == "yfiles":
+            yfiles_vis = vis_yfiles.YFilesVisualizer(self.network)
+            yfiles_vis.visualise(graph_layout="hierarchical", directed=True)
+        elif visualiser == "networkx":
+            networkx_vis = vis_networkx.NetworkXVisualizer(self.network)
+            networkx_vis.visualise(render=render)
+        else:
+            raise ValueError("Invalid visualiser")
 
     def mapping_node_identifier(self, node: str) -> List[str]:
         complex_string = None
@@ -88,4 +99,5 @@ class NetworkMock:
         edges["source"] = edges["source"].apply(convert_identifier)
         edges["target"] = edges["target"].apply(convert_identifier)
         return edges
+
 
