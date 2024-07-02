@@ -81,6 +81,4 @@ jobs:
             env:
                 CODECOV_NAME: ${{ matrix.python }}-${{ matrix.os }}
             run: |
-                curl -Os https://uploader.codecov.io/latest/linux/codecov
-                chmod +x codecov
-                ./codecov --no-color --required -F fast -t ${{ secrets.CODECOV_TOKEN }}
+                poetry run codecovcli --no-color --required -F fast -t ${{ secrets.CODECOV_TOKEN }}
