@@ -77,4 +77,4 @@ jobs:
             env:
                 CODECOV_NAME: ${{ matrix.python }}-${{ matrix.os }}
             run: |
-                poetry run codecovcli --no-color --required -F fast -t ${{ secrets.CODECOV_TOKEN }}
+                poetry run codecovcli --verbose upload-process -t ${{ secrets.CODECOV_TOKEN }} -n 'fast'-${{ github.run_id }} -F fast
