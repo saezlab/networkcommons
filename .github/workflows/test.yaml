@@ -61,10 +61,6 @@ jobs:
         -   name: Install dependencies
             if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
             run: |
-              echo "Env variables:\n\r"
-              echo -e "$PATH\n\r"
-              echo -e "$CFLAGS\n\r"
-              echo -e "$LDFLAGS\n\r"
               poetry install --no-interaction --no-root
         -   name: Install library
             run: poetry install --no-interaction
