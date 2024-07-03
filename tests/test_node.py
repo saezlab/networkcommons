@@ -1,6 +1,6 @@
 import pytest
 
-from networkcommons._noi import _node
+from networkcommons.noi import _node
 
 
 SAMPLE_HUMAN_PROTEINS = {

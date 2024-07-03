@@ -1,6 +1,6 @@
 import pytest
 
-from networkcommons import _noi
+from networkcommons import noi
 
 
 SAMPLE_PROTEINS_HUMAN = {

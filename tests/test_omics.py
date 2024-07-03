@@ -3,12 +3,13 @@ import pytest
 import pandas as pd
 import anndata as ad
 
-from networkcommons._data import omics
+from networkcommons.data.omics import _common
+from networkcommons.data import omics
 
 
 def test_datasets():
 
-    dsets = omics.common._datasets()
+    dsets = _common._datasets()
 
     assert 'baseurl' in dsets
     assert isinstance(dsets['datasets'], dict)
@@ -17,14 +18,14 @@ def test_datasets():
 
 def test_datasets_2():
 
-    dsets = omics.common.datasets()
+    dsets = _common.datasets()
 
     assert 'decryptm' in dsets
 
 
 def test_commons_url():
 
-    url = omics.common._commons_url('test', table = 'meta')
+    url = _common._commons_url('test', table = 'meta')
 
     assert 'metadata' in url
 
@@ -32,9 +33,9 @@ def test_commons_url():
 @pytest.mark.slow
 def test_download(tmp_path):
 
-    url = omics.common._commons_url('test', table = 'meta')
+    url = _common._commons_url('test', table = 'meta')
     path = tmp_path / 'test_download.tsv'
-    omics.common._download(url, path)
+    _common._download(url, path)
 
     assert path.exists()
 
@@ -48,9 +49,9 @@ def test_download(tmp_path):
 @pytest.mark.slow
 def test_open():
 
-    url = omics.common._commons_url('test', table = 'meta')
+    url = _common._commons_url('test', table = 'meta')
 
-    with omics.common._open(url) as fp:
+    with _common._open(url) as fp:
 
         line = next(fp)
 
@@ -59,8 +60,8 @@ def test_open():
 
 def test_open_df():
 
-    url = omics.common._commons_url('test', table = 'meta')
-    df = omics.common._open(url, df = {'sep': '\t'})
+    url = _common._commons_url('test', table = 'meta')
+    df = _common._open(url, df = {'sep': '\t'})
 
     assert isinstance(df, pd.DataFrame)
     assert df.shape == (4, 2)
@@ -69,7 +70,7 @@ def test_open_df():
 @pytest.mark.slow
 def test_decryptm_datasets():
 
-    dsets = omics.decryptm.decryptm_datasets()
+    dsets = omics.decryptm_datasets()
 
     assert isinstance(dsets, pd.DataFrame)
     assert dsets.shape == (51, 3)
@@ -85,7 +86,7 @@ def decryptm_args():
 @pytest.mark.slow
 def test_decryptm_table(decryptm_args):
 
-    df = omics.decryptm.decryptm_table(*decryptm_args)
+    df = omics.decryptm_table(*decryptm_args)
 
     assert isinstance(df, pd.DataFrame)
     assert df.shape == (18007, 65)
@@ -95,7 +96,7 @@ def test_decryptm_table(decryptm_args):
 @pytest.mark.slow
 def test_decryptm_experiment(decryptm_args):
 
-    dfs = omics.decryptm.decryptm_experiment(*decryptm_args[:2])
+    dfs = omics.decryptm_experiment(*decryptm_args[:2])
 
     assert isinstance(dfs, list)
     assert len(dfs) == 4

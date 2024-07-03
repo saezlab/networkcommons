@@ -2,7 +2,7 @@ import pytest
 
 import networkx as nx
 
-import networkcommons._visual.vis_networkx as _vis
+import networkcommons.visual._vis_networkx as _vis
 
 
 class TestVisualizeNetwork:

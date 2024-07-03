@@ -3,7 +3,7 @@ import pytest
 import networkx as nx
 import pandas as pd
 
-import networkcommons._eval.metrics as _metrics
+from networkcommons.eval import _metrics
 
 
 @pytest.fixture
