@@ -26,6 +26,7 @@ __all__ = [
     'get_mean_betweenness',
     'get_mean_closeness',
     'get_connected_targets',
+    'get_recovered_offtargets',
     'get_graph_metrics',
 ]
 
