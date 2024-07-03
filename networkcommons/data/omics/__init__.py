@@ -13,8 +13,12 @@
 # https://www.gnu.org/licenses/gpl-3.0.txt
 #
 
-from .decryptm import *
-from .decryptm_ebi import get_decryptm as _get_decryptm
-from .deseq2 import *
-from .panacea import *
-from .scperturb import *
+"""
+Access to public omics datasets.
+"""
+
+from ._common import *
+from ._decryptm import *
+from ._deseq2 import *
+from ._panacea import *
+from ._scperturb import *

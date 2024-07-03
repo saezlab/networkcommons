@@ -1,36 +1,58 @@
-from yfiles_jupyter_graphs import GraphWidget
-from typing import Dict
-from IPython.display import display
-from networkcommons._session import _log
+#!/usr/bin/env python
 
-from networkcommons._visual.yfiles_styles import (get_styles,
-                                                  apply_node_style,
-                                                  apply_edge_style,
-                                                  update_node_property,
-                                                  update_edge_property,
-                                                  get_edge_color,
-                                                  get_comparison_color)
+#
+# This file is part of the `networkcommons` Python module
+#
+# Copyright 2024
+# Heidelberg University Hospital
+#
+# File author(s): Saez Lab (omnipathdb@gmail.com)
+#
+# Distributed under the GPLv3 license
+# See the file `LICENSE` or read a copy at
+# https://www.gnu.org/licenses/gpl-3.0.txt
+#
+
+"""
+Interactive network visualization using the yFiles HTML widget.
+"""
+
+from __future__ import annotations
+
+__all__ = ['YFilesVisualizer']
+
+import lazy_import
+yfiles = lazy_import.lazy_module('yfiles_jupyter_graphs')
+ipydisplay = lazy_import.lazy_module('IPython.display')
+
+from . import _yfiles_styles
+from networkcommons._session import _log
 
 
 class YFilesVisualizer:
 
+
     def __init__(self, network):
+
         self.network = network.copy()
-        self.styles = get_styles()
+        self.styles = _yfiles_styles.get_styles()
+
 
     def visualize(self, graph_layout="Organic", directed=True):
+
         available_layouts = ["Circular", "Hierarchic", "Organic", "Orthogonal", "Radial", "Tree"]
         if graph_layout not in available_layouts:
             graph_layout = "Organic"
             _log.warning(f"Graph layout not available. Using default layout: {graph_layout}")
 
         # creating empty object for visualization
-        w = GraphWidget()
+        w = yfiles.GraphWidget()
 
         # filling w with nodes
         node_objects = []
 
         for node in self.network.nodes:
+
             styled_node = self.styles['default']['nodes']
             node_objects.append({
                 "id": node,
@@ -45,8 +67,9 @@ class YFilesVisualizer:
         edge_objects = []
 
         for edge in self.network.edges(data=True):
+
             styled_edge = self.styles['default']['edges']
-            styled_edge = {"color": get_edge_color(edge[2]['sign'], self.styles)}
+            styled_edge = {"color": _yfiles_styles.get_edge_color(edge[2]['sign'], self.styles)}
             edge_objects.append({
                 "id": (edge[0], edge[1]),
                 "start": edge[0],
@@ -64,18 +87,21 @@ class YFilesVisualizer:
         w.directed = directed
         w.graph_layout = graph_layout
 
-        display(w)
+        ipydisplay.display(w)
 
     def vis_comparison(self, int_comparison, node_comparison, graph_layout, directed):
         # creating empty object for visualization
-        w = GraphWidget()
+        w = yfiles.GraphWidget()
 
         objects = []
         for idx, item in node_comparison.iterrows():
             node_props = {"label": item["node"], "comparison": item["comparison"]}
-            node = apply_node_style(node_props, self.styles['default']['nodes'])
-            node = update_node_property(node, type="color",
-                                        value=get_comparison_color(item["comparison"], self.styles))
+            node = _yfiles_styles.apply_node_style(node_props, self.styles['default']['nodes'])
+            node = _yfiles_styles.update_node_property(
+                node,
+                type="color",
+                value=_yfiles_styles.get_comparison_color(item["comparison"], self.styles),
+            )
             objects.append({
                 "id": item["node"],
                 "properties": node,
@@ -87,9 +113,12 @@ class YFilesVisualizer:
         objects = []
         for index, row in int_comparison.iterrows():
             edge_props = {"comparison": row["comparison"]}
-            edge = apply_edge_style(edge_props, self.styles['default']['edges'])
-            edge = update_edge_property(edge, type="color",
-                                        value=get_comparison_color(row["comparison"], self.styles))
+            edge = _yfiles_styles.apply_edge_style(edge_props, self.styles['default']['edges'])
+            edge = _yfiles_styles.update_edge_property(
+                edge,
+                type="color",
+                value=_yfiles_styles.get_comparison_color(row["comparison"], self.styles),
+            )
             objects.append({
                 "id": row["comparison"],
                 "start": row["source"],
@@ -109,19 +138,19 @@ class YFilesVisualizer:
         display(w)
 
     @staticmethod
-    def custom_edge_color_mapping(edge: Dict):
+    def custom_edge_color_mapping(edge: dict):
         return edge["properties"]["color"]
 
     @staticmethod
-    def custom_node_color_mapping(node: Dict):
+    def custom_node_color_mapping(node: dict):
         return {"color": node["color"]}
 
     @staticmethod
-    def custom_factor_mapping(node: Dict):
+    def custom_factor_mapping(node: dict):
         return 1
 
     @staticmethod
-    def custom_label_styles_mapping(node: Dict):
-        label_style = get_styles()['default']['labels'].copy()
+    def custom_label_styles_mapping(node: dict):
+        label_style = _yfiles_styles.get_styles()['default']['labels'].copy()
         label_style['text'] = node["properties"]["label"]
         return label_style

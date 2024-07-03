@@ -1,9 +1,37 @@
+#!/usr/bin/env python
+
+#
+# This file is part of the `networkcommons` Python module
+#
+# Copyright 2024
+# Heidelberg University Hospital
+#
+# File author(s): Saez Lab (omnipathdb@gmail.com)
+#
+# Distributed under the GPLv3 license
+# See the file `LICENSE` or read a copy at
+# https://www.gnu.org/licenses/gpl-3.0.txt
+#
+
+"""
+Plots for omics data exploration.
+"""
+
+from __future__ import annotations
+
+__all__  = [
+    'build_volcano_plot',
+    'build_ma_plot',
+    'build_pca_plot',
+    'build_heatmap_with_tree',
+]
+
+import lazy_import
 import pandas as pd
 import numpy as np
-import matplotlib.pyplot as plt
-import seaborn as sns
-from sklearn.decomposition import PCA
-from typing import List
+plt = lazy_import.lazy_import('matplotlib.pyplot')
+sns = lazy_import.lazy_import('seaborn')
+sklearn_decomp = lazy_import.lazy_module('sklearn.decomposition')
 
 
 def build_volcano_plot(
@@ -135,7 +163,7 @@ def build_pca_plot(
         save: bool = False,
         output_dir: str = "."
 ):
-    pca = PCA(n_components=2)
+    pca = sklearn_decomp.PCA(n_components=2)
     principal_components = pca.fit_transform(data)
     pca_df = pd.DataFrame(data=principal_components, columns=['PC1', 'PC2'])
 
@@ -162,7 +190,7 @@ def build_heatmap_with_tree(
         data: pd.DataFrame,
         top_n: int = 50,
         value_column: str = 'log2FoldChange_condition_1',
-        conditions: List[str] = None,
+        conditions: list[str] = None,
         title: str = "Heatmap of Top Differentially Expressed Genes",
         save: bool = False,
         output_dir: str = "."
@@ -174,7 +202,7 @@ def build_heatmap_with_tree(
         data (pd.DataFrame): DataFrame containing RNA-seq results.
         top_n (int): Number of top differentially expressed genes to include in the heatmap.
         value_column (str): Column name for the values to rank and select the top genes.
-        conditions (List[str]): List of condition columns to include in the heatmap.
+        conditions (list[str]): List of condition columns to include in the heatmap.
         title (str): Title of the plot.
         save (bool): Whether to save the plot. Default is False.
         output_dir (str): Directory to save the plot. Default is ".".

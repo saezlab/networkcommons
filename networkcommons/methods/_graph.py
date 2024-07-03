@@ -13,15 +13,11 @@
 # https://www.gnu.org/licenses/gpl-3.0.txt
 #
 
+from __future__ import annotations
+
 """
 Graph based methods.
 """
-
-import networkx as nx
-import numpy as np
-
-from networkcommons import _utils
-from networkcommons._session import session as _session
 
 __all__ = [
     'run_shortest_paths',
@@ -32,6 +28,12 @@ __all__ = [
     'add_pagerank_scores',
     'compute_ppr_overlap',
 ]
+
+import networkx as nx
+import numpy as np
+
+from networkcommons import _utils
+from networkcommons._session import session as _session
 
 
 def run_shortest_paths(network, source_dict, target_dict, verbose=False):

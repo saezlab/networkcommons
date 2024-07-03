@@ -14,19 +14,28 @@
 #
 
 """
-This module contains functions to visualize networks.
-The styles for different types of networks are defined in the get_styles() function.
-The set_style_attributes() function is used to set attributes for nodes and edges based on the given styles.
-The visualize_network_default() function visualizes the graph with default style.
-The visualize_network_sign_consistent() function visualizes the graph considering sign consistency.
-The visualize_network() function is the main function to visualize the graph based on the network type.
+Visualize networks.
+
+The styles for different types of networks are defined in the `get_styles()`
+function.  The `set_style_attributes()` function is used to set attributes for
+nodes and edges based on the given styles.  The `visualize_network_default()`
+function visualizes the graph with default style.  The
+`visualize_network_sign_consistent()` function visualizes the graph considering
+sign consistency.  The `visualize_network()` function is the main function to
+visualize the graph based on the network type.
 """
 
+from __future__ import annotations
+
+__all__ = ['NetworkXVisualizer']
+
+import lazy_import
 import networkx as nx
-import matplotlib.pyplot as plt
-from networkcommons._visual._aux import wrap_node_name
+plt = lazy_import.lazy_import('matplotlib.pyplot')
+
+from . import _aux
+from . import _styles
 from networkcommons._session import _log
-from networkcommons._visual.styles import (get_styles, set_style_attributes, merge_styles)
 
 
 class NetworkXVisualizer:
@@ -34,13 +43,13 @@ class NetworkXVisualizer:
     def __init__(self, network, color_by="effect"):
         self.network = network.copy()
         self.color_by = color_by
-        self.edge_colors = get_styles()['default']['edges']
+        self.edge_colors = _styles.get_styles()['default']['edges']
 
     def set_custom_edge_colors(self, custom_edge_colors):
         self.edge_colors.update(custom_edge_colors)
 
     def color_nodes(self):
-        default_node_colors = get_styles()['default']['nodes']['default']
+        default_node_colors = _styles.get_styles()['default']['nodes']['default']
         source_node_color = default_node_colors['sources']
         target_node_color = default_node_colors['targets']
         nodes = self.network.nodes
@@ -54,7 +63,7 @@ class NetworkXVisualizer:
                 nodes[node]['color'] = target_node_color
 
     def color_edges(self):
-        edge_colors = get_styles()['default']['edges']
+        edge_colors = _styles.get_styles()['default']['edges']
         for edge in self.network.edges:
             u, v = edge
             edge_data = self.network.get_edge_data(u, v)
@@ -80,8 +89,8 @@ class NetworkXVisualizer:
             prog (str, optional): The layout program to use. Defaults to 'dot'.
             custom_style (dict, optional): The custom style to apply. If None, the default style is used.
         """
-        default_style = get_styles()['default']
-        style = merge_styles(default_style, custom_style)
+        default_style = _styles.get_styles()['default']
+        style = _styles.merge_styles(default_style, custom_style)
 
         A = nx.nx_agraph.to_agraph(network)
         A.graph_attr['ratio'] = '1.2'
@@ -100,11 +109,11 @@ class NetworkXVisualizer:
             else:
                 base_style = style['nodes']['other']
 
-            set_style_attributes(node, base_style)
+            _styles.set_style_attributes(node, base_style)
 
         for edge in A.edges():
             edge_style = style['edges']['neutral']
-            set_style_attributes(edge, edge_style)
+            _styles.set_style_attributes(edge, edge_style)
 
         A.layout(prog=prog)
         return A
@@ -125,8 +134,8 @@ class NetworkXVisualizer:
             prog (str, optional): The layout program to use. Defaults to 'dot'.
             custom_style (dict, optional): The custom style to apply. Defaults to None.
         """
-        default_style = get_styles()['sign_consistent']
-        style = merge_styles(default_style, custom_style)
+        default_style = _styles.get_styles()['sign_consistent']
+        style = _styles.merge_styles(default_style, custom_style)
 
         # Call the core visualization function
         A = self.visualize_network_default(network, source_dict, target_dict, prog, style)
@@ -153,7 +162,7 @@ class NetworkXVisualizer:
 
             if condition_style:
                 # Apply condition style without overwriting base style
-                set_style_attributes(node, {}, condition_style)
+                _styles.set_style_attributes(node, {}, condition_style)
 
         for edge in A.edges():
             u, v = edge
@@ -168,7 +177,7 @@ class NetworkXVisualizer:
             else:
                 edge_style = style['edges']['neutral']
 
-            set_style_attributes(edge, edge_style)
+            s_styles.et_style_attributes(edge, edge_style)
 
         return A
 
@@ -193,7 +202,7 @@ class NetworkXVisualizer:
         if network_type == 'sign_consistent':
             return self.visualize_network_sign_consistent(network, source_dict, target_dict, prog, custom_style)
         else:
-            default_style = get_styles().get(network_type, get_styles()['default'])
+            default_style = _styles.get_styles().get(network_type, get_styles()['default'])
             return self.visualize_network_default(network, source_dict, target_dict, prog, custom_style)
 
     def visualize(self, output_file='network.png', render=False, highlight_nodes=None, style=None):
@@ -211,7 +220,7 @@ class NetworkXVisualizer:
                 highlight_color = style['highlight_color']
             else:
                 highlight_color = style['nodes']['default']['fillcolor']
-            highlight_nodes = [wrap_node_name(node) for node in highlight_nodes]
+            highlight_nodes = [_aux.wrap_node_name(node) for node in highlight_nodes]
             nx.draw_networkx_nodes(self.network, pos, nodelist=highlight_nodes, node_color=highlight_color)
 
         if render:

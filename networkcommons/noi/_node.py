@@ -19,18 +19,19 @@ Procedures on Nodes of molecular interaction networks.
 
 from __future__ import annotations
 
+__all__ = ['Node']
+
 from typing import Generator, Literal, Sequence
 import re
 import inspect
 
-import pypath_common._misc as _common
-import pypath.utils.taxonomy as _taxonomy
-import pypath.utils.mapping as _mapping
-import pypath.utils.orthology as _orthology
-import pypath.inputs.uniprot as _uniprot
-import pypath.inputs.uniprot_db as _uniprot_db
-
-__all__ = ['Node']
+import lazy_import
+_common = lazy_import.lazy_module('pypath_common._misc')
+_taxonomy = lazy_import.lazy_module('pypath.utils.taxonomy')
+_mapping = lazy_import.lazy_module('pypath.utils.mapping')
+_orthology = lazy_import.lazy_module('pypath.utils.orthology')
+_uniprot = lazy_import.lazy_module('pypath.inputs.uniprot')
+_uniprot_db = lazy_import.lazy_module('pypath.inputs.uniprot_db')
 
 
 _REENS = re.compile(r'ENS[A-Z]*?([A-Z])[0-9]+')

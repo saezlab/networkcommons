@@ -13,17 +13,21 @@
 # https://www.gnu.org/licenses/gpl-3.0.txt
 #
 
+"""
+DecryptM proteomics and phosphoproteomics data.
+"""
+
 from __future__ import annotations
+
+__all__ = ['decryptm_datasets', 'decryptm_table', 'decryptm_experiment']
 
 import os
 import urllib.parse
 
 import pandas as pd
 
-from . import common
+from . import _common
 from networkcommons import _conf
-
-__all__ = ['decryptm_datasets', 'decryptm_table', 'decryptm_experiment']
 
 
 def decryptm_datasets(update: bool = False) -> pd.DataFrame:
@@ -43,7 +47,7 @@ def decryptm_datasets(update: bool = False) -> pd.DataFrame:
 
     if update or not os.path.exists(path):
 
-        baseurl = urllib.parse.urljoin(common._baseurl(), 'decryptm')
+        baseurl = urllib.parse.urljoin(_common._baseurl(), 'decryptm')
 
         datasets = pd.DataFrame(
             [
@@ -52,9 +56,9 @@ def decryptm_datasets(update: bool = False) -> pd.DataFrame:
                     data_type,
                     fname,
                 )
-                for experiment in common._ls(baseurl)
-                for data_type in common._ls(f'{baseurl}/{experiment}')
-                for fname in common._ls(f'{baseurl}/{experiment}/{data_type}')
+                for experiment in _common._ls(baseurl)
+                for data_type in _common._ls(f'{baseurl}/{experiment}')
+                for fname in _common._ls(f'{baseurl}/{experiment}/{data_type}')
                 if fname.startswith('curve')
             ],
             columns = ['experiment', 'data_type', 'fname']
@@ -86,8 +90,8 @@ def decryptm_table(experiment: str, data_type: str, fname: str) -> pd.DataFrame:
         The table as a pandas data frame.
     """
 
-    return common._open(
-        common._commons_url('decryptm', **locals()),
+    return _common._open(
+        _common._commons_url('decryptm', **locals()),
         df = {'sep': '\t'},
     )
 

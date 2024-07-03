@@ -19,11 +19,11 @@ Access to Moon example omics data.
 
 from __future__ import annotations
 
+__all__ = ['moon']
+
 import pandas as pd
 
-from . import common
-
-__all__ = ['moon']
+from . import _common
 
 
 def moon() -> dict[str, pd.DataFrame]:

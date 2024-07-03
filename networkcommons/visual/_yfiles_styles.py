@@ -1,3 +1,35 @@
+#!/usr/bin/env python
+
+#
+# This file is part of the `networkcommons` Python module
+#
+# Copyright 2024
+# Heidelberg University Hospital
+#
+# File author(s): Saez Lab (omnipathdb@gmail.com)
+#
+# Distributed under the GPLv3 license
+# See the file `LICENSE` or read a copy at
+# https://www.gnu.org/licenses/gpl-3.0.txt
+#
+
+"""
+Interactive network visualization using the yFiles HTML widget.
+"""
+
+from __future__ import annotations
+
+__all__ = [
+    'get_styles',
+    'get_comparison_color',
+    'get_edge_color',
+    'update_node_property',
+    'update_edge_property',
+    'apply_node_style',
+    'apply_edge_style',
+]
+
+
 def get_styles():
     """
     Return a dictionary containing styles for different types of networks specific to yFiles visualizations.

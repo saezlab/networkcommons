@@ -13,12 +13,19 @@
 # https://www.gnu.org/licenses/gpl-3.0.txt
 #
 
-import omnipath as op
+"""
+Access to the OmniPath database.
+"""
+
+__all__ = ['get_omnipath']
+
+import lazy_import
 import numpy as np
 
+op = lazy_import.lazy_module('omnipath')
 
-def get_omnipath(genesymbols=True,
-                 directed_signed=True):
+
+def get_omnipath(genesymbols: bool = True, directed_signed: bool = True):
     """
     Retrieves the Omnipath network with directed interactions
     and specific criteria.

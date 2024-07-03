@@ -1,7 +1,32 @@
-import pandas as pd
-import matplotlib.pyplot as plt
-import networkx as nx
+#!/usr/bin/env python
+
+#
+# This file is part of the `networkcommons` Python module
+#
+# Copyright 2024
+# Heidelberg University Hospital
+#
+# File author(s): Saez Lab (omnipathdb@gmail.com)
+#
+# Distributed under the GPLv3 license
+# See the file `LICENSE` or read a copy at
+# https://www.gnu.org/licenses/gpl-3.0.txt
+#
+
+"""
+Plot network (graph) metrics.
+"""
+
+from __future__ import annotations
+
+__all__  = ['plot_n_nodes_edges']
+
 from typing import List, Dict
+
+import lazy_import
+import pandas as pd
+plt = lazy_import.lazy_import('matplotlib.pyplot')
+import networkx as nx
 
 
 def plot_n_nodes_edges(

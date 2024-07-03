@@ -13,27 +13,28 @@
 # https://www.gnu.org/licenses/gpl-3.0.txt
 #
 
+"""
+General procedures for downloading omics datasets.
+"""
+
 from __future__ import annotations
 
-from typing import Any, IO
+__all__ = ['datasets']
+
+from typing import IO
 import zipfile
 import os
-import re
-import glob
 import hashlib
 import contextlib
 import urllib.parse
 
-import shutil
 import requests
 import bs4
 import pandas as pd
 
-from .._builtin import _module_data
 from networkcommons import _conf
 from networkcommons._session import _log
-
-__all__ = ['datasets']
+from .._builtin import _module_data
 
 
 def _datasets() -> dict[str, dict]:

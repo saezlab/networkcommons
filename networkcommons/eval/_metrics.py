@@ -17,9 +17,7 @@
 Basic graph metrics.
 """
 
-import pandas as pd
-import networkx as nx
-import numpy as np
+from __future__ import annotations
 
 __all__ = [
     'get_number_nodes',
@@ -31,8 +29,12 @@ __all__ = [
     'get_graph_metrics',
 ]
 
+import pandas as pd
+import networkx as nx
+import numpy as np
 
-def get_number_nodes(network):
+
+def get_number_nodes(network: nx.Graph) -> int:
     """
     Get the number of nodes in the network.
 
@@ -46,7 +48,7 @@ def get_number_nodes(network):
     return network.number_of_nodes()
 
 
-def get_number_edges(network):
+def get_number_edges(network: nx.Graph) -> int:
     """
     Get the number of edges in the network.
 
@@ -60,7 +62,7 @@ def get_number_edges(network):
     return network.number_of_edges()
 
 
-def get_mean_degree(network):
+def get_mean_degree(network: nx.Graph) -> float:
     """
     Get the mean degree centrality of the network.
 
@@ -74,7 +76,7 @@ def get_mean_degree(network):
     return np.mean(list(dict(nx.degree(network)).values()))
 
 
-def get_mean_betweenness(network):
+def get_mean_betweenness(network: nx.Graph) -> float:
     """
     Get the mean betweenness centrality of the network.
 
@@ -88,7 +90,7 @@ def get_mean_betweenness(network):
     return np.mean(list(nx.betweenness_centrality(network).values()))
 
 
-def get_mean_closeness(network):
+def get_mean_closeness(network: nx.Graph) -> float:
     """
     Get the mean closeness centrality of the network.
 

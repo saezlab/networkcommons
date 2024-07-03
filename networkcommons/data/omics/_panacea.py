@@ -13,13 +13,18 @@
 # https://www.gnu.org/licenses/gpl-3.0.txt
 #
 
+"""
+RNA-Seq data from the 'Pancancer Analysis of Chemical Entity Activity'
+resource.
+"""
+
 from __future__ import annotations
+
+__all__ = ['panacea']
 
 import pandas as pd
 
-from . import common
-
-__all__ = ['panacea']
+from . import _common
 
 
 def panacea() -> tuple[pd.DataFrame]:
@@ -31,8 +36,8 @@ def panacea() -> tuple[pd.DataFrame]:
     """
 
     return tuple(
-        common._open(
-            common._commons_url('panacea', table = table),
+        _common._open(
+            _common._commons_url('panacea', table = table),
             df = {'sep': '\t'},
         )
         for table in ('count', 'meta')

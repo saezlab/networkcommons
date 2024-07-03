@@ -17,16 +17,7 @@
 Moon: multi-omics??
 """
 
-from typing import Counter
-import re
-
-import networkx as nx
-import pandas as pd
-import decoupler as dc
-import numpy as np
-
-from networkcommons._methods import graph as _graph
-from networkcommons._session import _log
+from __future__ import annotations
 
 __all__ = [
     'meta_network_cleanup',
@@ -43,6 +34,18 @@ __all__ = [
     'reduce_solution_network',
     'translate_res',
 ]
+
+import collections
+import re
+
+import lazy_import
+import networkx as nx
+import pandas as pd
+dc = lazy_import.lazy_module('decoupler')
+import numpy as np
+
+from . import _graph
+from networkcommons._session import _log
 
 
 def meta_network_cleanup(graph):
@@ -297,7 +300,7 @@ def compress_same_children(uncompressed_graph, sig_input, metab_input):
         if parent not in sig_input and parent not in metab_input
     }
 
-    signature_counts = Counter(filtered_signatures.values())
+    signature_counts = collections.Counter(filtered_signatures.values())
 
     # Identify duplicated signatures that are not in metab_input or sig_input
     duplicated_parents = {

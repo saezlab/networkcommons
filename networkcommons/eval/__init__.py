@@ -17,4 +17,4 @@
 Network metrics and analysis methods.
 """
 
-from . import metrics as metrics
+from .metrics import *

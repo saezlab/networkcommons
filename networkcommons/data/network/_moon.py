@@ -13,26 +13,34 @@
 # https://www.gnu.org/licenses/gpl-3.0.txt
 #
 
+"""
+Prior knowledge network used by MOON.
+"""
+
+__all__ = ['build_moon_regulons']
+
+import lazy_import
 import numpy as np
 import pandas as pd
 
+dc = lazy_import.lazy_module('decoupler')
+
 from networkcommons import _utils
+from . import _omnipath
+from . import _liana
 
 
 def build_moon_regulons(include_liana=False):
-
-    import decoupler as dc
-    from . import omnipath
 
     dorothea_df = dc.get_collectri()
 
     TFs = np.unique(dorothea_df['source'])
 
-    full_pkn = omnipath.get_omnipath(genesymbols=True, directed_signed=True)
+    full_pkn = _omnipath.get_omnipath(genesymbols=True, directed_signed=True)
 
     if include_liana:
-        from . import lianaplus
-        ligrec_resource = lianaplus.get_lianaplus()
+
+        ligrec_resource = _liana.get_lianaplus()
 
         full_pkn = pd.concat([full_pkn, ligrec_resource])
         full_pkn['edgeID'] = full_pkn['source'] + '_' + full_pkn['target']

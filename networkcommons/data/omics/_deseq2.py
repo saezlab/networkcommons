@@ -13,7 +13,13 @@
 # https://www.gnu.org/licenses/gpl-3.0.txt
 #
 
+"""
+Differential expression analysis with DESeq2.
+"""
+
 from __future__ import annotations
+
+__all__ = ['deseq2']
 
 from typing import TYPE_CHECKING
 import multiprocessing
@@ -23,16 +29,15 @@ if TYPE_CHECKING:
 
     import pandas as pd
 
+import lazy_import
 from pypath_common import _misc as _ppcommon
-import pydeseq2 as _deseq2
 
 for _mod in ('default_inference', 'dds', 'ds'):
-    importlib.import_module(f'pydeseq2.{_mod}')
+
+    globals()[f'_deseq2_{_mod}'] = lazy_import.lazy_module(f'pydeseq2.{_mod}')
 
 from networkcommons import _conf
 from networkcommons._session import _log
-
-__all__ = ['deseq2']
 
 
 def deseq2(
@@ -70,9 +75,9 @@ def deseq2(
     ref_group = ref_group.replace('_', '-')
 
     n_cpus = _conf.get('cpu_count', multiprocessing.cpu_count())
-    inference = _deseq2.default_inference.DefaultInference(n_cpus = n_cpus)
+    inference = _deseq2_default_inference.DefaultInference(n_cpus = n_cpus)
 
-    dds = _deseq2.dds.DeseqDataSet(
+    dds = _deseq2_dds.DeseqDataSet(
         counts=counts.T,
         metadata=metadata,
         design_factors=design_factors,
@@ -82,7 +87,7 @@ def deseq2(
 
     dds.deseq2()
 
-    results = _deseq2.ds.DeseqStats(
+    results = _deseq2_ds.DeseqStats(
         dds,
         contrast=['group', test_group, ref_group],
         inference=inference

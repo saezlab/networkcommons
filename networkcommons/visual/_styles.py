@@ -1,3 +1,26 @@
+#!/usr/bin/env python
+
+#
+# This file is part of the `networkcommons` Python module
+#
+# Copyright 2024
+# Heidelberg University Hospital
+#
+# File author(s): Saez Lab (omnipathdb@gmail.com)
+#
+# Distributed under the GPLv3 license
+# See the file `LICENSE` or read a copy at
+# https://www.gnu.org/licenses/gpl-3.0.txt
+#
+
+"""
+Style definitions for network visualizations.
+"""
+
+from __future__ import annotations
+
+__all__  = ['get_styles', 'merge_styles', 'set_style_attributes']
+
 from networkcommons._session import _log
 
 
@@ -156,4 +179,3 @@ def merge_styles(default_style, custom_style, path=""):
                 _log(f"Missing key '{path}.{key}' in custom style. Using default value.")
 
     return merged_style
-

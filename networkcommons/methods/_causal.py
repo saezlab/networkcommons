@@ -17,18 +17,16 @@
 Causal network inference methods.
 """
 
-import networkx as nx
-import corneto as cn
-from corneto.contrib.networkx import (
-    networkx_to_corneto_graph,
-    corneto_graph_to_networkx
-)
-from corneto.methods.carnival import get_selected_edges
+from __future__ import annotations
 
 __all__ = [
     'convert_cornetograph',
     'run_corneto_carnival',
 ]
+
+import lazy_import
+import networkx as nx
+cn = lazy_import.lazy_import('corneto')
 
 
 def convert_cornetograph(graph):
@@ -44,7 +42,7 @@ def convert_cornetograph(graph):
     if isinstance(graph, cn._graph.Graph):
         corneto_graph = graph
     elif isinstance(graph, (nx.Graph, nx.DiGraph)):
-        corneto_graph = networkx_to_corneto_graph(graph)
+        corneto_graph = cn.contrib.networkx.networkx_to_corneto_graph(graph)
 
     return corneto_graph
 
@@ -80,10 +78,14 @@ def run_corneto_carnival(network,
         verbose=verbose
     )
 
-    network_sol = graph.edge_subgraph(get_selected_edges(problem, graph))
+    network_sol = graph.edge_subgraph(
+        cn.methods.carnival.get_selected_edges(problem, graph),
+    )
 
-    network_nx = corneto_graph_to_networkx(network_sol,
-                                           skip_unsupported_edges=True)
+    network_nx = cn.contrib.networkx.corneto_graph_to_networkx(
+        network_sol,
+        skip_unsupported_edges=True,
+    )
 
     network_nx.remove_nodes_from(['_s', '_pert_c0', '_meas_c0'])
 

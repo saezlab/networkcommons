@@ -17,6 +17,6 @@
 Network based inference methods and network operations.
 """
 
-from networkcommons._methods.graph import *
-from networkcommons._methods.causal import *
-from networkcommons._methods.moon import *
+from ._graph import *
+from ._causal import *
+from ._moon import *

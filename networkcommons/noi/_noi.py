@@ -19,6 +19,8 @@ Handling nodes of interest for network lookup queries.
 
 from __future__ import annotations
 
+__all__ = ['Noi']
+
 from typing import Any, Callable, Hashable
 import collections
 import itertools
@@ -30,7 +32,6 @@ from pypath_common import misc as _common
 
 from . import _node
 
-__all__ = ['Noi']
 
 class Noi(collections.abc.Mapping):
 

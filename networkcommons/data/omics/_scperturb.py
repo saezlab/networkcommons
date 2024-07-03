@@ -13,7 +13,13 @@
 # https://www.gnu.org/licenses/gpl-3.0.txt
 #
 
+"""
+Single-cell RNA-Seq data from the 'scPerturb' resource.
+"""
+
 from __future__ import annotations
+
+__all__ = ['scperturb', 'scperturb_metadata', 'scperturb_datasets']
 
 from typing import Any
 import json
@@ -21,7 +27,7 @@ import json
 import bs4
 import anndata as ad
 
-from . import common
+from . import _common
 
 _URL = 'https://zenodo.org/record/10044268'
 
@@ -50,7 +56,7 @@ def scperturb_metadata() -> dict[str, Any]:
     record is https://zenodo.org/records/10044268.
     """
 
-    soup = common._open(_URL, ftype = 'html')
+    soup = _common._open(_URL, ftype = 'html')
     data = soup.find(id = 'recordCitation').attrs['data-record']
 
     return json.loads(data)
@@ -72,6 +78,6 @@ def scperturb(dataset: str) -> ad.AnnData:
     """
 
     urls = scperturb_datasets()
-    path = common._maybe_download(urls[dataset])
+    path = _common._maybe_download(urls[dataset])
 
     return ad.read_h5ad(path)
