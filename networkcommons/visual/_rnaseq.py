@@ -36,14 +36,14 @@ sklearn_decomp = lazy_import.lazy_module('sklearn.decomposition')
 
 def build_volcano_plot(
         data: pd.DataFrame,
-        log2fc: str,
-        pval: str,
+        log2fc: 'str' = 'log2FoldChange',
+        pval: str = 'pvalue',
         pval_threshold: float = 0.05,
         log2fc_threshold: float = 1,
         title: str = "Volcano Plot",
         xlabel: str = "log2 Fold Change",
         ylabel: str = "-log10(p-value)",
-        colors: tuple = ("gray", "red"),
+        colors: tuple = ("gray", "red", "blue"),
         alpha: float = 0.7,
         size: int = 50,
         save: bool = False,
@@ -51,6 +51,8 @@ def build_volcano_plot(
 ):
     data['-log10(pval)'] = -np.log10(data[pval])
     data['significant'] = (data[pval] < pval_threshold) & (abs(data[log2fc]) >= log2fc_threshold)
+    data['Upregulated'] = (data[pval] < pval_threshold) & (data[log2fc] >= log2fc_threshold)
+    data['Downregulated'] = (data[pval] < pval_threshold) & (data[log2fc] <= -log2fc_threshold)
 
     fig, ax = plt.subplots(figsize=(10, 10))
 
@@ -64,12 +66,21 @@ def build_volcano_plot(
     )
 
     ax.scatter(
-        data.loc[data['significant'], log2fc],
-        data.loc[data['significant'], '-log10(pval)'],
+        data.loc[data['Upregulated'], log2fc],
+        data.loc[data['Upregulated'], '-log10(pval)'],
         c=colors[1],
         alpha=alpha,
         s=size,
-        label='Significant'
+        label='Upregulated: ' + str(len(data.loc[data['Upregulated'], log2fc])) + ' genes'
+    )
+
+    ax.scatter(
+        data.loc[data['Downregulated'], log2fc],
+        data.loc[data['Downregulated'], '-log10(pval)'],
+        c=colors[2],
+        alpha=alpha,
+        s=size,
+        label= 'Downregulated: ' + str(len(data.loc[data['Downregulated'], log2fc])) + ' genes'
     )
 
     ax.axhline(
