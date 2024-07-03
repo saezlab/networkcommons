@@ -90,39 +90,11 @@ def plot_n_nodes_edges(
     elif show_edges and not show_nodes:
         title = "Number of Edges"
     ax.set_title(title)
-
-    # Add a legend
     ax.legend()
 
     # Save the plot
     if filepath is not None:
         plt.savefig(filepath)
 
-    # Render the plot
     if render:
         plt.show()
-
-
-# Test the function with sample networks
-# if __name__ == "__main__":
-#     # Create sample directed graphs
-#     G1 = nx.DiGraph()
-#     G1.add_nodes_from(range(10))  # Adding 10 nodes
-#     G1.add_edges_from([(i, i + 1) for i in range(9)])  # Adding 9 edges
-#
-#     G2 = nx.DiGraph()
-#     G2.add_nodes_from(range(15))  # Adding 15 nodes
-#     G2.add_edges_from([(i, i + 1) for i in range(14)])  # Adding 14 edges
-#
-#     G3 = nx.DiGraph()
-#     G3.add_nodes_from(range(5))  # Adding 5 nodes
-#     G3.add_edges_from([(i, (i + 1) % 5) for i in range(5)])  # Adding 5 edges
-#
-#     G4 = nx.DiGraph()
-#     G4.add_nodes_from(range(20))  # Adding 20 nodes
-#     G4.add_edges_from([(i, i + 1) for i in range(19)])  # Adding 19 edges
-#
-#     networks = {'Network1': G1, 'Network2': G2, 'Network3': G3, 'Network4': G4}
-#
-#     plot_n_nodes_edges(networks, filepath="nodes_edges_plot.png", render=True, orientation='horizontal',
-#                        color_palette='Set2', size=12, linewidth=2, marker='o', show_nodes=True, show_edges=True)

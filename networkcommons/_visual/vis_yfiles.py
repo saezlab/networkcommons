@@ -1,9 +1,7 @@
 from yfiles_jupyter_graphs import GraphWidget
 from typing import Dict
 from IPython.display import display
-import matplotlib.pyplot as plt
 from networkcommons._session import _log
-import pandas as pd
 
 from networkcommons._visual.yfiles_styles import (get_styles,
                                                   apply_node_style,
@@ -20,7 +18,7 @@ class YFilesVisualizer:
         self.network = network.copy()
         self.styles = get_styles()
 
-    def visualise(self, graph_layout="Organic", directed=True):
+    def visualize(self, graph_layout="Organic", directed=True):
         available_layouts = ["Circular", "Hierarchic", "Organic", "Orthogonal", "Radial", "Tree"]
         if graph_layout not in available_layouts:
             graph_layout = "Organic"

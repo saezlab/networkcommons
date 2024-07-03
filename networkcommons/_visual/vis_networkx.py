@@ -24,8 +24,7 @@ The visualize_network() function is the main function to visualize the graph bas
 
 import networkx as nx
 import matplotlib.pyplot as plt
-from _aux import wrap_node_name
-#from ._aux import wrap_node_name
+from networkcommons._visual._aux import wrap_node_name
 from networkcommons._session import _log
 from networkcommons._visual.styles import (get_styles, set_style_attributes, merge_styles)
 
@@ -88,7 +87,8 @@ class NetworkXVisualizer:
         A.graph_attr['ratio'] = '1.2'
 
         sources = set(source_dict.keys())
-        target_dict_flat = {sub_key: sub_value for key, value in target_dict.items() for sub_key, sub_value in value.items()}
+        target_dict_flat = {sub_key: sub_value for key, value in target_dict.items()
+                            for sub_key, sub_value in value.items()}
         targets = set(target_dict_flat.keys())
 
         for node in A.nodes():
@@ -132,7 +132,8 @@ class NetworkXVisualizer:
         A = self.visualize_network_default(network, source_dict, target_dict, prog, style)
 
         sources = set(source_dict.keys())
-        target_dict_flat = {sub_key: sub_value for key, value in target_dict.items() for sub_key, sub_value in value.items()}
+        target_dict_flat = {sub_key: sub_value for key, value in target_dict.items()
+                            for sub_key, sub_value in value.items()}
         targets = set(target_dict_flat.keys())
 
         for node in A.nodes():
@@ -151,7 +152,8 @@ class NetworkXVisualizer:
                 condition_style = style['nodes'][nodes_type].get('negative_consistent')
 
             if condition_style:
-                set_style_attributes(node, {}, condition_style)  # Apply condition style without overwriting base style
+                # Apply condition style without overwriting base style
+                set_style_attributes(node, {}, condition_style)
 
         for edge in A.edges():
             u, v = edge
@@ -194,13 +196,13 @@ class NetworkXVisualizer:
             default_style = get_styles().get(network_type, get_styles()['default'])
             return self.visualize_network_default(network, source_dict, target_dict, prog, custom_style)
 
-    def visualise(self, output_file='network.png', render=False, highlight_nodes=None, style=None):
+    def visualize(self, output_file='network.png', render=False, highlight_nodes=None, style=None):
         plt.figure(figsize=(12, 12))
         network = self.network
         pos = nx.spring_layout(network)
 
-        node_colors = [network.nodes[node].get('fillcolor', 'lightgray') for node in network.nodes]
-        edge_colors = [network.edges[edge].get('color', 'black') for edge in network.edges]
+        node_colors = [network.nodes[node]['fillcolor'] for node in network.nodes]
+        edge_colors = [network.edges[edge]['color'] for edge in network.edges]
 
         nx.draw(network, pos, node_color=node_colors, edge_color=edge_colors, with_labels=True)
 
@@ -208,7 +210,7 @@ class NetworkXVisualizer:
             if style.get('highlight_color'):
                 highlight_color = style['highlight_color']
             else:
-                highlight_color = self._default_node_colors['highlight']
+                highlight_color = style['nodes']['default']['fillcolor']
             highlight_nodes = [wrap_node_name(node) for node in highlight_nodes]
             nx.draw_networkx_nodes(self.network, pos, nodelist=highlight_nodes, node_color=highlight_color)
 
@@ -217,82 +219,3 @@ class NetworkXVisualizer:
         else:
             plt.savefig(output_file)
             plt.close()
-
-    def visualize_big_graph(self):
-        raise NotImplementedError
-
-    def visualize_graph_split(self):
-        raise NotImplementedError
-
-
-#-----------------------------
-# Test examples
-# import matplotlib.pyplot as plt
-
-# # Create a sample graph
-# G = nx.DiGraph()
-# G.add_node("A")
-# G.add_node("B")
-# G.add_node("C")
-# G.add_edge("A", "B")
-# G.add_edge("B", "C")
-# G.add_edge("C", "A")
-
-# # Define source and target dictionaries
-# source_dict = {"A": 1, "B": -1}
-# target_dict = {"C": {"value": 1}}
-
-# # Basic Example with Default Style
-# A = visualize_network(G, source_dict, target_dict, prog='dot', network_type='default')
-# A.draw("default_style.png", format='png')
-# plt.imshow(plt.imread("default_style.png"))
-# plt.axis('off')
-# plt.show()
-
-# # Example with Custom Style
-# custom_style = {
-#     'nodes': {
-#         'sources': {
-#             'shape': 'rectangle',
-#             'color': 'red',
-#             'style': 'filled',
-#             'fillcolor': 'red',
-#             'penwidth': 2
-#         },
-#         'targets': {
-#             'shape': 'ellipse',
-#             'color': 'blue',
-#             'style': 'filled',
-#             'fillcolor': 'lightblue',
-#             'penwidth': 2
-#         },
-#         'other': {
-#             'shape': 'diamond',
-#             'color': 'green',
-#             'style': 'filled',
-#             'fillcolor': 'lightgreen',
-#             'penwidth': 2
-#         }
-#     },
-#     'edges': {
-#         'neutral': {
-#             'color': 'black',
-#             'penwidth': 1
-#         }
-#     }
-# }
-# A = visualize_network(G, source_dict, target_dict, prog='dot', network_type='default', custom_style=custom_style)
-# A.draw("custom_style.png", format='png')
-# plt.imshow(plt.imread("custom_style.png"))
-# plt.axis('off')
-# plt.show()
-
-# # Example with Sign Consistent Network
-# G["A"]["B"]["interaction"] = 1
-# G["B"]["C"]["interaction"] = -1
-# G["C"]["A"]["interaction"] = 1
-# A = visualize_network(G, source_dict, target_dict, prog='dot', network_type='sign_consistent')
-# A.draw("sign_consistent_style.png", format='png')
-# plt.imshow(plt.imread("sign_consistent_style.png"))
-# plt.axis('off')
-# plt.show()
