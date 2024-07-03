@@ -7459,4 +7459,4 @@ reference = "pypi-public"
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.9"
-content-hash = "e37be966a62defa45e609c432f86d90bb37463bafb238e0de7a8b8f76dbdae36"
+content-hash = "ff946664b03978e7064061c4104dd30a8bba57a67ad221d21c22e5a24825ea83"
