@@ -46,7 +46,7 @@ class YFilesVisualizer:
 
         for edge in self.network.edges(data=True):
             styled_edge = self.styles['default']['edges']
-            styled_edge = {"color": get_edge_color(edge[2]['effect'], self.styles)}
+            styled_edge = {"color": get_edge_color(edge[2]['sign'], self.styles)}
             edge_objects.append({
                 "id": (edge[0], edge[1]),
                 "start": edge[0],

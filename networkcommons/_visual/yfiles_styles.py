@@ -64,7 +64,7 @@ def get_styles():
                 'Conflicting': '#ffcc00'
             }
         },
-        'effects': {
+        'signs': {
             'activation': 'green',
             'inhibition': 'red',
             'form complex': 'blue',
@@ -113,13 +113,13 @@ def get_edge_color(effect, styles):
     Get the color for an edge based on its effect.
 
     Args:
-        effect (str): The effect type of the edge.
+        signs (str): The effect type of the edge.
         styles (dict): The styles dictionary.
 
     Returns:
         str: The color for the edge.
     """
-    return styles['effects'].get(effect, styles['effects']['default'])
+    return styles['signs'].get(effect, styles['signs']['default'])
 
 
 def update_edge_property(edge, type="color", value="blue"):
