@@ -45,7 +45,7 @@ networkx = "*"
 pandas = "*"
 corneto = { git = "https://github.com/deeenes/corneto.git", branch = "main" }
 liana = { git = "https://github.com/deeenes/liana-py.git", branch = "main" }
-pypath-common = "^0.2.2"
+pypath-common = "^0.2.3"
 pydeseq2 = "^0.4.9"
 omnipath = { git = "https://github.com/saezlab/omnipath.git", branch = "main" }
 decoupler = { git = "https://github.com/saezlab/decoupler-py.git", branch = "main" }
