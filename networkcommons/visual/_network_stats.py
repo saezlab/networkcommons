@@ -25,7 +25,7 @@ from typing import List, Dict
 
 import lazy_import
 import pandas as pd
-plt = lazy_import.lazy_import('matplotlib.pyplot')
+plt = lazy_import.lazy_module('matplotlib.pyplot')
 import networkx as nx
 
 

@@ -26,7 +26,8 @@ __all__ = [
 
 import lazy_import
 import networkx as nx
-cn = lazy_import.lazy_import('corneto')
+cn = lazy_import.lazy_module('corneto')
+cn_nx = lazy_import.lazy_module('corneto.contrib.networkx')
 
 
 def convert_cornetograph(graph):
@@ -42,7 +43,7 @@ def convert_cornetograph(graph):
     if isinstance(graph, cn._graph.Graph):
         corneto_graph = graph
     elif isinstance(graph, (nx.Graph, nx.DiGraph)):
-        corneto_graph = cn.contrib.networkx.networkx_to_corneto_graph(graph)
+        corneto_graph = cn_nx.networkx_to_corneto_graph(graph)
 
     return corneto_graph
 
@@ -82,7 +83,7 @@ def run_corneto_carnival(network,
         cn.methods.carnival.get_selected_edges(problem, graph),
     )
 
-    network_nx = cn.contrib.networkx.corneto_graph_to_networkx(
+    network_nx = cn_nx.corneto_graph_to_networkx(
         network_sol,
         skip_unsupported_edges=True,
     )

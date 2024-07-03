@@ -26,12 +26,12 @@ import re
 import inspect
 
 import lazy_import
-_common = lazy_import.lazy_module('pypath_common._misc')
+import pypath_common._misc as _common
+_uniprot = lazy_import.lazy_module('pypath.inputs.uniprot')
+_uniprot_db = lazy_import.lazy_module('pypath.inputs.uniprot_db')
 _taxonomy = lazy_import.lazy_module('pypath.utils.taxonomy')
 _mapping = lazy_import.lazy_module('pypath.utils.mapping')
 _orthology = lazy_import.lazy_module('pypath.utils.orthology')
-_uniprot = lazy_import.lazy_module('pypath.inputs.uniprot')
-_uniprot_db = lazy_import.lazy_module('pypath.inputs.uniprot_db')
 
 
 _REENS = re.compile(r'ENS[A-Z]*?([A-Z])[0-9]+')

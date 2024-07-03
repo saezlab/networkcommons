@@ -31,7 +31,7 @@ __all__ = ['NetworkXVisualizer']
 
 import lazy_import
 import networkx as nx
-plt = lazy_import.lazy_import('matplotlib.pyplot')
+plt = lazy_import.lazy_module('matplotlib.pyplot')
 
 from . import _aux
 from . import _styles

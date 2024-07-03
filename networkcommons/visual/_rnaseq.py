@@ -29,8 +29,8 @@ __all__  = [
 import lazy_import
 import pandas as pd
 import numpy as np
-plt = lazy_import.lazy_import('matplotlib.pyplot')
-sns = lazy_import.lazy_import('seaborn')
+plt = lazy_import.lazy_module('matplotlib.pyplot')
+sns = lazy_import.lazy_module('seaborn')
 sklearn_decomp = lazy_import.lazy_module('sklearn.decomposition')
 
 
