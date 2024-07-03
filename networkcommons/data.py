@@ -1,1 +1,0 @@
-from networkcommons._data import omics, network
