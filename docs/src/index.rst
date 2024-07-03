@@ -47,6 +47,21 @@ Bridging the gap between data, methods and knowledge in network inference
 .. ``decoupler`` is part of the `scverse <https://scverse.org>`_ ecosystem, a collection of tools for single-cell omics data analysis in python.
 .. For more information check the link.
 
+Mission statement
+=================
+Thirty years ago, microarrays revolutionized the study of biological processes, making the computational analysis of vast molecular data essential for understanding phenotypes systematically. This shift gave rise to **network biology**, a field that has developed numerous approaches based on diverse networks, algorithmic assumptions, and omics data types.
+At SaezLab, our focus is on large-scale studies of signaling processes, typically represented as directed, and sometimes signed, networks. These networks encode the transmission of molecular activation states among proteins, enabling us to map cellular functions based on data and prior knowledge.
+
+In a **recent review**, we identified several challenges in large-scale modeling of signaling networks, including the **lack of benchmarks** and the need for a **unified technical implementation** comprising data, methods, and evaluation strategies.
+
+The **NetworkCommons** initiative seeks to fill this gap, and aims to bring together the field around a common technical framework, aimed at standardising and advancing network biology methods. Our prototype focuses on directed and/or signed signaling networks, which we integrate with transcriptomics or phosphoproteomics data using various algorithms to create context-specific networks for evaluation and visualization.
+We envision this initiative as a critical technical advancement that will facilitate the **comparison**, **development**, and **reuse of novel and existing methods**. Our vignettes demonstrate how to utilize the implemented elements in this prototype for analyzing different types of omics data. 
+
+.. Note::
+   We are in the early stages of development and welcome any contributions aligned with our mission. 
+   Please use our GitHub Issues for discussions and questions.
+
+
 License
 =======
 The data redistributed by OmniPath does not have a license, each original resource carries their own. 
