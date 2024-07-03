@@ -48,7 +48,7 @@ def to_cornetograph(graph):
         for u, v, data in graph.edges(data=True):
             data['interaction'] = data.pop('sign')
 
-        corneto_graph = networkx_to_corneto_graph(graph)
+        corneto_graph = cn_nx.networkx_to_corneto_graph(graph)
 
     return corneto_graph
 
@@ -66,7 +66,7 @@ def to_networkx(graph, skip_unsupported_edges=True):
     if isinstance(graph, nx.Graph) or isinstance(graph, nx.DiGraph):
         networkx_graph = graph
     elif isinstance(graph, cn._graph.Graph):
-        networkx_graph = corneto_graph_to_networkx(
+        networkx_graph = cn_nx.corneto_graph_to_networkx(
             graph,
             skip_unsupported_edges=skip_unsupported_edges)
         # rename interaction for sign
