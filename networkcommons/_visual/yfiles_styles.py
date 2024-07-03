@@ -121,9 +121,11 @@ def get_edge_color(effect, styles):
     """
     return styles['effects'].get(effect, styles['effects']['default'])
 
+
 def update_edge_property(edge, type="color", value="blue"):
     style = {type: value}
     return apply_edge_style(edge, style)
+
 
 def get_comparison_color(category, styles, element_type='nodes'):
     """

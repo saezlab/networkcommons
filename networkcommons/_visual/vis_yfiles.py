@@ -2,18 +2,16 @@ from yfiles_jupyter_graphs import GraphWidget
 from typing import Dict
 from IPython.display import display
 import matplotlib.pyplot as plt
-from ._aux import wrap_node_name
-#from _aux import wrap_node_name
+from networkcommons._session import _log
 import pandas as pd
 
-#from yfiles_styles import (get_styles,
-from .yfiles_styles import (get_styles,
-                            apply_node_style,
-                            apply_edge_style,
-                            update_node_property,
-                            update_edge_property,
-                            get_edge_color,
-                            get_comparison_color)
+from networkcommons._visual.yfiles_styles import (get_styles,
+                                                  apply_node_style,
+                                                  apply_edge_style,
+                                                  update_node_property,
+                                                  update_edge_property,
+                                                  get_edge_color,
+                                                  get_comparison_color)
 
 
 class YFilesVisualizer:
@@ -22,7 +20,12 @@ class YFilesVisualizer:
         self.network = network.copy()
         self.styles = get_styles()
 
-    def visualise(self, graph_layout, directed, filepath="yfiles_visualization.png"):
+    def visualise(self, graph_layout="Organic", directed=True):
+        available_layouts = ["Circular", "Hierarchic", "Organic", "Orthogonal", "Radial", "Tree"]
+        if graph_layout not in available_layouts:
+            graph_layout = "Organic"
+            _log.warning(f"Graph layout not available. Using default layout: {graph_layout}")
+
         # creating empty object for visualization
         w = GraphWidget()
 
@@ -30,7 +33,7 @@ class YFilesVisualizer:
         node_objects = []
 
         for node in self.network.nodes:
-            styled_node = apply_node_style(node, self.styles['default']['nodes'])
+            styled_node = self.styles['default']['nodes']
             node_objects.append({
                 "id": node,
                 "properties": {'label': node},
@@ -44,8 +47,8 @@ class YFilesVisualizer:
         edge_objects = []
 
         for edge in self.network.edges(data=True):
-            edge_props = {"color": get_edge_color(edge[2]['effect'], self.styles)}
-            styled_edge = apply_edge_style(edge_props, self.styles['default']['edges'])
+            styled_edge = self.styles['default']['edges']
+            styled_edge = {"color": get_edge_color(edge[2]['effect'], self.styles)}
             edge_objects.append({
                 "id": (edge[0], edge[1]),
                 "start": edge[0],
@@ -83,7 +86,6 @@ class YFilesVisualizer:
             })
         w.nodes = objects
 
-        # filling w with edges
         objects = []
         for index, row in int_comparison.iterrows():
             edge_props = {"comparison": row["comparison"]}
@@ -118,25 +120,10 @@ class YFilesVisualizer:
 
     @staticmethod
     def custom_factor_mapping(node: Dict):
-        #TODO
-        return 3
+        return 1
 
     @staticmethod
     def custom_label_styles_mapping(node: Dict):
         label_style = get_styles()['default']['labels'].copy()
         label_style['text'] = node["properties"]["label"]
         return label_style
-
-
-# Example usage
-# create a network
-# import networkx as nx
-# network = nx.DiGraph()
-# network.add_nodes_from(["A", "B", "C", "D"])
-# network.add_edges_from([("A", "B", {"effect": "activation"}), ("B", "C", {"effect": "inhibition"}),
-#                         ("C", "D", {"effect": "activation"})])
-#
-#
-# visualizer = YFilesVisualizer(network)
-# visualizer.visualise(graph_layout="hierarchic", directed=True)
-

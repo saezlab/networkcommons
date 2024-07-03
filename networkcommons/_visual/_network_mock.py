@@ -3,7 +3,6 @@ import networkx as nx
 import pandas as pd
 from pypath.utils import mapping
 
-from ._aux import wrap_node_name
 import vis_yfiles
 import vis_networkx
 
