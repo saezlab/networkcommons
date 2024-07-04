@@ -21,9 +21,10 @@ from __future__ import annotations
 
 __all__ = ['YFilesVisualizer']
 
-import lazy_import
-yfiles = lazy_import.lazy_module('yfiles_jupyter_graphs')
-ipydisplay = lazy_import.lazy_module('IPython.display')
+import lazy_imports
+
+from IPython.display import display
+import yfiles_jupyter_graphs as yfiles
 
 from . import _yfiles_styles
 from networkcommons._session import _log
@@ -87,7 +88,7 @@ class YFilesVisualizer:
         w.directed = directed
         w.graph_layout = graph_layout
 
-        ipydisplay.display(w)
+        display(w)
 
     def vis_comparison(self, int_comparison, node_comparison, graph_layout, directed):
         # creating empty object for visualization
