@@ -27,7 +27,7 @@ visualize the graph based on the network type.
 
 from __future__ import annotations
 
-__all__ = ['NetworkXVisualizer']
+__all__ = ['visualize_graph_simple', 'NetworkXVisualizer']
 
 import lazy_import
 import networkx as nx
@@ -36,6 +36,87 @@ plt = lazy_import.lazy_module('matplotlib.pyplot')
 from . import _aux
 from . import _styles
 from networkcommons._session import _log
+
+
+def visualize_graph_simple(network,
+                           source_dict,
+                           target_dict,
+                           prog='dot',
+                           is_sign_consistent=True):
+    """
+    Visualize the graph using the provided network.
+
+    Args:
+        network (nx.Graph): The network to visualize.
+        source_dict (dict): A dictionary containing the sources and sign of
+            perturbation.
+        target_dict (dict): A dictionary containing the targets and sign of
+            measurements.
+        prog (str, optional): The layout program to use. Defaults to 'dot'.
+        is_sign_consistent (bool, optional): If True, only visualize sign
+            consistent paths. Defaults to True.
+    """
+
+    A = nx.nx_agraph.to_agraph(network)
+    A.graph_attr['ratio'] = '1.2'
+
+    sources = list(source_dict.keys())
+    targets = set(target_dict.keys())
+
+    for node in A.nodes():
+        n = node.get_name()
+        if n in sources:
+            fillcolor = 'steelblue'
+            if source_dict.get(n, 1) > 0 and is_sign_consistent:
+                color = 'forestgreen'
+            elif source_dict.get(n, 1) < 0 and is_sign_consistent:
+                color = 'tomato3'
+            else:
+                color = 'steelblue'
+            node.attr['shape'] = 'circle'
+            node.attr['color'] = color
+            node.attr['style'] = 'filled'
+            node.attr['fillcolor'] = fillcolor
+            node.attr['label'] = ''
+            node.attr['penwidth'] = 3
+        elif n in targets:
+            fillcolor = 'mediumpurple1'
+            if target_dict.get(n, 1) > 0 and is_sign_consistent:
+                color = 'forestgreen'
+            elif target_dict.get(n, 1) < 0 and is_sign_consistent:
+                color = 'tomato3'
+            else:
+                color = 'mediumpurple1'
+            node.attr['shape'] = 'circle'
+            node.attr['color'] = color
+            node.attr['style'] = 'filled'
+            node.attr['fillcolor'] = fillcolor
+            node.attr['label'] = ''
+            node.attr['penwidth'] = 3
+        else:
+            node.attr['shape'] = 'circle'
+            node.attr['color'] = 'gray'
+            node.attr['style'] = 'filled'
+            node.attr['fillcolor'] = 'gray'
+            node.attr['label'] = ''
+
+    for edge in A.edges():
+        u, v = edge
+        edge_data = network.get_edge_data(u, v)
+        if 'interaction' in edge_data:
+            edge_data['sign'] = edge_data.pop('interaction')
+        if edge_data['sign'] == 1 and is_sign_consistent:
+            edge_color = 'forestgreen'
+        elif edge_data['sign'] == -1 and is_sign_consistent:
+            edge_color = 'tomato3'
+        else:
+            edge_color = 'gray30'
+        edge.attr['color'] = edge_color
+        edge.attr['penwidth'] = 2
+
+    A.layout(prog=prog)
+
+    return A
 
 
 class NetworkXVisualizer:
