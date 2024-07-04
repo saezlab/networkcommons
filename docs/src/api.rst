@@ -187,5 +187,5 @@ Visualization
     visual.build_ma_plot
     visual.build_pca_plot
     visual.build_heatmap_with_tree
-    vlsual.visualize_graph_simple
+    visual.visualize_graph_simple
     visual.lollipop_plot
