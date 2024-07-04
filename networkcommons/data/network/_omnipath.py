@@ -53,7 +53,7 @@ def get_omnipath(genesymbols: bool = True, directed_signed: bool = True):
                           ) &
                           (network['curation_effort'] >= 2)]
 
-    network['sign'] = np.where(network['consensus_stimulation'] is True, 1, -1)
+    network['sign'] = np.where(network['consensus_stimulation'], 1, -1)
 
     # write the resulting omnipath network in networkx format
     network = network[['source', 'target', 'sign']].reset_index(drop=True)
