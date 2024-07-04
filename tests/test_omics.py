@@ -1,13 +1,15 @@
 import pytest
 
 import pandas as pd
+import anndata as ad
 
-from networkcommons._data import _omics
+from networkcommons.data.omics import _common
+from networkcommons.data import omics
 
 
 def test_datasets():
 
-    dsets = _omics._common._datasets()
+    dsets = _common._datasets()
 
     assert 'baseurl' in dsets
     assert isinstance(dsets['datasets'], dict)
@@ -16,23 +18,24 @@ def test_datasets():
 
 def test_datasets_2():
 
-    dsets = _omics._common.datasets()
+    dsets = _common.datasets()
 
     assert 'decryptm' in dsets
 
 
 def test_commons_url():
 
-    url = _omics._common._commons_url('test', table = 'meta')
+    url = _common._commons_url('test', table = 'meta')
 
     assert 'metadata' in url
 
 
+@pytest.mark.slow
 def test_download(tmp_path):
 
-    url = _omics._common._commons_url('test', table = 'meta')
+    url = _common._commons_url('test', table = 'meta')
     path = tmp_path / 'test_download.tsv'
-    _omics._common._download(url, path)
+    _common._download(url, path)
 
     assert path.exists()
 
@@ -43,11 +46,12 @@ def test_download(tmp_path):
     assert line.startswith('sample_ID\t')
 
 
+@pytest.mark.slow
 def test_open():
 
-    url = _omics._common._commons_url('test', table = 'meta')
+    url = _common._commons_url('test', table = 'meta')
 
-    with _omics._common._open(url) as fp:
+    with _common._open(url) as fp:
 
         line = next(fp)
 
@@ -56,16 +60,17 @@ def test_open():
 
 def test_open_df():
 
-    url = _omics._common._commons_url('test', table = 'meta')
-    df = _omics._common._open(url, df = {'sep': '\t'})
+    url = _common._commons_url('test', table = 'meta')
+    df = _common._open(url, df = {'sep': '\t'})
 
     assert isinstance(df, pd.DataFrame)
     assert df.shape == (4, 2)
 
 
+@pytest.mark.slow
 def test_decryptm_datasets():
 
-    dsets = _omics._decryptm.decryptm_datasets()
+    dsets = omics.decryptm_datasets()
 
     assert isinstance(dsets, pd.DataFrame)
     assert dsets.shape == (51, 3)
@@ -78,18 +83,20 @@ def decryptm_args():
     return 'KDAC_Inhibitors', 'Acetylome', 'curves_CUDC101.txt'
 
 
-def test_decryptm(decryptm_args):
+@pytest.mark.slow
+def test_decryptm_table(decryptm_args):
 
-    df = _omics._decryptm.decryptm(*decryptm_args)
+    df = omics.decryptm_table(*decryptm_args)
 
     assert isinstance(df, pd.DataFrame)
     assert df.shape == (18007, 65)
     assert df.EC50.dtype == 'float64'
 
 
+@pytest.mark.slow
 def test_decryptm_experiment(decryptm_args):
 
-    dfs = _omics._decryptm.decryptm_experiment(*decryptm_args[:2])
+    dfs = omics.decryptm_experiment(*decryptm_args[:2])
 
     assert isinstance(dfs, list)
     assert len(dfs) == 4
@@ -98,9 +105,10 @@ def test_decryptm_experiment(decryptm_args):
     assert dfs[3].EC50.dtype == 'float64'
 
 
+@pytest.mark.slow
 def test_panacea():
 
-    dfs = _omics._panacea.panacea()
+    dfs = omics.panacea()
 
     assert isinstance(dfs, tuple)
     assert len(dfs) == 2
@@ -108,3 +116,39 @@ def test_panacea():
     assert dfs[0].shape == (24961, 1217)
     assert dfs[1].shape == (1216, 2)
     assert (dfs[0].drop('gene_symbol', axis = 1).dtypes == 'int64').all()
+
+
+@pytest.mark.slow
+def test_scperturb_metadata():
+
+    m = omics.scperturb_metadata()
+
+    assert isinstance(m, dict)
+    assert len(m['files']['entries']) == 50
+    assert m['versions'] == {'index': 4, 'is_latest': True}
+
+
+@pytest.mark.slow
+def test_scperturb_datasets():
+
+    example_url = (
+        'https://zenodo.org/api/records/10044268/files/'
+        'XuCao2023.h5ad/content'
+    )
+    dsets = omics.scperturb_datasets()
+
+    assert isinstance(dsets, dict)
+    assert len(dsets) == 50
+    assert dsets['XuCao2023.h5ad'] == example_url
+
+
+@pytest.mark.slow
+def test_scperturb():
+
+    var_cols = ('ensembl_id', 'ncounts', 'ncells')
+    adata = omics.scperturb('AdamsonWeissman2016_GSM2406675_10X001.h5ad')
+
+    assert isinstance(adata, ad.AnnData)
+    assert tuple(adata.var.columns) == var_cols
+    assert 'UMI count' in adata.obs.columns
+    assert adata.shape == (5768, 35635)

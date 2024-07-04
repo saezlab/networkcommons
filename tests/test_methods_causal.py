@@ -1,7 +1,7 @@
 import networkx as nx
 import corneto as cn
 
-from networkcommons._methods import _causal
+from networkcommons.methods import _causal
 
 
 def test_run_corneto_carnival():

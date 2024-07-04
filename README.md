@@ -8,7 +8,7 @@ Networkcommons is a package which allows users to download data and prior knowle
 
 ## Contributors
 
-Martin Garrido-Rodriguez, Olga Ivanova, Victor Paton-Gonzales, Denes Turei
+Martin Garrido-Rodriguez, Olga Ivanova, Victor Paton, Denes Turei
 
 [badge-cov]: https://codecov.io/github/saezlab/networkcommons/graph/badge.svg?token=RH438ALJC2
 [link-cov]: https://codecov.io/github/saezlab/networkcommons

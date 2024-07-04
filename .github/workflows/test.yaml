@@ -1,15 +1,18 @@
-name: Test
+name: Unit tests (fast suite)
 
 on:
     push:
-        branches: [main]
+        branches: [main, dev]
     pull_request:
-        branches: [main]
+        branches: [main, dev]
+        types: [ opened, synchronize, reopened, ready_for_review ]
 
 jobs:
 
-    test:
+    tests:
+
         runs-on: ${{ matrix.os }}
+
         defaults:
             run:
                 shell: bash -e {0}
@@ -17,7 +20,7 @@ jobs:
         strategy:
             fail-fast: false
             matrix:
-                python: [3.8, 3.9, 3.10]
+                python: ['3.9', '3.10', '3.11', '3.12']
                 os: [ubuntu-latest, macos-latest]
 
         env:
@@ -25,33 +28,53 @@ jobs:
             PYTHON: ${{ matrix.python }}
 
         steps:
-        -   uses: actions/checkout@v2
-        -   name: Set up Python ${{ matrix.python }}
-            uses: actions/setup-python@v4
+        -   name: Check out
+            uses: actions/checkout@main
+        -   name: Install graphviz headers
+            if: ${{ matrix.os == 'ubuntu-latest' }}
+            run: |
+              sudo apt-get update
+              sudo apt-get install -y graphviz graphviz-dev
+        -   name: Install graphviz headers
+            if: ${{ matrix.os == 'macos-latest' }}
+            run: |
+              brew install graphviz
+              echo "PATH=\"$(brew --prefix graphviz)/bin:$PATH\"" >> "$GITHUB_ENV"
+              echo "CFLAGS=\"-I$(brew --prefix graphviz)/include\"" >> "$GITHUB_ENV"
+              echo "LDFLAGS=\"-L$(brew --prefix graphviz)/lib\"" >> "$GITHUB_ENV"
+        -   name: Setup Python ${{ matrix.python }}
+            uses: actions/setup-python@v5
             with:
-                python-version: ${{ matrix.python }}
-                cache: pip
-                cache-dependency-path: '**/pyproject.toml'
-
-        -   name: Install test dependencies
-            run: |
-                python -m pip install --upgrade pip wheel
-                pip install codecov
+              python-version: ${{ matrix.python }}
+        -   name: Install Poetry
+            uses: snok/install-poetry@v1
+            with:
+                virtualenvs-create: true
+                virtualenvs-in-project: true
+                installer-parallel: true
+        -   name: Load cached venv
+            id: cached-poetry-dependencies
+            uses: actions/cache@v4
+            with:
+                path: .venv
+                key: venv-${{ runner.os }}-${{ matrix.python }}-${{ hashFiles('**/poetry.lock') }}
         -   name: Install dependencies
+            if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
             run: |
-                pip install ".[dev,test]"
-        -   name: Install pip dependencies
+              poetry install --no-interaction --no-root
+        -   name: Install library
+            run: poetry install --no-interaction
+        -   name: Tests and coverage
+            if: ${{ github.event_name == 'push' }}
             run: |
-                python -m pip install --upgrade pip
-        -   name: Test
-            env:
-                MPLBACKEND: agg
-                PLATFORM: ${{ matrix.os }}
-                DISPLAY: :42
+                poetry run pytest -v --cov --color=yes --durations=0
+        -   name: Tests
+            if: ${{ github.event_name == 'pull_request' }}
             run: |
-                pytest -v --cov --color=yes
-        -   name: Upload coverage
+                poetry run pytest -v --cov --color=yes --durations=0
+        -   name: Upload coverage reports to Codecov
+            if: ${{ github.event_name == 'push' }}
             env:
                 CODECOV_NAME: ${{ matrix.python }}-${{ matrix.os }}
             run: |
-                codecov --no-color --required --flags unittests
+                poetry run codecovcli --verbose upload-process -t ${{ secrets.CODECOV_TOKEN }} -n 'fast'-${{ github.run_id }} -F fast

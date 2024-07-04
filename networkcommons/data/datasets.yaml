@@ -1,0 +1,23 @@
+omics:
+  baseurl: https://commons.omnipathdb.org/
+  datasets:
+    decryptm:
+      name: DecryptM
+      description: Drug perturbation proteomics and phosphoproteomics data
+      path: decryptm/{experiment}/{data_type}/{fname}
+    panacea:
+      name: Panacea
+      description: Pancancer Analysis of Chemical Entity Activity RNA-Seq data
+      path: panacea/panacea__{table}data.tsv
+    test:
+      name: Test data
+      description: Small RNA-Seq data for unit tests
+      path: unit_test/test__{table}data.tsv
+    moon:
+      name: MOON
+      description: Database files for running MOON
+      path: moon/{table}_input.tsv
+    cosmos:
+      name: COSMOS
+      description: Database files for running COSMOS (MetaPKN)
+      path: moon/net/meta_network.sif

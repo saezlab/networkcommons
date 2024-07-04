@@ -3,7 +3,7 @@ import pytest
 import pandas as pd
 import networkx as nx
 
-from networkcommons._methods import _graph
+from networkcommons.methods import _graph
 
 
 def _network(weights: bool = False, signs: bool = False) -> nx.DiGraph:
@@ -184,10 +184,18 @@ def test_add_pagerank_scores(net2):
     assert nx.is_isomorphic(network, network_with_pagerank)
 
     for node in network.nodes:
-        assert network.nodes[node] == network_with_pagerank.nodes[node]
+
+        assert (
+            network.nodes[node] ==
+            pytest.approx(network_with_pagerank.nodes[node])
+        )
 
     for edge in network.edges:
-        assert network.edges[edge] == network_with_pagerank.edges[edge]
+
+        assert (
+            network.edges[edge] ==
+            pytest.approx(network_with_pagerank.edges[edge])
+        )
 
 
 def test_compute_ppr_overlap(net2):
@@ -232,7 +240,14 @@ def test_compute_ppr_overlap(net2):
     assert nx.is_isomorphic(test_network, subnetwork)
 
     for node in test_network.nodes:
-        assert test_network.nodes[node] == subnetwork.nodes[node]
+        assert (
+            test_network.nodes[node] ==
+            pytest.approx(subnetwork.nodes[node])
+        )
 
     for edge in test_network.edges:
-        assert test_network.edges[edge] == subnetwork.edges[edge]
+
+        assert (
+            test_network.edges[edge] ==
+            pytest.approx(subnetwork.edges[edge])
+        )

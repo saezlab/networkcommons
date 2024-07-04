@@ -4,7 +4,7 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.poetry]
 name = "networkcommons"
-version = "0.2.0"
+version = "0.3.0"
 description = "Integrated framework for network inference and evaluation using prior knowledge and omics data"
 license = "gpl-3.0-only"
 authors = [
@@ -45,17 +45,28 @@ networkx = "*"
 pandas = "*"
 corneto = { git = "https://github.com/deeenes/corneto.git", branch = "main" }
 liana = { git = "https://github.com/deeenes/liana-py.git", branch = "main" }
-pypath-common = "^0.2.2"
+pypath-common = "^0.2.4"
 pydeseq2 = "^0.4.9"
-omnipath = "^1.0.8"
-decoupler = "^1.6.0"
+omnipath = { git = "https://github.com/saezlab/omnipath.git", branch = "main" }
+decoupler = { git = "https://github.com/saezlab/decoupler-py.git", branch = "main" }
 requests = "^2.32.3"
 beautifulsoup4 = "^4.12.3"
-pygraphviz = "1.11"
-pypath-omnipath = "^0.16.15"
+pypath-omnipath = "^0.16.16"
+numpydoc = "^1.7.0"
+sphinx-rtd-theme = "^2.0.0"
+lazy-import = { git = "https://github.com/mnmelo/lazy_import.git", branch = "master" }
+anndata = "^0.10.8"
+pytest = "^8.2.2"
+yfiles-jupyter-graphs = "^1.7.2"
+gurobipy = "^11.0.2"
+matplotlib = "^3.5.1"
+graphviz = "^0.17"
 
 [tool.poetry.dev-dependencies]
 pytest = ">=6.0"
+pytest-timeout = "^2.3.1"
+pytest-cov = "^5.0.0"
+codecov-cli = "^0.7.2"
 tox = ">=3.20.1"
 pre-commit = ">=2.17.0"
 bump2version = "*"
@@ -74,13 +85,12 @@ pydata-sphinx-theme = "*"
 sphinx-remove-toctrees = "*"
 jupyter-contrib-nbextensions = { git = "https://github.com/deeenes/jupyter_contrib_nbextensions.git", branch = "master" }
 nbsphinx = { git = "https://github.com/deeenes/nbsphinx.git", branch = "timings" }
+picos = "^2.4.17"
+cvxpy = "^1.5.1"
+pygraphviz = "1.11"
 
 [tool.poetry.urls]
 "Bug Tracker" = "https://github.com/saezlab/networkcommons/issues"
-
-[tool.poetry.group.dev.dependencies]
-picos = "^2.4.17"
-cvxpy = "^1.5.1"
 
 [tool.black]
 line-length = 80
@@ -171,10 +181,17 @@ testpaths = [
   "tests",
 ]
 xfail_strict = true
+markers = [
+    "slow: marks tests as slow (deselect with '-m \"not slow\"')"
+]
 addopts = [
     # "-Werror",  # if 3rd party libs raise DeprecationWarnings, just use filterwarnings below
     "--import-mode=importlib",  # allow using test files with same name
+    "-m not slow",
 ]
 filterwarnings = [
-    # "ignore:.*U.*mode is deprecated:DeprecationWarning",
+    "ignore: .*fitting did not converge.*:UserWarning",
+    "ignore: .*especially asymmetric.*:UserWarning",
+    "ignore: .*machine precision times.*:FutureWarning",
+    "ignore: .*invalid escape sequence.*:DeprecationWarning",
 ]

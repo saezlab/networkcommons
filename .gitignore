@@ -28,3 +28,5 @@ licensetools11.0.1_linux64/
 /.pytest_cache/
 /.cache/
 /data/
+/_build/
+api

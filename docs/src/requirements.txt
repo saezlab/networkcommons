@@ -1,0 +1,6 @@
+numpydoc
+nbsphinx
+ipython
+skranger
+sphinx_rtd_theme
+sphinx_autodoc_typehints

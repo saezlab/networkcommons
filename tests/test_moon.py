@@ -1,28 +1,10 @@
 import networkx as nx
 import pandas as pd
-<<<<<<< HEAD:networkcommons/test/test_moon.py
-from networkcommons.moon import (
-    meta_network_cleanup,
-    prepare_metab_inputs,
-    is_expressed,
-    filter_pkn_expressed_genes,
-    filter_input_nodes_not_in_pkn,
-    keep_controllable_neighbours,
-    keep_observable_neighbours,
-    compress_same_children,
-    run_moon_core,
-    filter_incoherent_TF_target,
-    decompress_moon_result,
-    reduce_solution_network,
-    get_ego_graph,
-    translate_res
-)
-=======
-from networkcommons._methods import _moon
->>>>>>> module-org:tests/test_moon.py
+from networkcommons.methods import _moon
 
 
 def test_meta_network_cleanup():
+
     graph = nx.DiGraph()
     graph.add_nodes_from(['A', 'B', 'C', 'D'])
     graph.add_edge('A', 'A', sign=1)  # Self-loop
@@ -41,6 +23,7 @@ def test_meta_network_cleanup():
 
 
 def test_prepare_metab_inputs():
+
     metab_input = {'glucose': 1.0, 'fructose': 2.0}
     compartment_codes = ['c', 'm', 'invalid']
 
@@ -53,46 +36,39 @@ def test_prepare_metab_inputs():
 
 
 def test_is_expressed():
+
     expressed_genes_entrez = ["GENE1", "GENE2", "GENE3"]
 
-<<<<<<< HEAD:networkcommons/test/test_moon.py
     # Test case for matching "Gene[0-9]+__[A-Z0-9_]+$"
-    assert is_expressed("Gene123__GENE1", expressed_genes_entrez) == "Gene123__GENE1", "Test case 1 failed"
-    assert is_expressed("Gene123__GENE4", expressed_genes_entrez) is None, "Test case 2 failed"
+    assert _moon.is_expressed("Gene123__GENE1", expressed_genes_entrez) == "Gene123__GENE1", "Test case 1 failed"
+    assert _moon.is_expressed("Gene123__GENE4", expressed_genes_entrez) is None, "Test case 2 failed"
 
     # Test case for matching "Gene[0-9]+__[^_][a-z]"
-    assert is_expressed("Gene456__Aa", expressed_genes_entrez) == "Gene456__Aa", "Test case 3 failed"
-    assert is_expressed("Gene789__Bb", expressed_genes_entrez) == "Gene789__Bb", "Test case 4 failed"
-    assert is_expressed("Gene456__Ab", expressed_genes_entrez) == "Gene456__Ab", "Test case 5 failed"
-    assert is_expressed("Gene789__Cz", expressed_genes_entrez) == "Gene789__Cz", "Test case 6 failed"
+    assert _moon.is_expressed("Gene456__Aa", expressed_genes_entrez) == "Gene456__Aa", "Test case 3 failed"
+    assert _moon.is_expressed("Gene789__Bb", expressed_genes_entrez) == "Gene789__Bb", "Test case 4 failed"
+    assert _moon.is_expressed("Gene456__Ab", expressed_genes_entrez) == "Gene456__Ab", "Test case 5 failed"
+    assert _moon.is_expressed("Gene789__Cz", expressed_genes_entrez) == "Gene789__Cz", "Test case 6 failed"
 
     # Test case for matching "Gene[0-9]+__[A-Z0-9_]+reverse"
     expressed_genes_entrez = ["GENE1", "GENE2"]
-    assert is_expressed("Gene111__GENE1_GENE2_reverse", expressed_genes_entrez) == "Gene111__GENE1_GENE2_reverse", "Test case 7 failed"
-    assert is_expressed("Gene222__GENE1_GENE4_reverse", expressed_genes_entrez) is None, "Test case 8 failed"
+    assert _moon.is_expressed("Gene111__GENE1_GENE2_reverse", expressed_genes_entrez) == "Gene111__GENE1_GENE2_reverse", "Test case 7 failed"
+    assert _moon.is_expressed("Gene222__GENE1_GENE4_reverse", expressed_genes_entrez) is None, "Test case 8 failed"
 
     # Test case for matching exact gene names in expressed_genes_entrez
     expressed_genes_entrez = ["Gene1", "Gene2", "Gene3"]
-    assert is_expressed("Gene1", expressed_genes_entrez) == "Gene1", "Test case 9 failed"
-    assert is_expressed("Gene4", expressed_genes_entrez) is None, "Test case 10 failed"
+    assert _moon.is_expressed("Gene1", expressed_genes_entrez) == "Gene1", "Test case 9 failed"
+    assert _moon.is_expressed("Gene4", expressed_genes_entrez) is None, "Test case 10 failed"
 
     # Test case for non-Metab and non-orphanReac strings that don't match any regex
-    assert is_expressed("RandomGene", expressed_genes_entrez) is None, "Test case 11 failed"
+    assert _moon.is_expressed("RandomGene", expressed_genes_entrez) is None, "Test case 11 failed"
 
     # Test case for "Metab" and "orphanReac" strings which should return the input itself
-    assert is_expressed("Metab1", expressed_genes_entrez) == "Metab1", "Test case 12 failed"
-    assert is_expressed("orphanReac1", expressed_genes_entrez) == "orphanReac1", "Test case 13 failed"
-=======
-    assert _moon.is_expressed('Gene1', expressed_genes) == 'Gene1'
-    assert _moon.is_expressed('Gene4', expressed_genes) is None
-    assert _moon.is_expressed('Metab__something', expressed_genes) == \
-        'Metab__something'
-    assert _moon.is_expressed('orphanReac__something', expressed_genes) == \
-        'orphanReac__something'
->>>>>>> module-org:tests/test_moon.py
+    assert _moon.is_expressed("Metab1", expressed_genes_entrez) == "Metab1", "Test case 12 failed"
+    assert _moon.is_expressed("orphanReac1", expressed_genes_entrez) == "orphanReac1", "Test case 13 failed"
 
 
 def test_filter_pkn_expressed_genes():
+
     expressed_genes = ['Gene1', 'Gene2', 'Gene3']
     graph = nx.DiGraph()
     graph.add_nodes_from(['Gene1', 'Gene2', 'Gene4'])
@@ -106,6 +82,7 @@ def test_filter_pkn_expressed_genes():
 
 
 def test_filter_input_nodes_not_in_pkn():
+
     data = {'Gene1': 1, 'Gene2': 2, 'Gene3': 3}
     graph = nx.DiGraph()
     graph.add_nodes_from(['Gene1', 'Gene2'])
@@ -117,6 +94,7 @@ def test_filter_input_nodes_not_in_pkn():
 
 
 def test_keep_controllable_neighbours():
+
     source_dict = {'Gene1': 1, 'Gene2': 1}
     graph = nx.DiGraph()
     graph.add_edges_from([('Gene1', 'Gene3'),
@@ -133,6 +111,7 @@ def test_keep_controllable_neighbours():
 
 
 def test_keep_observable_neighbours():
+
     target_dict = {'Gene3': 1, 'Gene4': 1}
     graph = nx.DiGraph()
     graph.add_edges_from([('Gene1', 'Gene3'),
@@ -150,6 +129,7 @@ def test_keep_observable_neighbours():
 
 
 def test_compress_same_children():
+
     graph = nx.DiGraph()
     graph.add_edges_from([
         ('A', 'B', {'sign': 1}),
@@ -180,8 +160,11 @@ def test_compress_same_children():
     ])
     sig_input = []
     metab_input = []
-
-    subnetwork, node_signatures, duplicated_parents = compress_same_children(
+    (
+        subnetwork,
+        node_signatures,
+        duplicated_parents
+    ) = _moon.compress_same_children(
         graph, sig_input, metab_input
     )
 
@@ -191,6 +174,7 @@ def test_compress_same_children():
 
 
 def test_run_moon_core():
+
     graph = nx.DiGraph()
     graph.add_edges_from([
         ('A', 'B', {'sign': 1}),
@@ -217,6 +201,7 @@ def test_run_moon_core():
 
 
 def test_filter_incoherent_TF_target():
+
     moon_res = pd.DataFrame({'source': ['TF1'], 'score': [1]})
     TF_reg_net = pd.DataFrame({'source': ['TF1', 'TF1'],
                                'target': ['Gene1', 'Gene2'],
@@ -234,6 +219,7 @@ def test_filter_incoherent_TF_target():
 
 
 def test_decompress_moon_result():
+
     moon_res = pd.DataFrame({'source': ['A'], 'score': [1]})
     node_signatures = {'A': 'A'}
     duplicated_parents = {}
@@ -249,6 +235,7 @@ def test_decompress_moon_result():
 
 
 def test_reduce_solution_network():
+
     moon_res = pd.DataFrame({'source_original': ['A', 'B', 'C'],
                              'source': ['Parent_of_C', 'Parent_of_C', 'C'],
                              'score': [1.4783, -1.54, 0.5]})
@@ -271,6 +258,7 @@ def test_reduce_solution_network():
 
 
 def test_get_ego_graph():
+
     # Create a sample directed graph
     G = nx.DiGraph()
     G.add_edges_from([("A", "B"), ("A", "C"), ("B", "D"), ("C", "E"), ("D", "F"), ("E", "G")])
@@ -280,7 +268,7 @@ def test_get_ego_graph():
     depth_limit = 2
 
     # Call the function
-    ego_graph = get_ego_graph(G, sources, depth_limit)
+    ego_graph = _moon.get_ego_graph(G, sources, depth_limit)
 
     # Define expected nodes and edges in the ego graph
     expected_nodes = {"A", "B", "C", "D", "E"}
@@ -293,7 +281,7 @@ def test_get_ego_graph():
     # Test with a different source and depth limit
     sources = ["B"]
     depth_limit = 1
-    ego_graph = get_ego_graph(G, sources, depth_limit)
+    ego_graph = _moon.get_ego_graph(G, sources, depth_limit)
 
     # Define expected nodes and edges in the ego graph for new source and depth
     expected_nodes = {"B", "D"}
@@ -305,13 +293,13 @@ def test_get_ego_graph():
 
 
 def test_translate_res():
+
     G = nx.DiGraph()
     G.add_edges_from([
         ("Metab__HMDB1_a", "Metab__HMDB2_b"),
         ("Metab__HMDB3_b", "GeneC_c")
     ])
 
-<<<<<<< HEAD:networkcommons/test/test_moon.py
     att_data = {
         "nodes": [
             "Metab__HMDB1_a",
@@ -329,8 +317,9 @@ def test_translate_res():
         "HMDB3": "Gamma"
     }
 
-    translated_network, translated_att = translate_res(G, att_df, mapping_dict)
-
+    translated_network, translated_att = _moon.translate_res(
+        G, att_df, mapping_dict
+    )
     expected_edges = [
         ("Metab__Alpha_a", "Metab__Beta_b"),
         ("Metab__Gamma_b", "EnzymeC")
@@ -344,15 +333,6 @@ def test_translate_res():
 
     assert set(translated_network.edges()) == set(expected_edges), "Translated network edges are incorrect"
     assert translated_att['nodes'].tolist() == expected_att_nodes, "Translated attribute table nodes are incorrect"
-
-
-
-=======
-    translated_network, translated_att = _moon.translate_res(
-        network, att, mapping_dict
-    )
-
-    assert 'Metab__A' in translated_network.nodes, "Translation failed"
-    assert 'Metab__A' in translated_att['nodes'].values, \
+    assert 'Metab__Alpha_a' in translated_network.nodes, "Translation failed"
+    assert 'Metab__Alpha_a' in translated_att['nodes'].values, \
         "Translation failed in attributes"
->>>>>>> module-org:tests/test_moon.py
