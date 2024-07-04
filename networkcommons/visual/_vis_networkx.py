@@ -36,7 +36,7 @@ import matplotlib.pyplot as plt
 from . import _aux
 from . import _styles
 from networkcommons._session import _log
-import graphviz
+
 
 def visualize_graph_simple(network,
                            source_dict,
