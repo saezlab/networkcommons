@@ -143,8 +143,8 @@ Other
     data.omics.moon
 
 
-Evaluation
-==========
+Evaluation and description
+==========================
 
 .. module::networkcommons.eval
 .. currentmodule:: networkcommons
