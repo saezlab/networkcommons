@@ -59,6 +59,7 @@ anndata = "^0.10.8"
 pytest = "^8.2.2"
 yfiles-jupyter-graphs = "^1.7.2"
 gurobipy = "^11.0.2"
+matplotlib = "^3.5.1"
 
 [tool.poetry.dev-dependencies]
 pytest = ">=6.0"
