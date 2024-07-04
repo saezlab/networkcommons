@@ -27,8 +27,10 @@ __all__ = [
 
 import lazy_import
 import networkx as nx
-cn = lazy_import.lazy_module('corneto')
-cn_nx = lazy_import.lazy_module('corneto.contrib.networkx')
+# cn = lazy_import.lazy_module('corneto')
+# cn_nx = lazy_import.lazy_module('corneto.contrib.networkx')
+import corneto as cn
+import corneto.contrib.networkx as cn_nx
 
 
 def to_cornetograph(graph):

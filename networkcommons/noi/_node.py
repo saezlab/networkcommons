@@ -33,7 +33,6 @@ _taxonomy = lazy_import.lazy_module('pypath.utils.taxonomy')
 _mapping = lazy_import.lazy_module('pypath.utils.mapping')
 _orthology = lazy_import.lazy_module('pypath.utils.orthology')
 
-
 _REENS = re.compile(r'ENS[A-Z]*?([A-Z])[0-9]+')
 _RERSQ = re.compile(
     r'^((?:(WP|AC|AP|NC|NG|NM|NP|NR|NT|NW|XM|XP|XR|YP|ZP)_)|(?:NZ\_[A-Z]{2,4}))'

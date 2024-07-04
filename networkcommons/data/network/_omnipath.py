@@ -22,7 +22,8 @@ __all__ = ['get_omnipath']
 import lazy_import
 import numpy as np
 
-op = lazy_import.lazy_module('omnipath')
+# op = lazy_import.lazy_module('omnipath')
+import omnipath as op
 
 
 def get_omnipath(genesymbols: bool = True, directed_signed: bool = True):

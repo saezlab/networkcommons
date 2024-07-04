@@ -32,10 +32,13 @@ if TYPE_CHECKING:
 import lazy_import
 from pypath_common import _misc as _ppcommon
 
-for _mod in ('default_inference', 'dds', 'ds'):
+#for _mod in ('default_inference', 'dds', 'ds'):
 
-    globals()[f'_deseq2_{_mod}'] = lazy_import.lazy_module(f'pydeseq2.{_mod}')
+#    globals()[f'_deseq2_{_mod}'] = lazy_import.lazy_module(f'pydeseq2.{_mod}')
 
+import pydeseq2.default_inference as _deseq2_default_inference
+import pydeseq2.ds as _deseq2_ds
+import pydeseq2.dds as _deseq2_dds
 from networkcommons import _conf
 from networkcommons._session import _log
 

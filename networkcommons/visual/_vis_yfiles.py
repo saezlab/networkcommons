@@ -21,7 +21,7 @@ from __future__ import annotations
 
 __all__ = ['YFilesVisualizer']
 
-import lazy_imports
+import lazy_import
 
 from IPython.display import display
 import yfiles_jupyter_graphs as yfiles
