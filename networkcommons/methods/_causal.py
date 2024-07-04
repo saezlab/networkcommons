@@ -45,10 +45,11 @@ def to_cornetograph(graph):
         corneto_graph = graph
     elif isinstance(graph, (nx.Graph, nx.DiGraph)):
         # substitute 'sign' for 'interaction' in the graph
-        for u, v, data in graph.edges(data=True):
+        nx_graph = graph.copy()
+        for u, v, data in nx_graph.edges(data=True):
             data['interaction'] = data.pop('sign')
 
-        corneto_graph = cn_nx.networkx_to_corneto_graph(graph)
+        corneto_graph = cn_nx.networkx_to_corneto_graph(nx_graph)
 
     return corneto_graph
 
