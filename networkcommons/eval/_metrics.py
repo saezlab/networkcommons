@@ -28,6 +28,7 @@ __all__ = [
     'get_connected_targets',
     'get_recovered_offtargets',
     'get_graph_metrics',
+    'get_metrics_from_networks'
 ]
 
 import pandas as pd
@@ -158,7 +159,7 @@ def get_recovered_offtargets(network, offtargets, percent=False):
 
 def get_graph_metrics(network, target_dict):
     """
-    Get the graph metrics of the network.
+    Get the graph metrics of a network.
 
     Args:
         network (nx.Graph): The network to get the graph metrics from.
@@ -179,3 +180,27 @@ def get_graph_metrics(network, target_dict):
     }
 
     return pd.DataFrame(metrics, index=[0])
+
+
+def get_metrics_from_networks(networks, target_dict):
+    """
+    Get the graph metrics of multiple networks.
+
+    Args:
+        networks (Dict[str, nx.Graph]): A dictionary of network names and
+            their corresponding graphs.
+        target_dicts (Dict[str, dict]): A dictionary of target dictionaries
+            for each network.
+
+    Returns:
+        DataFrame: The graph metrics of the networks.
+    """
+    metrics = pd.DataFrame()
+    for network_name, graph in networks.items():
+        network_df = get_graph_metrics(graph, target_dict)
+        network_df['network'] = network_name
+        metrics = pd.concat([metrics, network_df])
+
+    metrics.reset_index(inplace=True, drop=True)
+
+    return metrics

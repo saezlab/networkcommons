@@ -29,6 +29,7 @@ __all__ = [
     'keep_observable_neighbours',
     'compress_same_children',
     'run_moon_core',
+    'run_moon',
     'filter_incoherent_TF_target',
     'decompress_moon_result',
     'reduce_solution_network',

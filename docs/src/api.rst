@@ -161,6 +161,7 @@ Evaluation
     eval.get_connected_targets
     eval.get_recovered_offtargets
     eval.get_graph_metrics
+    eval.get_metrics_from_networks
     
 
 Visualization
@@ -186,3 +187,5 @@ Visualization
     visual.build_ma_plot
     visual.build_pca_plot
     visual.build_heatmap_with_tree
+    visual.visualize_graph_simple
+    visual.lollipop_plot

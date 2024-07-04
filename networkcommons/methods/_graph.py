@@ -69,7 +69,8 @@ def run_shortest_paths(network, source_dict, target_dict, verbose=False):
                     weight='weight'
                 )])
             except (nx.NetworkXNoPath, nx.NodeNotFound):
-                _session.log_traceback(console = verbose)
+                # _session.log_traceback(console = verbose)
+                pass
 
     subnetwork = _utils.get_subnetwork(network, shortest_paths_res)
 
