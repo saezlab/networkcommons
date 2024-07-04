@@ -1,12 +1,12 @@
 [paths]
 source =
-    project_name
-    */site-packages/Network Commons
+    networkcommons
+    */site-packages/networkcommons
 
 [run]
 branch = true
 parallel = true
-source = Network Commons
+source = networkcommons
 omit = */__init__.py
 
 [report]
