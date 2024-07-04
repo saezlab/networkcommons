@@ -19,7 +19,7 @@ Plot network (graph) metrics.
 
 from __future__ import annotations
 
-__all__ = ['plot_n_nodes_edges', 'plot_n_nodes_edges_from_df', 'build_heatmap_with_tree']
+__all__ = ['plot_n_nodes_edges', 'plot_n_nodes_edges_from_df', 'build_heatmap_with_tree', 'lollipop_plot']
 
 from typing import List, Dict, Union
 
@@ -33,65 +33,64 @@ from scipy.spatial.distance import squareform
 
 
 def lollipop_plot(
-        labels: List[str],
-        values: List[List[int]],
-        categories: List[List[str]],
-        orientation: str,
-        color_palette: str,
-        size: int,
-        linewidth: int,
-        marker: str,
-        title: str,
-        filepath: str = None,
-        render: bool = False
-):
+    df,
+    label_col,
+    value_col,
+    orientation='vertical',
+    color_palette='tab10',
+    size=10, linewidth=2,
+    marker='o',
+    title='',
+    filepath=None,
+    render=False):
     """
-    Common function to plot metrics using a lollipop plot.
+    Function to plot metrics using a lollipop plot from a DataFrame.
 
     Args:
-        labels (List[str]): Labels for the x or y axis.
-        values (List[List[int]]): List of values to plot.
-        categories (List[List[str]]): List of categories (e.g., 'Nodes', 'Edges') for each label.
-        orientation (str): 'vertical' or 'horizontal'.
-        color_palette (str): Matplotlib color palette.
-        size (int): Size of the markers.
-        linewidth (int): Line width of the lollipops.
-        marker (str): Marker style for the lollipops.
-        title (str): Title of the plot.
+        df (pd.DataFrame): DataFrame containing the data.
+        label_col (str): Column name for labels.
+        value_col (str): Column name for values.
+        orientation (str): 'vertical' or 'horizontal'. Default is 'vertical'.
+        color_palette (str): Matplotlib color palette. Default is 'tab10'.
+        size (int): Size of the markers. Default is 10.
+        linewidth (int): Line width of the lollipops. Default is 2.
+        marker (str): Marker style for the lollipops. Default is 'o'.
+        title (str): Title of the plot. Default is ''.
         filepath (str): Path to save the plot. Default is None.
         render (bool): Whether to display the plot. Default is False.
     """
     palette = plt.get_cmap(color_palette)
-    colors = palette.colors if hasattr(palette, 'colors') else palette(range(len(labels)))
+    colors = palette.colors if hasattr(palette, 'colors') else palette(range(len(df[label_col].unique())))
 
     fig, ax = plt.subplots(figsize=(12, 8))
 
-    for idx, (label, value_set, category_set) in enumerate(zip(labels, values, categories)):
-        color = colors[idx % len(colors)]
+    labels = df[label_col]
+    values = df[value_col]
 
-        if orientation == 'vertical':
-            positions = [f"{label} {cat}" for cat in category_set]
-            ax.vlines(x=positions, ymin=0, ymax=value_set, color=color, linewidth=linewidth, label=label)
-            ax.scatter(positions, value_set, color=color, s=size ** 2, marker=marker, zorder=3)
-
-            for i, value in enumerate(value_set):
-                offset = size * 0.1 if value < 10 else size * 0.2
-                ax.text(positions[i], value + offset, str(value), ha='center', va='bottom', fontsize=size)
-        else:
-            positions = [f"{label} {cat}" for cat in category_set]
-            ax.hlines(y=positions, xmin=0, xmax=value_set, color=color, linewidth=linewidth, label=label)
-            ax.scatter(value_set, positions, color=color, s=size ** 2, marker=marker, zorder=3)
-
-            for i, value in enumerate(value_set):
-                offset = size * 0.1 if value < 10 else size * 0.2
-                ax.text(value + offset, positions[i], str(value), va='center', ha='left', fontsize=size)
+    color = colors[0 % len(colors)]
+    positions = labels
 
     if orientation == 'vertical':
-        ax.set_xlabel("Network and Type")
-        ax.set_ylabel("Count")
+        ax.vlines(x=positions, ymin=0, ymax=values, color=color, linewidth=linewidth, label=label_col)
+        ax.scatter(positions, values, color=color, s=size ** 2, marker=marker, zorder=3)
+
+        for i, value in enumerate(values):
+            offset = size * 0.1 if value < 10 else size * 0.2
+            ax.text(positions[i], value + offset, str(value), ha='center', va='bottom', fontsize=size)
     else:
-        ax.set_ylabel("Network and Type")
-        ax.set_xlabel("Count")
+        ax.hlines(y=positions, xmin=0, xmax=values, color=color, linewidth=linewidth, label=label_col)
+        ax.scatter(values, positions, color=color, s=size ** 2, marker=marker, zorder=3)
+
+        for i, value in enumerate(values):
+            offset = size * 0.1 if value < 10 else size * 0.2
+            ax.text(value + offset, positions[i], str(value), va='center', ha='left', fontsize=size)
+
+    if orientation == 'vertical':
+        ax.set_xlabel("Network")
+        ax.set_ylabel(value_col)
+    else:
+        ax.set_ylabel("Network")
+        ax.set_xlabel(value_col)
 
     ax.set_title(title)
     ax.legend()
