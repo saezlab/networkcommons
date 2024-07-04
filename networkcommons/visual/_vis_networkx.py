@@ -177,7 +177,7 @@ class NetworkXVisualizer:
             else:
                 edge_style = style['edges']['neutral']
 
-            s_styles.et_style_attributes(edge, edge_style)
+            _styles.et_style_attributes(edge, edge_style)
 
         return A
 
@@ -202,7 +202,7 @@ class NetworkXVisualizer:
         if network_type == 'sign_consistent':
             return self.visualize_network_sign_consistent(network, source_dict, target_dict, prog, custom_style)
         else:
-            default_style = _styles.get_styles().get(network_type, get_styles()['default'])
+            default_style = _styles.get_styles().get(network_type, 'default')
             return self.visualize_network_default(network, source_dict, target_dict, prog, custom_style)
 
     def visualize(self, output_file='network.png', render=False, highlight_nodes=None, style=None):
