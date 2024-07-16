@@ -231,11 +231,14 @@ def get_ec50_evaluation(network, ec50_dict):
     ec50_values_in = [ec50_dict[node] for node in ec50_dict.keys() if node in network.nodes()]
     ec50_values_out = [ec50_dict[node] for node in ec50_dict.keys() if node not in network.nodes()]
 
+    num_nodes = len(network.nodes())
+    coverage = (len(ec50_values_in) / num_nodes * 100) if num_nodes > 0 else np.nan
+
     return pd.DataFrame({
         'avg_EC50_in': np.mean(ec50_values_in),
         'avg_EC50_out': np.mean(ec50_values_out),
         'nodes_with_EC50': len(ec50_values_in),
-        'coverage': len(ec50_values_in) / len(network.nodes()) * 100
+        'coverage': coverage
     }, index=[0])
 
 
