@@ -28,7 +28,8 @@ __all__ = [
     'get_connected_targets',
     'get_recovered_offtargets',
     'get_graph_metrics',
-    'get_metrics_from_networks'
+    'get_metric_from_networks',
+    'get_ec50_evaluation'
 ]
 
 import pandas as pd
@@ -182,13 +183,14 @@ def get_graph_metrics(network, target_dict):
     return pd.DataFrame(metrics, index=[0])
 
 
-def get_metrics_from_networks(networks, target_dict):
+def get_metric_from_networks(networks, function, **kwargs):
     """
     Get the graph metrics of multiple networks.
 
     Args:
         networks (Dict[str, nx.Graph]): A dictionary of network names and
             their corresponding graphs.
+        function (function): The function to get the graph metrics.
         target_dicts (Dict[str, dict]): A dictionary of target dictionaries
             for each network.
 
@@ -196,11 +198,47 @@ def get_metrics_from_networks(networks, target_dict):
         DataFrame: The graph metrics of the networks.
     """
     metrics = pd.DataFrame()
+    if function in globals():
+        function = globals()[function]
+    else:
+        raise ValueError(f"Function {function} not found in available functions.")
     for network_name, graph in networks.items():
-        network_df = get_graph_metrics(graph, target_dict)
+        network_df = function(graph, **kwargs)
         network_df['network'] = network_name
         metrics = pd.concat([metrics, network_df])
 
     metrics.reset_index(inplace=True, drop=True)
 
     return metrics
+
+
+def get_ec50_evaluation(network, ec50_dict):
+    """
+    Get the EC50 evaluation of multiple networks. Produces three columns
+    - 'avg_EC50': The average EC50 value of the network.
+    - 'nodes_with_EC50': The number of nodes with an EC50 value.
+    - coverage: The percentage of nodes with an EC50 value.
+
+
+    Args:
+        network (nx.Graph): The network to get the nodes from.
+        ec50_dict (dict): A dictionary containing the EC50 values.
+
+    Returns:
+        DataFrame: The EC50 evaluation of the network.
+    """
+
+    ec50_values_in = [ec50_dict[node] for node in ec50_dict.keys() if node in network.nodes()]
+    ec50_values_out = [ec50_dict[node] for node in ec50_dict.keys() if node not in network.nodes()]
+
+    return pd.DataFrame({
+        'avg_EC50_in': np.mean(ec50_values_in),
+        'avg_EC50_out': np.mean(ec50_values_out),
+        'nodes_with_EC50': len(ec50_values_in),
+        'coverage': len(ec50_values_in) / len(network.nodes()) * 100
+    }, index=[0])
+
+
+
+
+
