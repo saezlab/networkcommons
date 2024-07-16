@@ -2,6 +2,7 @@ import pytest
 
 import networkx as nx
 import pandas as pd
+import numpy as np
 
 from networkcommons.eval import _metrics
 
