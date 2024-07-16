@@ -29,11 +29,13 @@ __all__ = [
     'get_recovered_offtargets',
     'get_graph_metrics',
     'get_metric_from_networks',
-    'get_ec50_evaluation'
+    'get_ec50_evaluation',
+    'run_ora'
 ]
 
 import pandas as pd
 import networkx as nx
+import decoupler as dc
 import numpy as np
 
 
@@ -163,7 +165,7 @@ def get_graph_metrics(network, target_dict):
     Get the graph metrics of a network.
 
     Args:
-        network (nx.Graph): The network to get the graph metrics from.
+        network (nx.Graph, dict): The network to get the graph metrics from. If a dictionary, will iterate over it.
         target_dict (dict): A dictionary containing the targets and sign
             of measurements.
 
@@ -171,16 +173,27 @@ def get_graph_metrics(network, target_dict):
         DataFrame: The graph metrics of the network.
     """
 
-    metrics = {
-        'Number of nodes': get_number_nodes(network),
-        'Number of edges': get_number_edges(network),
-        'Mean degree': get_mean_degree(network),
-        'Mean betweenness': get_mean_betweenness(network),
-        'Mean closeness': get_mean_closeness(network),
-        'Connected targets': get_connected_targets(network, target_dict)
-    }
+    if isinstance(network, dict):
+        metrics = pd.DataFrame()
+        for network_name, graph in network.items():
+            network_df = get_graph_metrics(graph, target_dict)
+            network_df['network'] = network_name
+            metrics = pd.concat([metrics, network_df])
 
-    return pd.DataFrame(metrics, index=[0])
+        metrics.reset_index(inplace=True, drop=True)
+
+    elif isinstance(network, (nx.Graph, nx.DiGraph)):
+        metrics = pd.DataFrame({
+            'network': 'Network1',
+            'Number of nodes': get_number_nodes(network),
+            'Number of edges': get_number_edges(network),
+            'Mean degree': get_mean_degree(network),
+            'Mean betweenness': get_mean_betweenness(network),
+            'Mean closeness': get_mean_closeness(network),
+            'Connected targets': get_connected_targets(network, target_dict)
+        }, index=[0])
+
+    return metrics
 
 
 def get_metric_from_networks(networks, function, **kwargs):
@@ -242,6 +255,31 @@ def get_ec50_evaluation(network, ec50_dict):
     }, index=[0])
 
 
+def run_ora(graph, net, metric='ora_Combined score', ascending=False, **kwargs):
+    """
+    Run over-representation analysis on a custom set of genes.
 
+    Args:
+        graph (nx.Graph, nx.DiGraph): A (contextualised) graph.
+        net (pd.DataFrame): A DataFrame containing source (gene set name) and
+        target columns (elements which will be mapped to the network nodes),
+        and containing the gene sets of interest.
+        **kwargs: Additional keyword arguments to pass to the function 
+        decoupler.get_ora_df().
 
+    Returns:
+        pd.DataFrame: The results of the over-representation analysis.
+    """
+    custom_set = list(graph.nodes())
 
+    ora_results = dc.get_ora_df(
+        df=custom_set,
+        net=net,
+        **kwargs)
+
+    # append ora_ to colnames
+    ora_results.columns = ['ora_' + col for col in ora_results.columns]
+
+    ora_results['ora_rank'] = ora_results[metric].rank(ascending=ascending, method='min')
+
+    return ora_results
