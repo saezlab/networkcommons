@@ -86,3 +86,60 @@ def test_get_graph_metrics(network):
     }, index=[0])
 
     assert _metrics.get_graph_metrics(network, target_dict).equals(metrics)
+
+
+def test_all_nodes_in_ec50_dict():
+    network = nx.Graph([(1, 2), (2, 3)])
+    ec50_dict = {1: 5.0, 2: 10.0, 3: 15.0}
+    expected_result = pd.DataFrame({
+        'avg_EC50_in': [10.0],
+        'avg_EC50_out': [np.nan],
+        'nodes_with_EC50': [3],
+        'coverage': [100.0]
+    })
+
+    result = _metrics.get_ec50_evaluation(network, ec50_dict)
+    pd.testing.assert_frame_equal(result, expected_result)
+
+
+def test_some_nodes_in_ec50_dict():
+    network = nx.Graph([(1, 2), (2, 3)])
+    ec50_dict = {1: 5.0, 2: 10.0, 4: 20.0}
+    expected_result = pd.DataFrame({
+        'avg_EC50_in': [7.5],
+        'avg_EC50_out': [20.0],
+        'nodes_with_EC50': [2],
+        'coverage': [2/3 * 100]
+    })
+
+    result = _metrics.get_ec50_evaluation(network, ec50_dict)
+    pd.testing.assert_frame_equal(result, expected_result)
+
+
+def test_no_nodes_in_ec50_dict():
+    network = nx.Graph([(1, 2), (2, 3)])
+    ec50_dict = {4: 20.0, 5: 25.0}
+    expected_result = pd.DataFrame({
+        'avg_EC50_in': [np.nan],
+        'avg_EC50_out': [22.5],
+        'nodes_with_EC50': [0],
+        'coverage': [0.0]
+    })
+
+    result = _metrics.get_ec50_evaluation(network, ec50_dict)
+    pd.testing.assert_frame_equal(result, expected_result)
+
+
+def test_empty_network():
+    network = nx.Graph()
+    ec50_dict = {1: 5.0, 2: 10.0}
+    expected_result = pd.DataFrame({
+        'avg_EC50_in': [np.nan],
+        'avg_EC50_out': [7.5],
+        'nodes_with_EC50': [0],
+        'coverage': [np.nan]
+    })
+
+    result = _metrics.get_ec50_evaluation(network, ec50_dict)
+    pd.testing.assert_frame_equal(result, expected_result)
+
