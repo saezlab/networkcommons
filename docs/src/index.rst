@@ -6,7 +6,7 @@ Bridging the gap between data, methods and knowledge in network inference
 
 |MainBuild| |Codecov| |Docs|
 
-.. |MainBuild| image:: https://github.com/saezlab/networkcommons/actions/workflows/main.yml/badge.svg
+.. |MainBuild| image:: https://github.com/saezlab/networkcommons/actions/workflows/test.yaml/badge.svg
    :target: https://github.com/saezlab/networkcommons/actions
    
 .. .. |Issues| image:: https://img.shields.io/github/issues/saezlab/networkcommons.svg
