@@ -161,7 +161,7 @@ Evaluation and description
     eval.get_connected_targets
     eval.get_recovered_offtargets
     eval.get_graph_metrics
-    eval.get_metrics_from_networks
+    eval.get_metric_from_networks
     
 
 Visualization
