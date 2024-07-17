@@ -78,6 +78,7 @@ def test_get_graph_metrics(network):
     target_dict = {'D': 1, 'F': 1, 'W': 1}
 
     metrics = pd.DataFrame({
+        'network': 'Network1',
         'Number of nodes': 6,
         'Number of edges': 7,
         'Mean degree': 7/3,
@@ -144,3 +145,33 @@ def test_empty_network():
     result = _metrics.get_ec50_evaluation(network, ec50_dict)
     pd.testing.assert_frame_equal(result, expected_result)
 
+
+def test_run_ora():
+    # Create an example graph
+    graph = nx.DiGraph()
+    graph.add_nodes_from(["geneA", "geneB", "geneC", "geneD", "geneE", "geneF"])
+
+    # Create an example net DataFrame
+    net = pd.DataFrame({
+        'source': ['gene_set_1', 'gene_set_1', 'gene_set_2', 'gene_set_2', 'gene_set_2'],
+        'target': ['geneA', 'geneB', 'geneC', 'geneD', 'geneE']
+    })
+
+    # Expected output DataFrame (you need to adjust this based on expected results)
+    expected_results = pd.DataFrame({
+        'ora_Term': ["gene_set_1", "gene_set_2"],
+        'ora_Set size': [2, 3],
+        'ora_Overlap ratio': [1.0, 1.0],
+        'ora_p-value': [7.500375e-08, 1.500225e-11],
+        'ora_FDR p-value': [7.500375e-08, 3.000450e-11],
+        'ora_Odds ratio': [4444.111111, 5713.571429],
+        'ora_Combined score': [72908.876856, 142398.317463],
+        'ora_Features': ["geneA;geneB", "geneC;geneD;geneE"],
+        'ora_rank': [2.0, 1.0]
+    })
+
+    # Run the ORA function
+    ora_results = _metrics.run_ora(graph, net, metric='ora_Combined score', ascending=False)
+
+    # Assertions to verify the results
+    pd.testing.assert_frame_equal(ora_results, expected_results)

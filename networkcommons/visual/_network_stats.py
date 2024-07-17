@@ -19,7 +19,7 @@ Plot network (graph) metrics.
 
 from __future__ import annotations
 
-__all__ = ['plot_n_nodes_edges', 'plot_n_nodes_edges_from_df', 'build_heatmap_with_tree', 'lollipop_plot']
+__all__ = ['plot_n_nodes_edges', 'plot_n_nodes_edges_from_df', 'build_heatmap_with_tree', 'lollipop_plot', 'create_rank_heatmap']
 
 from typing import List, Dict, Union
 
@@ -257,4 +257,37 @@ def build_heatmap_with_tree(
     if save:
         plt.savefig(f"{output_dir}/heatmap_with_tree.png", bbox_inches='tight')
 
+    plt.show()
+
+
+def create_rank_heatmap(ora_results, ora_terms):
+    """
+    Create a heatmap with rows as ora_terms and columns as networks,
+    displaying the rank number in the cells.
+
+    Args:
+        ora_results (pd.DataFrame): DataFrame containing the ORA results with ranks.
+        ora_terms (list): List of ora_Term to include in the heatmap.
+
+    Returns:
+        None
+    """
+    # Filter the ORA results to include only the specified ora_Term
+    filtered_data = ora_results[ora_results['ora_Term'].isin(ora_terms)]
+
+    # Pivot the dataframe to have ora_Term as rows and network as columns
+    heatmap_data = filtered_data.pivot(index='ora_Term', columns='network', values='ora_rank')
+
+    xsize = len(heatmap_data.columns)
+    ysize = len(heatmap_data.index)*2
+
+    # Create the heatmap
+    plt.figure(figsize=(xsize, ysize))
+    sns.heatmap(heatmap_data, annot=True, fmt=".0f", cmap="coolwarm_r", linewidths=.5, cbar=False)
+    plt.title("Heatmap of ORA Term Ranks by Network")
+    plt.ylabel('ORA Term')
+    plt.xlabel('Network')
+    plt.xticks(rotation=90)
+    plt.yticks(rotation=0)
+    plt.tight_layout()
     plt.show()
