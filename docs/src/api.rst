@@ -162,6 +162,8 @@ Evaluation and description
     eval.get_recovered_offtargets
     eval.get_graph_metrics
     eval.get_metric_from_networks
+    eval.get_ec50_evaluation
+    eval.run_ora
     
 
 Visualization
@@ -189,3 +191,4 @@ Visualization
     visual.build_heatmap_with_tree
     visual.visualize_graph_simple
     visual.lollipop_plot
+    visual.create_rank_heatmap
