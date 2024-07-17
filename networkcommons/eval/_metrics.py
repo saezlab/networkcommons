@@ -227,7 +227,12 @@ def get_metric_from_networks(networks, function, **kwargs):
 
 def get_ec50_evaluation(network, ec50_dict):
     """
-    Get the EC50 evaluation of multiple networks. Produces three columns
+    Get the EC50 evaluation of multiple networks.
+    This evaluation approach is based on the assumption that those
+    elements important to explain the measurements will be more sensitive
+    to the perturbation (lower EC50) than those less related to said
+    perturbation.
+    Produces three columns
     - 'avg_EC50': The average EC50 value of the network.
     - 'nodes_with_EC50': The number of nodes with an EC50 value.
     - coverage: The percentage of nodes with an EC50 value.
@@ -264,7 +269,7 @@ def run_ora(graph, net, metric='ora_Combined score', ascending=False, **kwargs):
         net (pd.DataFrame): A DataFrame containing source (gene set name) and
         target columns (elements which will be mapped to the network nodes),
         and containing the gene sets of interest.
-        **kwargs: Additional keyword arguments to pass to the function 
+        **kwargs: Additional keyword arguments to pass to the function
         decoupler.get_ora_df().
 
     Returns:
