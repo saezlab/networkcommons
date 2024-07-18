@@ -14,7 +14,8 @@
 #
 
 """
-CPTAC transcriptomics, proteomics and phosphoproteomics data.
+CPTAC (Clinical Proteomic Tumor Analysis Consortium data) 
+transcriptomics, proteomics and phosphoproteomics data.
 """
 
 from __future__ import annotations
@@ -97,7 +98,7 @@ def cptac_table(cancer_type: str, fname: str) -> pd.DataFrame:
     Args:
         cencer_type:
             Name of the cancer type. For a complete list see
-            `CPTAC_cohortsize()`.
+            `cptac_cohortsize()`.
         fname:
             File name. For the available files and description,
             see `cptac_fileinfo()`.
