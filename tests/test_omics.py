@@ -21,6 +21,7 @@ def test_datasets_2():
     dsets = _common.datasets()
 
     assert 'decryptm' in dsets
+    assert 'CPTAC' in dsets
 
 
 def test_commons_url():
@@ -152,3 +153,36 @@ def test_scperturb():
     assert tuple(adata.var.columns) == var_cols
     assert 'UMI count' in adata.obs.columns
     assert adata.shape == (5768, 35635)
+
+
+@pytest.mark.slow
+def test_cptac_cohortsize():
+
+    expected_df = pd.DataFrame({
+        "Cancer_type": ["BRCA", "CCRCC", "COAD", "GBM", "HNSCC", "LSCC", "LUAD", "OV", "PDAC", "UCEC"],
+        "Tumor": [122, 103, 110, 99, 108, 108, 110, 83, 105, 95],
+        "Normal": [0, 80, 100, 0, 62, 99, 101, 20, 44, 18]
+    })
+
+    output_df = omics.cptac_cohortsize()
+
+    assert output_df.equals(expected_df)
+
+
+@pytest.mark.slow
+def test_cptac_fileinfo():
+
+    fileinfo_df = omics.cptac_fileinfo()
+
+    assert isinstance(fileinfo_df, pd.DataFrame)
+    assert fileinfo_df.shape == (37, 2)
+    assert fileinfo_df.columns.tolist() == ['File name', 'Description']
+
+
+@pytest.mark.slow
+def test_cptac_table():
+
+    df = omics.cptac_table('BRCA', 'meta')
+
+    assert isinstance(df, pd.DataFrame)
+    assert df.shape == (123, 201)
