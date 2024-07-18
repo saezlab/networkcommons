@@ -131,6 +131,20 @@ scPerturb
     data.omics.scperturb_metadata
     data.omics.scperturb_datasets
 
+CPTAC
+~~~~~
+.. module::networkcommons.data.omics
+.. currentmodule:: networkcommons
+
+.. autosummary::
+    :toctree: api
+    :recursive:
+
+    data.omics.cptac_cohortsize
+    data.omics.cptac_fileinfo
+    data.omics.cptac_table
+
+
 Other
 ~~~~~~~~
 .. module::networkcommons.data.omics
