@@ -96,7 +96,7 @@ def cptac_table(cancer_type: str, fname: str) -> pd.DataFrame:
     One table of omics data from CPTAC.
 
     Args:
-        cencer_type:
+        cancer_type:
             Name of the cancer type. For a complete list see
             `cptac_cohortsize()`.
         fname:
