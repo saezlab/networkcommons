@@ -21,3 +21,7 @@ omics:
       name: COSMOS
       description: Database files for running COSMOS (MetaPKN)
       path: moon/net/meta_network.sif
+    CPTAC:
+      name: CPTAC
+      description: Clinical Proteomic Tumor Analysis Consortium data
+      path: CPTAC/{cancer_type}/{cancer_type}_{fname}.txt

@@ -23,3 +23,4 @@ from ._deseq2 import *
 from ._panacea import *
 from ._scperturb import *
 from ._moon import *
+from ._cptac import *
