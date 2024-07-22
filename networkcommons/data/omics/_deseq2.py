@@ -48,6 +48,8 @@ def deseq2(
         metadata: pd.DataFrame,
         test_group: str,
         ref_group: str,
+        sample_col: str = 'sample_ID',
+        feature_col: str = 'gene_symbol',
         covariates: list | None = None,
     ) -> pd.DataFrame:
     """
@@ -66,16 +68,15 @@ def deseq2(
     """
 
     _log('Running differential expression analysis using DESeq2.')
-    # TODO: hardcoding these column names in a hidden way not the best
-    # solution:
-    counts.set_index('gene_symbol', inplace=True)
-    metadata.set_index('sample_ID', inplace=True)
+
+    counts.set_index(feature_col, inplace=True)
+    metadata.set_index(sample_col, inplace=True)
     design_factors = ['group'] + _ppcommon.to_list(covariates)
 
-    # TODO: this seems really arbitrary and specific to certain tables,
-    # is this suitable and useful in a general DESeq2 analysis?
-    test_group = test_group.replace('_', '-')
-    ref_group = ref_group.replace('_', '-')
+    if '_' in test_group:
+        test_group = test_group.replace('_', '-')
+    if '_' in ref_group:
+        ref_group = ref_group.replace('_', '-')
 
     n_cpus = _conf.get('cpu_count', multiprocessing.cpu_count())
     inference = _deseq2_default_inference.DefaultInference(n_cpus = n_cpus)
