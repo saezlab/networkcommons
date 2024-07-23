@@ -49,6 +49,7 @@ def build_volcano_plot(
         save: bool = False,
         output_dir: str = "."
 ):
+    data = data.copy()
     data['-log10(pval)'] = -np.log10(data[pval])
     data['significant'] = (data[pval] < pval_threshold) & (abs(data[log2fc]) >= log2fc_threshold)
     data['Upregulated'] = (data[pval] < pval_threshold) & (data[log2fc] >= log2fc_threshold)
