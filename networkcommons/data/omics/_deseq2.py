@@ -51,6 +51,7 @@ def deseq2(
         sample_col: str = 'sample_ID',
         feature_col: str = 'gene_symbol',
         covariates: list | None = None,
+        round_values: bool = False
     ) -> pd.DataFrame:
     """
     Runs DESeq2 analysis on the given counts and metadata.
@@ -60,8 +61,15 @@ def deseq2(
         metadata (pd.DataFrame): The metadata with sample IDs as index.
         test_group (str): The name of the test group.
         ref_group (str): The name of the reference group.
+        sample_col (str, optional): The name of the sample ID column in the metadata.
+            Defaults to 'sample_ID'.
+        feature_col (str, optional): The name of the feature column in the counts data.
+            Defaults to 'gene_symbol'.
         covariates (list, optional): List of covariates to include in the analysis.
             Defaults to None.
+        round_values (bool, optional): Whether to round the counts to integers. Otherwise, the
+            counts will be left as floats and the function will fail. Defaults to False.
+
 
     Returns:
         pd.DataFrame: The results of the DESeq2 analysis as a data frame.
@@ -69,14 +77,19 @@ def deseq2(
 
     _log('Running differential expression analysis using DESeq2.')
 
-    counts.set_index(feature_col, inplace=True)
-    metadata.set_index(sample_col, inplace=True)
+    counts = counts.set_index(feature_col)
+    metadata = metadata.set_index(sample_col)
     design_factors = ['group'] + _ppcommon.to_list(covariates)
 
     if '_' in test_group:
         test_group = test_group.replace('_', '-')
     if '_' in ref_group:
         ref_group = ref_group.replace('_', '-')
+
+    if round_values and not counts.select_dtypes(include=['float64', 'float32']).empty:
+        counts = counts.round(0)
+        _log('Float values found. Rounded counts to integers.')
+
 
     n_cpus = _conf.get('cpu_count', multiprocessing.cpu_count())
     inference = _deseq2_default_inference.DefaultInference(n_cpus = n_cpus)
