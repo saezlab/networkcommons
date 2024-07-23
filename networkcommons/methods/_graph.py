@@ -173,7 +173,8 @@ def run_all_paths(network,
                                                    targets,
                                                    depth_cutoff))
         except (nx.NetworkXNoPath, nx.NodeNotFound):
-            _session.log_traceback(console = verbose)
+            # _session.log_traceback(console = verbose)
+            pass
 
     subnetwork = _utils.get_subnetwork(network, all_paths_res)
 
