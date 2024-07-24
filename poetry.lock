@@ -1207,7 +1207,7 @@ reference = "pypi-public"
 
 [[package]]
 name = "decoupler"
-version = "1.7.0"
+version = "1.7.1"
 description = "Ensemble of methods to infer biological activities from omics data"
 optional = false
 python-versions = "^3.9"
@@ -1225,7 +1225,7 @@ typing-extensions = "^4.12.2"
 type = "git"
 url = "https://github.com/saezlab/decoupler-py.git"
 reference = "main"
-resolved_reference = "13a6c66d4005b25c82beb6029e509882db39d5fa"
+resolved_reference = "0a24fa9a4650f3b633a1dda0cb21c3ed39de5cd0"
 
 [[package]]
 name = "defusedxml"
