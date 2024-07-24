@@ -19,7 +19,7 @@ General procedures for downloading omics datasets.
 
 from __future__ import annotations
 
-__all__ = ['datasets']
+__all__ = ['datasets', 'get_ensembl_mappings']
 
 from typing import IO
 import zipfile
@@ -31,6 +31,8 @@ import urllib.parse
 import requests
 import bs4
 import pandas as pd
+
+import biomart
 
 from networkcommons import _conf
 from networkcommons._session import _log
@@ -214,3 +216,46 @@ def _ls(path: str) -> list[str]:
         raise FileNotFoundError(
             f'URL {path} returned status code {resp.status_code}'
         )
+
+
+def get_ensembl_mappings():
+    """
+    Retrieves the mapping between Ensembl attributes for human genes.
+
+    Returns:
+        pandas.DataFrame: A DataFrame containing the mapping between Ensembl attributes.
+            The DataFrame has the following columns:
+            - ensembl_transcript_id: Ensembl transcript ID
+            - gene_symbol: HGNC symbol for the gene
+            - ensembl_gene_id: Ensembl gene ID
+            - ensembl_peptide_id: Ensembl peptide ID
+    """
+
+    # Set up connection to server
+    server = biomart.BiomartServer('http://ensembl.org/biomart')
+    mart = server.datasets['hsapiens_gene_ensembl']
+    
+    # List the types of data we want
+    attributes = ['ensembl_transcript_id', 'hgnc_symbol', 'ensembl_gene_id', 'ensembl_peptide_id']
+    
+    # Get the mapping between the attributes
+    response = mart.search({'attributes': attributes})
+    data = response.raw.data.decode('ascii')
+    
+    # Convert the raw data into a list of tuples
+    data_tuples = [tuple(line.split('\t')) for line in data.splitlines()]
+    
+    # Convert the list of tuples into a dataframe
+    df = pd.DataFrame(data_tuples, columns=['ensembl_transcript_id', 'gene_symbol', 'ensembl_gene_id', 'ensembl_peptide_id'])
+    
+    # Melt the dataframe to long format
+    melted_df = pd.melt(df, id_vars=['gene_symbol'], value_vars=['ensembl_transcript_id', 'ensembl_gene_id', 'ensembl_peptide_id'],
+                        var_name='ensembl_type', value_name='ensembl_id')
+    
+    # Drop rows with empty 'ensembl_id' and drop the 'ensembl_type' column
+    melted_df = melted_df[melted_df['gene_symbol'] != ''].drop(columns=['ensembl_type'])
+    
+    # Set 'ensembl_id' as the index
+    melted_df.drop_duplicates(inplace=True)
+    
+    return melted_df
