@@ -9,6 +9,8 @@ from networkcommons.eval import _metrics
 from unittest.mock import patch
 import networkcommons._utils as utils
 
+import unittest
+
 @pytest.fixture
 def network():
 
@@ -80,7 +82,6 @@ def test_get_graph_metrics(network):
     target_dict = {'D': 1, 'F': 1, 'W': 1}
 
     metrics = pd.DataFrame({
-        'network': 'Network1',
         'Number of nodes': 6,
         'Number of edges': 7,
         'Mean degree': 7/3,
@@ -202,3 +203,64 @@ def test_get_phosphorylation_status():
     expected_df = pd.DataFrame(expected_data)
 
     pd.testing.assert_frame_equal(result_df.reset_index(drop=True), expected_df)
+
+
+def test_get_metric_from_networks():
+    # Create mock networks
+    real_graph = nx.DiGraph()
+    real_graph.add_edges_from([
+        ('A', 'B'),
+        ('B', 'C'),
+        ('C', 'D'),
+        ('D', 'E')
+    ])
+
+    random_graph = nx.DiGraph()
+    random_graph.add_edges_from([
+        ('W', 'X'),
+        ('X', 'Y'),
+        ('Y', 'Z'),
+        ('Z', 'W'),
+        ('W', 'Y')
+    ])
+
+    # Create mock networks
+    networks = {
+        'shortest_path__real': real_graph,
+        'shortest_path__random_1': random_graph
+    }
+
+    target_dict = {'D': 1, 'F': 1, 'W': 1}
+
+    # Expected data
+    expected_data = {
+        'Number of nodes': [5, 4],
+        'Number of edges': [4, 5],
+        'Mean degree': [1.6, 2.5],
+        'Mean betweenness': [0.166667, 0.375000],
+        'Mean closeness': [0.271667, 0.587500],
+        'Connected targets': [1, 1],
+        'network': ['shortest_path__real', 'shortest_path__random_1'],
+        'type': ['real', 'random'],
+        'method': ['shortest_path', 'shortest_path']
+    }
+    expected_df = pd.DataFrame(expected_data)
+
+    # Call the function
+    result_df = _metrics.get_metric_from_networks(
+        networks,
+        _metrics.get_graph_metrics,
+        target_dict=target_dict
+        )
+    print(result_df)
+
+    # Verify the results
+    pd.testing.assert_frame_equal(result_df.reset_index(drop=True), expected_df)
+
+
+def test_function_not_found():
+    networks = {
+        'real_network__1': nx.path_graph(5),
+    }
+    with unittest.TestCase().assertRaises(NameError):
+        _metrics.get_metric_from_networks(networks, nonexistent_function)
