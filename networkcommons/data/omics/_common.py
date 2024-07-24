@@ -260,17 +260,19 @@ def get_ensembl_mappings(update: bool = False) -> pd.DataFrame:
                             var_name='ensembl_type', value_name='ensembl_id')
 
         # Drop rows with empty 'ensembl_id' and drop the 'ensembl_type' column
-        melted_df = melted_df[melted_df['gene_symbol'] != ''].drop(columns=['ensembl_type'])
+        melted_df = melted_df[(melted_df['gene_symbol'] != '') & (melted_df['ensembl_id'] != '')].drop(columns=['ensembl_type'])
 
         # Set 'ensembl_id' as the index
         melted_df.drop_duplicates(inplace=True)
+
+        melted_df = melted_df.reset_index(drop=True)
 
         melted_df.to_pickle(path)
 
     else:
         melted_df = pd.read_pickle(path)
 
-    return melted_df.reset_index(drop=True)
+    return melted_df
 
 
 def convert_ensembl_to_gene_symbol(dataframe, equivalence_df, column_name='idx', summarisation='mean'):
@@ -311,16 +313,17 @@ def convert_ensembl_to_gene_symbol(dataframe, equivalence_df, column_name='idx',
     merged_df.drop(columns=['partial_id', 'ensembl_id', column_name], inplace=True)
 
     # Summarize duplicated entries by taking the max value
-    non_numeric_cols = merged_df.select_dtypes(exclude='number').columns
+    non_numeric_cols = merged_df.select_dtypes(exclude='number').columns.values
+    print(non_numeric_cols)
 
     if summarisation == 'max':
-        summarized_df = merged_df.groupby(non_numeric_cols).max().reset_index()
+        summarized_df = merged_df.groupby(list(non_numeric_cols)).max().reset_index()
     elif summarisation == 'min':
-        summarized_df = merged_df.groupby(non_numeric_cols).min().reset_index()
+        summarized_df = merged_df.groupby(list(non_numeric_cols)).min().reset_index()
     elif summarisation == 'mean':
-        summarized_df = merged_df.groupby(non_numeric_cols).mean().reset_index()
+        summarized_df = merged_df.groupby(list(non_numeric_cols)).mean().reset_index()
     elif summarisation == 'median':
-        summarized_df = merged_df.groupby(non_numeric_cols).median().reset_index()
+        summarized_df = merged_df.groupby(list(non_numeric_cols)).median().reset_index()
     else:
         raise ValueError(f"Invalid summarisation method: {summarisation}")
 
