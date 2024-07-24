@@ -26,6 +26,7 @@ import zipfile
 import os
 import hashlib
 import contextlib
+import functools as ft
 import urllib.parse
 
 import requests
@@ -147,7 +148,7 @@ def _open(
     """
 
     PANDAS_READERS = {
-        'tsv': pd.read_csv,
+        'tsv': ft.partial(pd.read_table, sep = '\t'),
         'csv': pd.read_csv,
         'txt': pd.read_csv,
         'xls': pd.read_excel,
