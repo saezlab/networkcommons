@@ -6,7 +6,10 @@ import anndata as ad
 from networkcommons.data.omics import _common
 from networkcommons.data import omics
 
-from unittest.mock import patch
+from unittest.mock import patch, MagicMock
+
+import responses
+
 
 
 def test_datasets():
@@ -276,3 +279,31 @@ def test_convert_ensembl_to_gene_symbol_no_match():
         })
         pd.testing.assert_frame_equal(result_df, expected_df)
         mocked_print.assert_any_call("Number of non-matched Ensembl IDs: 1 (33.33%)")
+
+
+@patch('biomart.BiomartServer')
+def test_get_ensembl_mappings(mock_biomart_server):
+    # Mock the biomart server and dataset
+    mock_server_instance = MagicMock()
+    mock_biomart_server.return_value = mock_server_instance
+    mock_dataset = mock_server_instance.datasets['hsapiens_gene_ensembl']
+    mock_response = MagicMock()
+    mock_dataset.search.return_value = mock_response
+    mock_response.raw.data.decode.return_value = (
+        'ENST00000361390\tBRCA2\tENSG00000139618\tENSP00000354687\n'
+        'ENST00000361453\tBRCA2\tENSG00000139618\tENSP00000354687\n'
+        'ENST00000361453\tBRCA1\tENSG00000012048\tENSP00000354688\n'
+    )
+
+    result_df = omics.get_ensembl_mappings()
+    print(result_df)
+
+    expected_data = {
+        'gene_symbol': ['BRCA2', 'BRCA2', 'BRCA1', 'BRCA2', 'BRCA1', 'BRCA2', 'BRCA1'],
+        'ensembl_id': ['ENST00000361390', 'ENST00000361453', 'ENST00000361453',
+                       'ENSG00000139618', 'ENSG00000012048', 'ENSP00000354687',
+                       'ENSP00000354688']
+    }
+    expected_df = pd.DataFrame(expected_data)
+
+    pd.testing.assert_frame_equal(result_df.reset_index(drop=True), expected_df)
