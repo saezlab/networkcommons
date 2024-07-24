@@ -221,7 +221,7 @@ def build_ma_plot(
     plt.show()
 
 
-def plot_pca(dataframe, metadata):
+def plot_pca(dataframe, metadata, feature_col='idx'):
     """
     Plots the PCA (Principal Component Analysis) of a dataframe.
 
@@ -237,7 +237,7 @@ def plot_pca(dataframe, metadata):
     """
 
     # Check if the dataframe contains any non-numeric columns
-    numeric_df = dataframe.set_index('idx').T
+    numeric_df = dataframe.set_index(feature_col).T
     if type(metadata) == pd.DataFrame:
         groups = metadata.group.values
     else:
