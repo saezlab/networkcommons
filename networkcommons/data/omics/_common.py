@@ -19,7 +19,7 @@ General procedures for downloading omics datasets.
 
 from __future__ import annotations
 
-__all__ = ['datasets', 'get_ensembl_mappings']
+__all__ = ['datasets', 'get_ensembl_mappings', 'convert_ensembl_to_gene_symbol']
 
 from typing import IO
 import zipfile
