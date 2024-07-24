@@ -1,5 +1,6 @@
 import pandas as pd
 import networkx as nx
+import numpy as np
 
 
 def read_network_from_file(file_path,
