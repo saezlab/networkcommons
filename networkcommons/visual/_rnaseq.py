@@ -27,7 +27,7 @@ import seaborn as sns
 __all__  = [
     'build_volcano_plot',
     'build_ma_plot',
-    'build_pca_plot',
+    'plot_pca',
     'build_heatmap_with_tree',
 ]
 
@@ -196,7 +196,7 @@ def plot_pca(dataframe, metadata):
     # Handle cases where there are no numeric columns
     if numeric_df.empty:
         raise ValueError("The dataframe contains no numeric columns suitable for PCA.")
-    
+
     std_devs = numeric_df.std()
     zero_std_cols = std_devs[std_devs == 0].index
     if not zero_std_cols.empty:
@@ -209,7 +209,7 @@ def plot_pca(dataframe, metadata):
     # PCA
     pca = PCA(n_components=2)
     principal_components = pca.fit_transform(standardized_data)
-    
+
     # Creating a dataframe with PCA results
     pca_df = pd.DataFrame(data=principal_components, columns=['PCA1', 'PCA2'])
     pca_df['group'] = groups
@@ -223,7 +223,7 @@ def plot_pca(dataframe, metadata):
 
     # Display the plot
     plt.show()
-    
+
     return pca_df
 
 
