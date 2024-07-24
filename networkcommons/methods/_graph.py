@@ -35,6 +35,9 @@ import numpy as np
 from networkcommons import _utils
 from networkcommons._session import session as _session
 
+from collections import defaultdict, Counter
+import random
+
 
 def run_shortest_paths(network, source_dict, target_dict, verbose=False):
     """
@@ -77,25 +80,28 @@ def run_shortest_paths(network, source_dict, target_dict, verbose=False):
     return subnetwork, shortest_paths_res
 
 
-def run_sign_consistency(network, paths, source_dict, target_dict):
+def run_sign_consistency(network, paths, source_dict, target_dict=None):
     """
-    Calculate the sign consistency between sources and targets.
+    Calculate the sign consistency between sources and targets. If the target
+    sign is not provided, infer the sign by majority consensus from the paths.
 
     Args:
         network (nx.Graph): The network.
         paths (list): A list containing the shortest paths.
         source_dict (dict): A dictionary containing the sources and sign
             of perturbation.
-        target_dict (dict): A dictionary containing the targets and sign
-            of measurements.
+        target_dict (dict, optional): A dictionary containing the targets and sign
+            of measurements. If None, infer the target signs by consensus.
 
     Returns:
         nx.Graph: The subnetwork containing the sign consistent paths.
         list: A list containing the sign consistent paths.
+        dict: A dictionary containing the inferred target signs (if target_dict is None).
     """
     directed = nx.is_directed(network)
     subnetwork = nx.DiGraph() if directed else nx.Graph()
     sign_consistency_res = []
+    inferred_target_signs = defaultdict(list)
 
     for path in paths:
         source = path[0]
@@ -103,18 +109,51 @@ def run_sign_consistency(network, paths, source_dict, target_dict):
         target = path[-1]
 
         source_sign = source_dict[source]
-        target_sign = target_dict[target]
 
         for i in range(len(path) - 1):
             edge_sign = network.get_edge_data(path[i], path[i + 1])['sign']
             product_sign *= edge_sign
 
-        if np.sign(source_sign * product_sign) == np.sign(target_sign):
-            sign_consistency_res.append(path)
+        if target_dict:
+            target_sign = target_dict[target]
+            if np.sign(source_sign * product_sign) == np.sign(target_sign):
+                sign_consistency_res.append(path)
+        else:
+            inferred_target_signs[target].append(np.sign(source_sign * product_sign))
+
+    if not target_dict:
+        print('No target sign provided. Inferring target signs by majority consensus.')
+        inferred_target_sign = {}
+        for target, signs in inferred_target_signs.items():
+            sign_count = Counter(signs)
+            most_common_signs = sign_count.most_common()
+            if len(most_common_signs) > 1 and most_common_signs[0][1] == most_common_signs[1][1]:
+                chosen_sign = random.choice([most_common_signs[0][0], most_common_signs[1][0]])
+            else:
+                chosen_sign = most_common_signs[0][0]
+            inferred_target_sign[target] = chosen_sign
+
+        for path in paths:
+            source = path[0]
+            product_sign = 1
+            target = path[-1]
+
+            source_sign = source_dict[source]
+            target_sign = inferred_target_sign[target]
+
+            for i in range(len(path) - 1):
+                edge_sign = network.get_edge_data(path[i], path[i + 1])['sign']
+                product_sign *= edge_sign
+
+            if np.sign(source_sign * product_sign) == np.sign(target_sign):
+                sign_consistency_res.append(path)
 
     subnetwork = _utils.get_subnetwork(network, sign_consistency_res)
 
-    return subnetwork, sign_consistency_res
+    if not target_dict:
+        return subnetwork, sign_consistency_res, inferred_target_sign
+    else:
+        return subnetwork, sign_consistency_res
 
 
 def run_reachability_filter(network, source_dict):
