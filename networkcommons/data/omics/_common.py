@@ -258,7 +258,7 @@ def get_ensembl_mappings():
     # Set 'ensembl_id' as the index
     melted_df.drop_duplicates(inplace=True)
 
-    return melted_df
+    return melted_df.reset_index(drop=True)
 
 
 def convert_ensembl_to_gene_symbol(dataframe, equivalence_df, column_name='idx', summarisation='mean'):
