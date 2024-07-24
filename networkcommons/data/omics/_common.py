@@ -234,28 +234,85 @@ def get_ensembl_mappings():
     # Set up connection to server
     server = biomart.BiomartServer('http://ensembl.org/biomart')
     mart = server.datasets['hsapiens_gene_ensembl']
-    
+
     # List the types of data we want
     attributes = ['ensembl_transcript_id', 'hgnc_symbol', 'ensembl_gene_id', 'ensembl_peptide_id']
-    
+
     # Get the mapping between the attributes
     response = mart.search({'attributes': attributes})
     data = response.raw.data.decode('ascii')
-    
+
     # Convert the raw data into a list of tuples
     data_tuples = [tuple(line.split('\t')) for line in data.splitlines()]
-    
+
     # Convert the list of tuples into a dataframe
     df = pd.DataFrame(data_tuples, columns=['ensembl_transcript_id', 'gene_symbol', 'ensembl_gene_id', 'ensembl_peptide_id'])
-    
+
     # Melt the dataframe to long format
     melted_df = pd.melt(df, id_vars=['gene_symbol'], value_vars=['ensembl_transcript_id', 'ensembl_gene_id', 'ensembl_peptide_id'],
                         var_name='ensembl_type', value_name='ensembl_id')
-    
+
     # Drop rows with empty 'ensembl_id' and drop the 'ensembl_type' column
     melted_df = melted_df[melted_df['gene_symbol'] != ''].drop(columns=['ensembl_type'])
-    
+
     # Set 'ensembl_id' as the index
     melted_df.drop_duplicates(inplace=True)
-    
+
     return melted_df
+
+
+def convert_ensembl_to_gene_symbol(dataframe, equivalence_df, column_name='idx', summarisation='mean'):
+    """
+    Converts Ensembl IDs to gene symbols using an equivalence dataframe, handles partial matches, 
+    and summarizes duplicated entries by taking the maximum value.
+
+    Parameters:
+        dataframe (pd.DataFrame): The input dataframe with Ensembl IDs.
+        equivalence_df (pd.DataFrame): The equivalence dataframe with Ensembl IDs as index and gene symbols.
+        You can either use a custom one or use the one retrieved by get_ensembl_mappings().
+        column_name (str): The name of the column containing Ensembl IDs in the input dataframe.
+        summarisation (str): The method to summarize duplicated entries. Options are 'max', 'min', 'mean', and 'median'.
+
+    Returns:
+        pd.DataFrame: The dataframe with gene symbols and summarized duplicated entries.
+    """
+    dataframe = dataframe.copy()
+    equivalence_df = equivalence_df.copy()
+
+    if column_name not in dataframe.columns:
+        dataframe.reset_index(inplace=True)
+
+    # Extract partial match from the Ensembl IDs in the input dataframe
+    dataframe['partial_id'] = dataframe[column_name].str.extract(r'([A-Za-z0-9]+)', expand=False)
+
+    # Reset index of equivalence dataframe for merging
+    # Merge dataframes using partial matches
+    merged_df = pd.merge(dataframe, equivalence_df, left_on='partial_id', right_on='ensembl_id', how='left')
+
+    # Calculate and print the number and percentage of non-matched Ensembl IDs
+    total_count = len(merged_df)
+    non_matched_count = merged_df['gene_symbol'].isna().sum()
+    non_matched_percentage = (non_matched_count / total_count) * 100
+    print(f"Number of non-matched Ensembl IDs: {non_matched_count} ({non_matched_percentage:.2f}%)")
+
+    # Drop temporary and original index columns
+    merged_df.drop(columns=['partial_id', 'ensembl_id', column_name], inplace=True)
+
+    # Summarize duplicated entries by taking the max value
+    if summarisation == 'max':
+        summarized_df = merged_df.groupby('gene_symbol').max().reset_index()
+    elif summarisation == 'min':
+        summarized_df = merged_df.groupby('gene_symbol').min().reset_index()
+    elif summarisation == 'mean':
+        summarized_df = merged_df.groupby('gene_symbol').mean().reset_index()
+    elif summarisation == 'median':
+        summarized_df = merged_df.groupby('gene_symbol').median().reset_index()
+    else:
+        raise ValueError(f"Invalid summarisation method: {summarisation}")
+
+    # Calculate and print the number and percentage of summarized duplicated entries
+    summarized_count = len(merged_df) - len(summarized_df)
+    summarized_percentage = (summarized_count / total_count) * 100
+    print(f"Number of summarized duplicated entries: {summarized_count} ({summarized_percentage:.2f}%)")
+
+    return summarized_df
