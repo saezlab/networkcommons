@@ -31,13 +31,16 @@ __all__ = [
     'get_metric_from_networks',
     'get_ec50_evaluation',
     'run_ora',
-    'perform_random_controls'
+    'perform_random_controls',
+    'get_phosphorylation_status'
 ]
 
 import pandas as pd
 import networkx as nx
 import decoupler as dc
 import numpy as np
+
+import networkcommons.utils as utils
 
 import random
 
@@ -336,3 +339,19 @@ def perform_random_controls(graph,
         inferred_networks[network_label] = inferred_network
 
     return inferred_networks
+
+
+def get_phosphorylation_status(network, dataframe, col='stat'):
+    subset_df = utils.subset_df_with_nodes(network, dataframe)
+    metric_in = subset_df[col].values
+    excluded_df = dataframe[~dataframe.index.isin(subset_df.index)]
+    metric_out = excluded_df[col].values
+    coverage = len(subset_df) / len(network.nodes) * 100 if len(network.nodes) > 0 else 0
+
+    return pd.DataFrame({
+        'avg_relabundance': np.mean(metric_in),
+        'avg_relabundance_overall': np.mean(dataframe[col].values),
+        'diff_avg_abundance': abs(np.mean(metric_in)) - abs(np.mean(metric_out)),
+        'nodes_with_phosphoinfo': len(subset_df),
+        'coverage': coverage
+    }, index=[0])
