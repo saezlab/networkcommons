@@ -215,8 +215,13 @@ def get_metric_from_networks(networks, function, **kwargs):
         DataFrame: The graph metrics of the networks.
     """
     metrics = pd.DataFrame()
-    if not callable(function):
-        raise ValueError(f"Function {function.__name__} not found in available functions.")
+    try:
+        callable(function)
+        if not callable(function):
+            raise NameError(f"Function {function} not callable from the given environment.")
+    except (KeyError, AttributeError, NameError):
+        raise NameError(f"Function {function} not found in available functions.")
+
     for network_name, graph in networks.items():
         network_df = function(graph, **kwargs)
         network_df['network'] = network_name
