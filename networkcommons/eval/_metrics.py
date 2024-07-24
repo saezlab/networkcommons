@@ -342,6 +342,26 @@ def perform_random_controls(graph,
 
 
 def get_phosphorylation_status(network, dataframe, col='stat'):
+    """
+    Calculates the phosphorylation status metrics for a given network and dataframe.
+
+    Parameters:
+    network (nx.DiGraph): The network graph.
+    dataframe (pandas DataFrame): The dataframe containing the phosphorylation data.
+    col (str, optional): The column name in the dataframe to use to infer the metrics. Defaults to 'stat' 
+    (from nc.data.omics.deseq2()).
+
+    Returns:
+    pandas DataFrame: A dataframe containing the calculated metrics:
+    - avg_relabundance: The average value of the nodes with phosphorylation information.
+    - avg_relabundance_overall: The average value of all the elements, irrespective of whether
+    they are present in the network or not.
+    - diff_avg_abundance: The difference between the average relative abundance of the nodes with phosphorylation
+    information and the average relative abundance of all elements.
+    - nodes_with_phosphoinfo: The number of nodes with phosphorylation information.
+    - coverage: The percentage of nodes with phosphorylation information.
+    """
+
     subset_df = utils.subset_df_with_nodes(network, dataframe)
     metric_in = subset_df[col].values
     excluded_df = dataframe[~dataframe.index.isin(subset_df.index)]
