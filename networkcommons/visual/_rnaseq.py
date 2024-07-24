@@ -29,6 +29,7 @@ __all__  = [
     'build_ma_plot',
     'plot_pca',
     'build_heatmap_with_tree',
+    'plot_density'
 ]
 
 import lazy_import
@@ -37,6 +38,56 @@ import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
 from sklearn import decomposition as sklearn_decomp
+
+
+def plot_density(df,
+                 ensembl_ids,
+                 id_column='idx',
+                 quantiles=[10, 90],
+                 title='Density Plot of Intensity Values',
+                 xlabel='Intensity',
+                 ylabel='Density'):
+    """
+    Plots density of intensity values for specified genes, including mean and quantile lines.
+
+    Args:
+        df (pd.DataFrame): Input DataFrame containing gene data.
+        ensembl_ids (list of str): List of specific genes to highlight.
+        id_column (str): Column name for identifying the gene.
+        quantiles (list of int): List of quantiles to plot.
+        title (str): Title of the plot.
+        xlabel (str): Label for the x-axis.
+        ylabel (str): Label for the y-axis.
+
+    Returns:
+        None
+    """
+    # Ensure all relevant columns are numeric
+    numeric_df = df.iloc[:, 1:].apply(pd.to_numeric, errors='coerce')
+    
+    plt.figure(figsize=(12, 6))
+    
+    for ensembl_id in ensembl_ids:
+        specific_gene = df[df[id_column].str.contains(ensembl_id, na=False)]
+        if not specific_gene.empty:
+            values = specific_gene.iloc[0, 1:].astype(float)
+            values.plot(kind='density', label=f'Gene: {ensembl_id}')
+            
+            # Mean value line
+            mean_value = values.mean()
+            plt.axvline(mean_value, color='k', linestyle='--', linewidth=1, label=f'Mean: {np.round(mean_value, 2)}')
+            
+            for quantile in quantiles:
+                q = np.percentile(values, quantile)
+                plt.axvline(q, color='k', linestyle=':', linewidth=1, label=f'Q{quantile}: {np.round(q, 2)}')
+    
+    plt.title(title)
+    plt.xlabel(xlabel)
+    plt.ylabel(ylabel)
+    plt.legend()
+    plt.tight_layout()
+    plt.show()
+
 
 
 def build_volcano_plot(
