@@ -190,7 +190,6 @@ def get_graph_metrics(network, target_dict):
 
     elif isinstance(network, (nx.Graph, nx.DiGraph)):
         metrics = pd.DataFrame({
-            'network': 'Network1',
             'Number of nodes': get_number_nodes(network),
             'Number of edges': get_number_edges(network),
             'Mean degree': get_mean_degree(network),
@@ -216,10 +215,8 @@ def get_metric_from_networks(networks, function, **kwargs):
         DataFrame: The graph metrics of the networks.
     """
     metrics = pd.DataFrame()
-    if function in globals():
-        function = globals()[function]
-    else:
-        raise ValueError(f"Function {function} not found in available functions.")
+    if not callable(function):
+        raise ValueError(f"Function {function.__name__} not found in available functions.")
     for network_name, graph in networks.items():
         network_df = function(graph, **kwargs)
         network_df['network'] = network_name
