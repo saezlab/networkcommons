@@ -35,6 +35,7 @@ import pandas as pd
 import networkx as nx
 import matplotlib.pyplot as plt
 import seaborn as sns
+import numpy as np
 from scipy.cluster.hierarchy import linkage
 from scipy.spatial.distance import squareform
 
@@ -79,7 +80,7 @@ def plot_rank(df,
     # Compute average and standard error across columns, ignoring the non-numeric columns
     df['average'] = df.select_dtypes(include=[np.number]).mean(axis=1)
     df['stdev'] = df.select_dtypes(include=[np.number]).std(axis=1)
-    
+
     # Sort by average value
     df = df.sort_values('average').reset_index(drop=True)
 
@@ -91,13 +92,13 @@ def plot_rank(df,
 
     # Plotting
     plt.figure(figsize=figsize)
-    
+
     # Plot the average intensity
     plt.plot(df['average'], label=legend_labels.get('average', 'Average Intensity'), color=average_color)
-    
+
     # Plot the shaded area for stderr
     plt.fill_between(df.index, df['average'] - df['stdev'], df['average'] + df['stdev'], color=stdev_color, alpha=stdev_alpha, label=legend_labels.get('stdev', 'Standard Deviation'))
-    
+
     # Highlight the specific genes if bio_ids is provided
     if bio_ids:
         for bio_id in bio_ids:
@@ -113,7 +114,7 @@ def plot_rank(df,
                         fontsize=9,
                         color=highlight_color
                     )
-    
+
     plt.title(title)
     plt.xlabel(x_label)
     plt.ylabel(y_label)
