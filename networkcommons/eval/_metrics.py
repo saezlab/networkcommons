@@ -359,25 +359,26 @@ def get_phosphorylation_status(network, dataframe, col='stat'):
 
     Returns:
     pandas DataFrame: A dataframe containing the calculated metrics:
-    - avg_relabundance: The average value of the nodes with phosphorylation information.
+    - avg_relabundance: The average value of the nodes with phosphorylation information, in absolute values
+    (we don't consider the sign of the dysregulation, but how severe it is).
     - avg_relabundance_overall: The average value of all the elements, irrespective of whether
-    they are present in the network or not.
-    - diff_avg_abundance: The difference between the average relative abundance of the nodes with phosphorylation
-    information and the average relative abundance of all elements.
+    they are present in the network or not, in absolute values.
+    - diff_dysregulation: The overall difference of dysregulation between nodes in the network and those
+    outside of it.
     - nodes_with_phosphoinfo: The number of nodes with phosphorylation information.
     - coverage: The percentage of nodes with phosphorylation information.
     """
 
     subset_df = utils.subset_df_with_nodes(network, dataframe)
-    metric_in = subset_df[col].values
+    metric_in = abs(subset_df[col].values)
     excluded_df = dataframe[~dataframe.index.isin(subset_df.index)]
-    metric_out = excluded_df[col].values
+    metric_out = abs(excluded_df[col].values)
     coverage = len(subset_df) / len(network.nodes) * 100 if len(network.nodes) > 0 else 0
 
     return pd.DataFrame({
         'avg_relabundance': np.mean(metric_in),
         'avg_relabundance_overall': np.mean(dataframe[col].values),
-        'diff_avg_abundance': abs(np.mean(metric_in)) - abs(np.mean(metric_out)),
+        'diff_dysregulation': abs(np.mean(metric_in)) - abs(np.mean(metric_out)),
         'nodes_with_phosphoinfo': len(subset_df),
         'coverage': coverage
     }, index=[0])
