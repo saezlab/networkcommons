@@ -191,16 +191,22 @@ def test_get_phosphorylation_status():
     }
     dataframe = pd.DataFrame(data, index=['node1', 'node2', 'node3', 'node4'])
 
+    subset_df = dataframe.loc[~dataframe.index.isin(['node4'])]
+    metric_in = abs(subset_df['stat'].values)
+    metric_overall = abs(dataframe['stat'].values)
+
     result_df = _metrics.get_phosphorylation_status(network, dataframe, col='stat')
+    print(result_df)
 
     expected_data = {
-        'avg_relabundance': [np.mean([0.5, 1.5, -0.5])],
-        'avg_relabundance_overall': [np.mean([0.5, 1.5, -0.5, 0.0])],
-        'diff_avg_abundance': [abs(np.mean([0.5, 1.5, -0.5])) - abs(np.mean([0.0]))],
+        'avg_relabundance': np.mean(metric_in),
+        'avg_relabundance_overall': np.mean(metric_overall),
+        'diff_dysregulation': np.mean(metric_in) - np.mean(metric_overall),
         'nodes_with_phosphoinfo': [3],
         'coverage': [3 / 3 * 100]
     }
     expected_df = pd.DataFrame(expected_data)
+    print(expected_data)
 
     pd.testing.assert_frame_equal(result_df.reset_index(drop=True), expected_df)
 

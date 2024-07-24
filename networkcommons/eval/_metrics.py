@@ -371,14 +371,13 @@ def get_phosphorylation_status(network, dataframe, col='stat'):
 
     subset_df = utils.subset_df_with_nodes(network, dataframe)
     metric_in = abs(subset_df[col].values)
-    excluded_df = dataframe[~dataframe.index.isin(subset_df.index)]
-    metric_out = abs(excluded_df[col].values)
+    metric_out = abs(dataframe[col].values)
     coverage = len(subset_df) / len(network.nodes) * 100 if len(network.nodes) > 0 else 0
 
     return pd.DataFrame({
         'avg_relabundance': np.mean(metric_in),
-        'avg_relabundance_overall': np.mean(dataframe[col].values),
-        'diff_dysregulation': abs(np.mean(metric_in)) - abs(np.mean(metric_out)),
+        'avg_relabundance_overall': np.mean(metric_out),
+        'diff_dysregulation': np.mean(metric_in) - np.mean(metric_out),
         'nodes_with_phosphoinfo': len(subset_df),
         'coverage': coverage
     }, index=[0])
