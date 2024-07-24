@@ -40,7 +40,7 @@ import networkx as nx
 import decoupler as dc
 import numpy as np
 
-import networkcommons.utils as utils
+import networkcommons._utils as utils
 
 import random
 
