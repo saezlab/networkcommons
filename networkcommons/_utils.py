@@ -181,6 +181,8 @@ def handle_missing_values(df, threshold=0.1):
     to_fill = na_percentage < threshold
     to_drop = na_percentage >= threshold
 
+    filled_count = (df[to_fill].isna().sum(axis=1) > 0).sum()
+
     # Replace NAs with the mean of the row for rows to fill
     df.loc[to_fill] = df.loc[to_fill].apply(lambda row: row.fillna(row.mean()), axis=1)
 
@@ -190,7 +192,6 @@ def handle_missing_values(df, threshold=0.1):
     # Return index to column if necessary
     df = df.reset_index()
 
-    filled_count = to_fill.sum()
     removed_count = to_drop.sum()
 
     print(f"Number of genes filled: {filled_count}")
