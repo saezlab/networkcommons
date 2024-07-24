@@ -210,8 +210,7 @@ def get_metric_from_networks(networks, function, **kwargs):
         networks (Dict[str, nx.Graph]): A dictionary of network names and
             their corresponding graphs.
         function (function): The function to get the graph metrics.
-        target_dicts (Dict[str, dict]): A dictionary of target dictionaries
-            for each network.
+        **kwargs: Additional keyword arguments to pass to the function.
 
     Returns:
         DataFrame: The graph metrics of the networks.
@@ -224,6 +223,11 @@ def get_metric_from_networks(networks, function, **kwargs):
     for network_name, graph in networks.items():
         network_df = function(graph, **kwargs)
         network_df['network'] = network_name
+        if 'random' in network_name:
+            network_df['type'] = 'random'
+        else:
+            network_df['type'] = 'real'
+        network_df['method'] = network_name.split('__')[0]
         metrics = pd.concat([metrics, network_df])
 
     metrics.reset_index(inplace=True, drop=True)
@@ -241,7 +245,7 @@ def get_ec50_evaluation(network, ec50_dict):
     Produces three columns
     - 'avg_EC50': The average EC50 value of the network.
     - 'nodes_with_EC50': The number of nodes with an EC50 value.
-    - coverage: The percentage of nodes with an EC50 value.
+    - 'coverage': The percentage of nodes with an EC50 value.
 
 
     Args:
