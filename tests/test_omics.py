@@ -6,6 +6,8 @@ import anndata as ad
 from networkcommons.data.omics import _common
 from networkcommons.data import omics
 
+from unittest.mock import patch
+
 
 def test_datasets():
 
@@ -186,3 +188,91 @@ def test_cptac_table():
 
     assert isinstance(df, pd.DataFrame)
     assert df.shape == (123, 201)
+
+
+def test_convert_ensembl_to_gene_symbol_max():
+    dataframe = pd.DataFrame({
+        'idx': ['ENSG000001.23', 'ENSG000002', 'ENSG000001.19'],
+        'value': [10, 20, 15]
+    })
+    equivalence_df = pd.DataFrame({
+        'ensembl_id': ['ENSG000001', 'ENSG000002'],
+        'gene_symbol': ['GeneA', 'GeneB']
+    })
+    result_df = omics.convert_ensembl_to_gene_symbol(dataframe, equivalence_df, summarisation='max')
+    expected_df = pd.DataFrame({
+        'gene_symbol': ['GeneA', 'GeneB'],
+        'value': [15, 20]
+    })
+    pd.testing.assert_frame_equal(result_df, expected_df)
+
+
+def test_convert_ensembl_to_gene_symbol_min():
+    dataframe = pd.DataFrame({
+        'idx': ['ENSG000001.28', 'ENSG000002', 'ENSG000001.23'],
+        'value': [10, 20, 15]
+    })
+    equivalence_df = pd.DataFrame({
+        'ensembl_id': ['ENSG000001', 'ENSG000002'],
+        'gene_symbol': ['GeneA', 'GeneB']
+    })
+    result_df = omics.convert_ensembl_to_gene_symbol(dataframe, equivalence_df, summarisation='min')
+    expected_df = pd.DataFrame({
+        'gene_symbol': ['GeneA', 'GeneB'],
+        'value': [10, 20]
+    })
+    pd.testing.assert_frame_equal(result_df, expected_df)
+
+
+def test_convert_ensembl_to_gene_symbol_mean():
+    dataframe = pd.DataFrame({
+        'idx': ['ENSG000001.29', 'ENSG000002', 'ENSG000001.48'],
+        'value': [10, 20, 15]
+    })
+    equivalence_df = pd.DataFrame({
+        'ensembl_id': ['ENSG000001', 'ENSG000002'],
+        'gene_symbol': ['GeneA', 'GeneB']
+    })
+    result_df = omics.convert_ensembl_to_gene_symbol(dataframe, equivalence_df, summarisation='mean')
+    expected_df = pd.DataFrame({
+        'gene_symbol': ['GeneA', 'GeneB'],
+        'value': [12.5, 20]
+    })
+    pd.testing.assert_frame_equal(result_df, expected_df)
+
+
+def test_convert_ensembl_to_gene_symbol_median():
+    dataframe = pd.DataFrame({
+        'idx': ['ENSG000001.10', 'ENSG000002', 'ENSG000001.2'],
+        'value': [10, 20, 15]
+    })
+    equivalence_df = pd.DataFrame({
+        'ensembl_id': ['ENSG000001', 'ENSG000002'],
+        'gene_symbol': ['GeneA', 'GeneB']
+    })
+    result_df = omics.convert_ensembl_to_gene_symbol(dataframe, equivalence_df, summarisation='median')
+    expected_df = pd.DataFrame({
+        'gene_symbol': ['GeneA', 'GeneB'],
+        'value': [12.5, 20]
+    })
+    pd.testing.assert_frame_equal(result_df, expected_df)
+
+
+def test_convert_ensembl_to_gene_symbol_no_match():
+    dataframe = pd.DataFrame({
+        'idx': ['ENSG000001.1', 'ENSG000003', 'ENSG000001.02'],
+        'value': [10, 20, 15]
+    })
+    equivalence_df = pd.DataFrame({
+        'ensembl_id': ['ENSG000001', 'ENSG000002'],
+        'gene_symbol': ['GeneA', 'GeneB']
+    })
+    with patch('builtins.print') as mocked_print:
+        result_df = omics.convert_ensembl_to_gene_symbol(dataframe, equivalence_df, summarisation='mean')
+        print(mocked_print.mock_calls)
+        expected_df = pd.DataFrame({
+            'gene_symbol': ['GeneA'],
+            'value': [12.5]
+        })
+        pd.testing.assert_frame_equal(result_df, expected_df)
+        mocked_print.assert_any_call("Number of non-matched Ensembl IDs: 1 (33.33%)")
