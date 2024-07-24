@@ -198,3 +198,23 @@ def handle_missing_values(df, threshold=0.1):
     print(f"Number of genes removed: {removed_count}")
 
     return df
+
+
+def subset_df_with_nodes(network, dataframe):
+    """
+    Subsets a dataframe using the nodes of a network as the index.
+
+    Parameters:
+    network (networkx.Graph): The network from which to extract nodes.
+    dataframe (pd.DataFrame): The dataframe to subset.
+
+    Returns:
+    pd.DataFrame: A subset of the dataframe with rows that have indices matching the nodes of the network.
+    """
+    # Extract the nodes from the network
+    nodes = list(network.nodes)
+
+    # Subset the dataframe using the nodes as index
+    subset_df = dataframe[dataframe.index.isin(nodes)]
+
+    return subset_df
