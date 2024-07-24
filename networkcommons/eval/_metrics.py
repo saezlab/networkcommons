@@ -30,13 +30,16 @@ __all__ = [
     'get_graph_metrics',
     'get_metric_from_networks',
     'get_ec50_evaluation',
-    'run_ora'
+    'run_ora',
+    'perform_random_controls'
 ]
 
 import pandas as pd
 import networkx as nx
 import decoupler as dc
 import numpy as np
+
+import random
 
 
 def get_number_nodes(network: nx.Graph) -> int:
@@ -288,3 +291,48 @@ def run_ora(graph, net, metric='ora_Combined score', ascending=False, **kwargs):
     ora_results['ora_rank'] = ora_results[metric].rank(ascending=ascending, method='min')
 
     return ora_results
+
+
+def perform_random_controls(graph,
+                            inference_function,
+                            n_iterations,
+                            network_name,
+                            **kwargs):
+    """
+    Performs random controls of a network by shuffling node labels and running the inference function.
+
+    Parameters:
+    graph (nx.DiGraph): The original directed graph.
+    inference_function (function): The network inference function to apply.
+    n_iterations (int): The number of iterations to perform.
+    network_name (str): The base name for the networks in the resulting dictionary.
+    **kwargs: Additional keyword arguments to pass to the inference function.
+
+    Returns:
+    dict: A dictionary containing the inferred networks.
+    """
+    # Initialize the dictionary to store the networks
+    inferred_networks = {}
+
+    # Get the list of nodes
+    nodes = list(graph.nodes)
+
+    for i in range(n_iterations):
+        # Shuffle the node labels
+        shuffled_nodes = nodes[:]
+        random.shuffle(shuffled_nodes)
+
+        # Create a mapping from original to shuffled node labels
+        mapping = {original: shuffled for original, shuffled in zip(nodes, shuffled_nodes)}
+
+        # Relabel the nodes in the graph
+        shuffled_graph = nx.relabel_nodes(graph, mapping, copy=True)
+
+        # Perform the network inference on the shuffled graph
+        inferred_network, _ = inference_function(shuffled_graph, **kwargs)
+
+        # Add the inferred network to the dictionary with a unique name
+        network_label = f"{network_name}__random{i+1:03d}"
+        inferred_networks[network_label] = inferred_network
+
+    return inferred_networks
