@@ -19,7 +19,14 @@ Plot network (graph) metrics.
 
 from __future__ import annotations
 
-__all__ = ['plot_n_nodes_edges', 'plot_n_nodes_edges_from_df', 'build_heatmap_with_tree', 'lollipop_plot', 'create_rank_heatmap']
+__all__ = ['plot_n_nodes_edges',
+           'plot_n_nodes_edges_from_df',
+           'build_heatmap_with_tree',
+           'lollipop_plot',
+           'create_rank_heatmap',
+           'plot_scatter',
+           'plot_rank'
+           ]
 
 from typing import List, Dict, Union
 
@@ -30,6 +37,143 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 from scipy.cluster.hierarchy import linkage
 from scipy.spatial.distance import squareform
+
+
+def plot_rank(df, 
+                   bio_ids=None,
+                   figsize=(12, 6),
+                   x_label='Proteins',
+                   y_label='Average Intensity',
+                   title='Protein abundance Rank Plot',
+                   legend_labels=None,
+                   id_column='idx',
+                   average_color='blue',
+                   stdev_color='gray',
+                   stdev_alpha=0.2,
+                   highlight_color='red',
+                   highlight_size=5,
+                   highlight_zorder=5):
+    """
+    Plots gene data with customizable attributes.
+
+    Args:
+        df (pd.DataFrame): Input DataFrame containing gene data.
+        bio_ids (list of str): List of specific genes to highlight.
+        figsize (tuple): Size of the figure.
+        x_label (str): Label for the x-axis.
+        y_label (str): Label for the y-axis.
+        title (str): Title of the plot.
+        legend_labels (dict): Dictionary with legend labels for 'average', 'stdev', and 'highlight'.
+        id_column (str): Name of the column containing the IDs (e.g gene_symbols or proteins).
+        average_color (str): Color of the average intensity line.
+        stdev_color (str): Color of the standard deviation shaded area.
+        stdev_alpha (float): Alpha (transparency) for the standard deviation shaded area.
+        highlight_color (str): Color for highlighting the specific gene.
+        highlight_size (int): Size of the highlighted points.
+        highlight_zorder (int): Z-order for the highlighted points.
+
+    Returns:
+        None
+    """
+    df = df.copy()
+    # Compute average and standard error across columns, ignoring the non-numeric columns
+    df['average'] = df.select_dtypes(include=[np.number]).mean(axis=1)
+    df['stdev'] = df.select_dtypes(include=[np.number]).std(axis=1)
+    
+    # Sort by average value
+    df = df.sort_values('average').reset_index(drop=True)
+
+    n_proteins = len(df)
+
+    # Ensure legend_labels is a dictionary
+    if legend_labels is None:
+        legend_labels = {}
+
+    # Plotting
+    plt.figure(figsize=figsize)
+    
+    # Plot the average intensity
+    plt.plot(df['average'], label=legend_labels.get('average', 'Average Intensity'), color=average_color)
+    
+    # Plot the shaded area for stderr
+    plt.fill_between(df.index, df['average'] - df['stdev'], df['average'] + df['stdev'], color=stdev_color, alpha=stdev_alpha, label=legend_labels.get('stdev', 'Standard Deviation'))
+    
+    # Highlight the specific genes if bio_ids is provided
+    if bio_ids:
+        for bio_id in bio_ids:
+            specific_gene = df[df[id_column].str.contains(bio_id, na=False)]
+            if not specific_gene.empty:
+                for _, gene in specific_gene.iterrows():
+                    plt.scatter(gene.name, gene['average'], color=highlight_color, zorder=highlight_zorder, s=highlight_size)
+                    plt.annotate(
+                        bio_id,
+                        xy=(gene.name, gene['average']),
+                        xytext=(gene.name - n_proteins*0.02, gene['average'] + gene['stdev']),
+                        arrowprops=dict(facecolor='black', arrowstyle='->', shrinkA=0, shrinkB=0, lw=1),
+                        fontsize=9,
+                        color=highlight_color
+                    )
+    
+    plt.title(title)
+    plt.xlabel(x_label)
+    plt.ylabel(y_label)
+    plt.legend()
+    plt.tight_layout()
+    plt.show()
+
+
+def plot_scatter(df,
+                              summarise_df=True,
+                              x_col='diff_avg_abundance',
+                              y_col='coverage',
+                              size_col='nodes_with_phosphoinfo',
+                              hue_col='method',
+                              style_col='type',
+                              numeric_cols=None,
+                              xlabel='Difference in Average Abundance',
+                              ylabel='Coverage',
+                              title='Coverage vs Difference in Average Abundance',
+                              figsize=(10, 6)):
+    """
+    Plots a scatter plot with customizable column labels. It is prepared to be used
+    by default with a dataframe from get_phosphorylation_status, as shown in Vignette 4.
+
+    Args:
+        df (pd.DataFrame): Input DataFrame containing the data to plot.
+        summarise_df (bool): In case a random control has been performed, whether to summarise or not 
+        the random networks.
+        x_col (str): Column name for the x-axis.
+        y_col (str): Column name for the y-axis.
+        size_col (str): Column name for the size of the points.
+        hue_col (str): Column name for the hue (color) of the points.
+        style_col (str): Column name for the style of the points.
+        numeric_cols (list of str): List of numeric columns to summarise.
+        Defaults to all numeric columns in the DataFrame.
+        xlabel (str): Label for the x-axis.
+        ylabel (str): Label for the y-axis.
+        title (str): Title of the plot.
+        figsize (tuple): Figure size of the plot.
+
+    Returns:
+        None
+    """
+    if numeric_cols is None:
+        numeric_cols = df.select_dtypes(include=['number']).columns
+
+    if summarise_df:
+        summary_df = df.groupby([hue_col, style_col])[numeric_cols].mean().reset_index()
+    else:
+        summary_df = df
+
+    # Plot
+    plt.figure(figsize=figsize)
+    sns.scatterplot(data=summary_df, x=x_col, y=y_col, size=size_col, hue=hue_col, style=style_col, sizes=(50, 200))
+    
+    plt.xlabel(xlabel)
+    plt.ylabel(ylabel)
+    plt.title(title)
+    plt.legend()
+    plt.show()
 
 
 def lollipop_plot(
