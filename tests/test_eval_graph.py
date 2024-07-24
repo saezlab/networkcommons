@@ -7,7 +7,7 @@ import numpy as np
 from networkcommons.eval import _metrics
 
 from unittest.mock import patch
-import networkcommons.utils as utils
+import networkcommons._utils as utils
 
 @pytest.fixture
 def network():
@@ -190,19 +190,15 @@ def test_get_phosphorylation_status():
     }
     dataframe = pd.DataFrame(data, index=['node1', 'node2', 'node3', 'node4'])
 
-    # Mock the utils.subset_df_with_nodes function
-    with patch('utils.subset_df_with_nodes') as mock_subset:
-        mock_subset.return_value = dataframe.loc[['node1', 'node2', 'node3']]
+    result_df = _metrics.get_phosphorylation_status(network, dataframe, col='stat')
 
-        result_df = _metrics.get_phosphorylation_status(network, dataframe, col='stat')
+    expected_data = {
+        'avg_relabundance': [np.mean([0.5, 1.5, -0.5])],
+        'avg_relabundance_overall': [np.mean([0.5, 1.5, -0.5, 0.0])],
+        'diff_avg_abundance': [abs(np.mean([0.5, 1.5, -0.5])) - abs(np.mean([0.0]))],
+        'nodes_with_phosphoinfo': [3],
+        'coverage': [3 / 3 * 100]
+    }
+    expected_df = pd.DataFrame(expected_data)
 
-        expected_data = {
-            'avg_relabundance': [np.mean([0.5, 1.5, -0.5])],
-            'avg_relabundance_overall': [np.mean([0.5, 1.5, -0.5, 0.0])],
-            'diff_avg_abundance': [abs(np.mean([0.5, 1.5, -0.5])) - abs(np.mean([0.0]))],
-            'nodes_with_phosphoinfo': [3],
-            'coverage': [3 / 3 * 100]
-        }
-        expected_df = pd.DataFrame(expected_data)
-
-        pd.testing.assert_frame_equal(result_df.reset_index(drop=True), expected_df)
+    pd.testing.assert_frame_equal(result_df.reset_index(drop=True), expected_df)
