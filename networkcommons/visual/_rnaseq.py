@@ -38,6 +38,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
 from sklearn import decomposition as sklearn_decomp
+from networkcommons._utils import handle_missing_values
 
 
 def plot_density(df,
@@ -221,7 +222,7 @@ def build_ma_plot(
     plt.show()
 
 
-def plot_pca(dataframe, metadata, feature_col='idx'):
+def plot_pca(dataframe, metadata, feature_col='idx', **kwargs):
     """
     Plots the PCA (Principal Component Analysis) of a dataframe.
 
@@ -243,7 +244,6 @@ def plot_pca(dataframe, metadata, feature_col='idx'):
     else:
         groups = metadata
 
-
     # Handle cases where there are no numeric columns
     if numeric_df.empty:
         raise ValueError("The dataframe contains no numeric columns suitable for PCA.")
@@ -256,6 +256,10 @@ def plot_pca(dataframe, metadata, feature_col='idx'):
 
     # Standardizing the Data
     standardized_data = (numeric_df - numeric_df.mean()) / numeric_df.std()
+
+    if standardized_data.isna().sum().sum() > 0:
+        print("Warning: Missing values were found in the standardized data and will be filled with the handle_missing_values function.")
+        standardized_data = handle_missing_values(standardized_data, **kwargs)
 
     # PCA
     pca = PCA(n_components=2)
