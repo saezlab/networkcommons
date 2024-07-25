@@ -32,7 +32,8 @@ __all__ = [
     'get_ec50_evaluation',
     'run_ora',
     'perform_random_controls',
-    'get_phosphorylation_status'
+    'get_phosphorylation_status',
+    'shuffle_dict_keys'
 ]
 
 import pandas as pd
