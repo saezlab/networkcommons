@@ -13,6 +13,6 @@
 # https://www.gnu.org/licenses/gpl-3.0.txt
 #
 
-from ._omnipath import get_omnipath
+from ._omnipath import get_omnipath, get_phosphositeplus
 from ._liana import get_lianaplus
 from ._moon import *

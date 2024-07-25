@@ -20,7 +20,7 @@ transcriptomics, proteomics and phosphoproteomics data.
 
 from __future__ import annotations
 
-__all__ = ['cptac_fileinfo', 'cptac_cohortsize', 'cptac_table']
+__all__ = ['cptac_fileinfo', 'cptac_cohortsize', 'cptac_table', 'cptac_datatypes']
 
 import os
 import urllib.parse
@@ -61,6 +61,24 @@ def cptac_fileinfo(update: bool = False) -> pd.DataFrame:
     return file_legend
 
 
+def cptac_datatypes() -> list:
+    """
+    List describing the data types available in the CPTAC dataset.
+
+    Returns:
+        Data frame with data type information.
+    """
+    baseurl = urllib.parse.urljoin(_common._baseurl(), 'CPTAC')
+
+    directories = _common._ls(baseurl)
+
+    files = ['CPTAC_pancancer_data_freeze_cohort_size.xlsx', 
+             'CPTAC_pancancer_data_freeze_file_description.xlsx']
+    directories = [directory for directory in directories if directory not in files]
+
+    return directories
+
+
 def cptac_cohortsize(update: bool = False) -> pd.DataFrame:
     """
     Table describing the number of tumor and normal samples per CPTAC 
@@ -91,11 +109,13 @@ def cptac_cohortsize(update: bool = False) -> pd.DataFrame:
     return file_legend
 
 
-def cptac_table(cancer_type: str, fname: str) -> pd.DataFrame:
+def cptac_table(data_type: str, cancer_type: str, fname: str) -> pd.DataFrame:
     """
     One table of omics data from CPTAC.
 
     Args:
+        data_type:
+            Type of data. For a complete list see `cptac_datatypes()`.
         cancer_type:
             Name of the cancer type. For a complete list see
             `cptac_cohortsize()`.

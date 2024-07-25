@@ -17,10 +17,15 @@
 Access to the OmniPath database.
 """
 
-__all__ = ['get_omnipath']
+__all__ = ['get_omnipath', 'get_phosphositeplus']
 
 import lazy_import
 import numpy as np
+import os
+import urllib
+from networkcommons import _conf
+from networkcommons.data.omics import _common
+import pandas as pd
 
 # op = lazy_import.lazy_module('omnipath')
 import omnipath as op
@@ -60,3 +65,28 @@ def get_omnipath(genesymbols: bool = True, directed_signed: bool = True):
     network = network[['source', 'target', 'sign']].reset_index(drop=True)
 
     return network
+
+
+def get_phosphositeplus(update: bool = False):
+    """
+    Retrieves the PhosphoSitePlus network from the server
+
+    Returns:
+        network (pandas.DataFrame): PhosphoSitePlus network with
+        source, target, and sign columns.
+    """
+    path = os.path.join(_conf.get('pickle_dir'), 'phosphositeplus.pickle')
+
+    if update or not os.path.exists(path):
+
+        baseurl = urllib.parse.urljoin(_common._baseurl(), 'phosphosite')
+
+        file_legend = pd.read_csv(baseurl + '/kinase-substrate.tsv', sep='\t')
+
+        file_legend.to_pickle(path)
+
+    else:
+
+        file_legend = pd.read_pickle(path)
+
+    return file_legend

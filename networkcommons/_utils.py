@@ -1,5 +1,6 @@
 import pandas as pd
 import networkx as nx
+import numpy as np
 
 
 def read_network_from_file(file_path,
@@ -139,3 +140,81 @@ def targetlayer_formatter(df, n_elements=25):
     dict_df = df['sign'].to_dict()
 
     return dict_df
+
+
+def handle_missing_values(df, threshold=0.1):
+    """
+    Handles missing values in a DataFrame by filling them with the mean of the row or dropping the rows.
+
+    Parameters:
+    - df (pandas.DataFrame): The DataFrame containing the data.
+    - threshold (float): The threshold for the share (0<n<1) of missing values in a row. Rows with a share
+                         of missing values greater than or equal to the threshold will be dropped.
+
+    Returns:
+    - df (pandas.DataFrame): The DataFrame with missing values handled.
+
+    Raises:
+    - ValueError: If more than one non-numeric column is found in the DataFrame.
+
+    Example:
+    >>> df = pd.DataFrame({'A': [1, 2, np.nan], 'B': [3, 2, np.nan], 'C': [np.nan, 7, 8]})
+    >>> handle_missing_values(df, 0.5)
+    Number of genes filled: 1
+    Number of genes removed: 1
+    """
+    df = df.copy()
+
+    # Check non-numeric columns. If only one, set it as index. If more, abort.
+    non_numeric_columns = df.select_dtypes(exclude=[np.number]).columns
+    if len(non_numeric_columns) == 1:
+        df = df.set_index(non_numeric_columns[0])
+    elif len(non_numeric_columns) > 1:
+        raise ValueError(f"More than one non-numeric column found: {non_numeric_columns}")
+
+    # Replace -inf values with nan
+    df = df.replace(-np.inf, np.nan)
+
+    na_percentage = df.isna().mean(axis=1)
+
+    # Determine which rows to fill and which to drop
+    to_fill = na_percentage < threshold
+    to_drop = na_percentage >= threshold
+
+    filled_count = (df[to_fill].isna().sum(axis=1) > 0).sum()
+
+    # Replace NAs with the mean of the row for rows to fill
+    df.loc[to_fill] = df.loc[to_fill].apply(lambda row: row.fillna(row.mean()), axis=1)
+
+    # Drop rows with NA percentage greater than or equal to threshold
+    df = df[~to_drop]
+
+    # Return index to column if necessary
+    df = df.reset_index()
+
+    removed_count = to_drop.sum()
+
+    print(f"Number of genes filled: {filled_count}")
+    print(f"Number of genes removed: {removed_count}")
+
+    return df
+
+
+def subset_df_with_nodes(network, dataframe):
+    """
+    Subsets a dataframe using the nodes of a network as the index.
+
+    Parameters:
+    network (networkx.Graph): The network from which to extract nodes.
+    dataframe (pd.DataFrame): The dataframe to subset.
+
+    Returns:
+    pd.DataFrame: A subset of the dataframe with rows that have indices matching the nodes of the network.
+    """
+    # Extract the nodes from the network
+    nodes = list(network.nodes)
+
+    # Subset the dataframe using the nodes as index
+    subset_df = dataframe[dataframe.index.isin(nodes)]
+
+    return subset_df

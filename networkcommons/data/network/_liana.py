@@ -21,7 +21,7 @@ __all__ = ['get_lianaplus']
 
 import lazy_import
 
-# liana = lazy_import.lazy_module('liana')
+liana = lazy_import.lazy_module('liana')
 
 
 def get_lianaplus(resource='Consensus'):
