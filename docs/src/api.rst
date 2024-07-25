@@ -147,6 +147,7 @@ CPTAC
     data.omics.cptac_fileinfo
     data.omics.cptac_table
     data.omics.cptac_datatypes
+    data.omics.cptac_extend_dataframe
 
 
 Other
@@ -184,6 +185,7 @@ Evaluation and description
     eval.run_ora
     eval.get_phosphorylation_status
     eval.perform_random_controls
+    eval.shuffle_dict_keys
     
 
 Visualization
