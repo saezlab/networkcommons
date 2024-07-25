@@ -18,12 +18,18 @@ Plots for omics data exploration.
 """
 
 from __future__ import annotations
+import pandas as pd
+from sklearn.decomposition import PCA
+import matplotlib.pyplot as plt
+import seaborn as sns
+
 
 __all__  = [
     'build_volcano_plot',
     'build_ma_plot',
-    'build_pca_plot',
+    'plot_pca',
     'build_heatmap_with_tree',
+    'plot_density'
 ]
 
 import lazy_import
@@ -32,6 +38,91 @@ import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
 from sklearn import decomposition as sklearn_decomp
+from networkcommons._utils import handle_missing_values
+
+
+def plot_density(df,
+                 gene_ids,
+                 metadata=None,
+                 id_column='idx',
+                 sample_id_column='sample_ID',
+                 group_column='group',
+                 quantiles=[10, 90],
+                 title='Density Plot of Intensity Values',
+                 xlabel='Intensity',
+                 ylabel='Density'):
+    """
+    Plots density of intensity values for specified genes, including mean and quantile lines, and separates distributions by groups if metadata is provided.
+    Each gene is displayed in a separate subplot.
+
+    Args:
+        df (pd.DataFrame): Input DataFrame containing gene data.
+        gene_ids (list of str): List of specific genes to highlight.
+        metadata (pd.DataFrame): Optional DataFrame containing metadata (sample_ID, group).
+        id_column (str): Column name for identifying the gene.
+        sample_id_column (str): Column name in metadata for sample IDs.
+        group_column (str): Column name in metadata for groups.
+        quantiles (list of int): List of quantiles to plot.
+        title (str): Title of the plot.
+        xlabel (str): Label for the x-axis.
+        ylabel (str): Label for the y-axis.
+
+    Returns:
+        None
+    """
+    num_genes = len(gene_ids)
+    num_cols = 3
+    num_rows = (num_genes + num_cols - 1) // num_cols  # Calculate the number of rows needed
+
+    fig, axes = plt.subplots(num_rows, num_cols, figsize=(15, 5 * num_rows))
+    axes = axes.flatten()  # Flatten the axes array for easy iteration
+
+    for idx, gene_id in enumerate(gene_ids):
+        specific_gene = df[df[id_column].str.contains(gene_id, na=False)]
+        if not specific_gene.empty:
+            values = specific_gene.iloc[0, 1:].astype(float)
+            ax = axes[idx]
+
+            if metadata is not None:
+                merged_df = pd.DataFrame(values).reset_index()
+                merged_df.columns = [sample_id_column, 'intensity']
+                merged_df = merged_df.merge(metadata, left_on=sample_id_column, right_on=sample_id_column)
+
+                groups = merged_df[group_column].unique()
+                for group in groups:
+                    group_values = merged_df[merged_df[group_column] == group]['intensity']
+                    group_values.plot(kind='density', ax=ax, label=f'Group: {group}')
+
+                    # Mean value line for group
+                    mean_value = group_values.mean()
+                    ax.axvline(mean_value, linestyle='--', linewidth=1, label=f'Group {group} Mean: {np.round(mean_value, 2)}')
+
+                    for quantile in quantiles:
+                        q = np.percentile(group_values, quantile)
+                        ax.axvline(q, linestyle=':', linewidth=1, label=f'Group {group} Q{quantile}: {np.round(q, 2)}')
+            else:
+                values.plot(kind='density', ax=ax, label='Density')
+
+                # Mean value line
+                mean_value = values.mean()
+                ax.axvline(mean_value, linestyle='--', linewidth=1, label=f'Mean: {np.round(mean_value, 2)}')
+
+                for quantile in quantiles:
+                    q = np.percentile(values, quantile)
+                    ax.axvline(q, linestyle=':', linewidth=1, label=f'Q{quantile}: {np.round(q, 2)}')
+
+            ax.set_title(f'Gene: {gene_id}')
+            ax.set_xlabel(xlabel)
+            ax.set_ylabel(ylabel)
+            ax.legend(loc='upper left', bbox_to_anchor=(1, 1))
+
+    # Remove any unused subplots
+    for i in range(len(gene_ids), len(axes)):
+        fig.delaxes(axes[i])
+
+    plt.suptitle(title)
+    plt.tight_layout(rect=[0, 0, 1, 0.96])
+    plt.show()
 
 
 def build_volcano_plot(
@@ -49,6 +140,7 @@ def build_volcano_plot(
         save: bool = False,
         output_dir: str = "."
 ):
+    data = data.copy()
     data['-log10(pval)'] = -np.log10(data[pval])
     data['significant'] = (data[pval] < pval_threshold) & (abs(data[log2fc]) >= log2fc_threshold)
     data['Upregulated'] = (data[pval] < pval_threshold) & (data[log2fc] >= log2fc_threshold)
@@ -164,37 +256,67 @@ def build_ma_plot(
     plt.show()
 
 
-def build_pca_plot(
-        data: pd.DataFrame,
-        title: str = "PCA Plot",
-        xlabel: str = "PC1",
-        ylabel: str = "PC2",
-        alpha: float = 0.7,
-        size: int = 50,
-        save: bool = False,
-        output_dir: str = "."
-):
-    pca = sklearn_decomp.PCA(n_components=2)
-    principal_components = pca.fit_transform(data)
-    pca_df = pd.DataFrame(data=principal_components, columns=['PC1', 'PC2'])
+def plot_pca(dataframe, metadata, feature_col='idx', **kwargs):
+    """
+    Plots the PCA (Principal Component Analysis) of a dataframe.
 
-    fig, ax = plt.subplots(figsize=(10, 10))
+    Parameters:
+        dataframe (pd.DataFrame): The input dataframe containing numeric columns.
+        metadata (pd.DataFrame or array-like): The metadata associated with the dataframe or an array-like object representing the groups.
 
-    ax.scatter(
-        pca_df['PC1'],
-        pca_df['PC2'],
-        alpha=alpha,
-        s=size
-    )
+    Returns:
+        pd.DataFrame: The dataframe with PCA results.
 
-    ax.set_xlabel(xlabel)
-    ax.set_ylabel(ylabel)
-    ax.set_title(title)
+    Raises:
+        ValueError: If the dataframe contains no numeric columns suitable for PCA.
+    """
 
-    if save:
-        plt.savefig(f"{output_dir}/pca_plot.png")
+    # Check if the dataframe contains any non-numeric columns
+    df = dataframe.copy()
 
+    if df.isna().sum().sum() > 0:
+        print("Warning: Missing values were found in the input data and will be filled with the handle_missing_values function.")
+        df = handle_missing_values(df, **kwargs)
+
+    numeric_df = df.set_index(feature_col).T
+    if type(metadata) == pd.DataFrame:
+        groups = metadata.group.values
+    else:
+        groups = metadata
+
+    # Handle cases where there are no numeric columns
+    if numeric_df.empty:
+        raise ValueError("The dataframe contains no numeric columns suitable for PCA.")
+
+    std_devs = numeric_df.std()
+    zero_std_cols = std_devs[std_devs == 0].index
+    if not zero_std_cols.empty:
+        print(f"Warning: The following columns have zero standard deviation and will be dropped: {list(zero_std_cols)}")
+        numeric_df.drop(columns=zero_std_cols, inplace=True)
+
+    # Standardizing the Data
+    standardized_data = (numeric_df - numeric_df.mean()) / numeric_df.std()
+
+    
+    # PCA
+    pca = PCA(n_components=2)
+    principal_components = pca.fit_transform(standardized_data)
+
+    # Creating a dataframe with PCA results
+    pca_df = pd.DataFrame(data=principal_components, columns=['PCA1', 'PCA2'])
+    pca_df['group'] = groups
+    # Plotting
+    plt.figure(figsize=(10, 7))
+    sns.scatterplot(data=pca_df, x='PCA1', y='PCA2', hue='group', palette='viridis')
+    plt.title('PCA Plot (PCA1 vs PCA2)')
+    plt.xlabel(f'PCA1 ({pca.explained_variance_ratio_[0]*100:.2f}% of variance)')
+    plt.ylabel(f'PCA2 ({pca.explained_variance_ratio_[1]*100:.2f}% of variance)')
+    plt.grid()
+
+    # Display the plot
     plt.show()
+
+    return pca_df
 
 
 def build_heatmap_with_tree(

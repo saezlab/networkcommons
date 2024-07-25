@@ -77,6 +77,7 @@ Prior Knowledge
 
     data.network.get_omnipath
     data.network.get_lianaplus
+    data.network.get_phosphositeplus
 
 
 Datasets
@@ -93,6 +94,8 @@ Utils
 
     data.omics.datasets
     data.omics.deseq2
+    data.omics.get_ensembl_mappings
+    data.omics.convert_ensembl_to_gene_symbol
 
 DecryptM
 ~~~~~~~~
@@ -143,6 +146,8 @@ CPTAC
     data.omics.cptac_cohortsize
     data.omics.cptac_fileinfo
     data.omics.cptac_table
+    data.omics.cptac_datatypes
+    data.omics.cptac_extend_dataframe
 
 
 Other
@@ -178,6 +183,9 @@ Evaluation and description
     eval.get_metric_from_networks
     eval.get_ec50_evaluation
     eval.run_ora
+    eval.get_phosphorylation_status
+    eval.perform_random_controls
+    eval.shuffle_dict_keys
     
 
 Visualization
@@ -201,8 +209,11 @@ Visualization
     visual.apply_edge_style
     visual.build_volcano_plot
     visual.build_ma_plot
-    visual.build_pca_plot
+    visual.plot_pca
     visual.build_heatmap_with_tree
     visual.visualize_graph_simple
     visual.lollipop_plot
     visual.create_rank_heatmap
+    visual.plot_density
+    visual.plot_scatter
+    visual.plot_rank

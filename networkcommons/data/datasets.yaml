@@ -24,4 +24,4 @@ omics:
     CPTAC:
       name: CPTAC
       description: Clinical Proteomic Tumor Analysis Consortium data
-      path: CPTAC/{cancer_type}/{cancer_type}_{fname}.txt
+      path: CPTAC/{data_type}/{cancer_type}_{fname}.txt

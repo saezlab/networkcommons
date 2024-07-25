@@ -30,13 +30,20 @@ __all__ = [
     'get_graph_metrics',
     'get_metric_from_networks',
     'get_ec50_evaluation',
-    'run_ora'
+    'run_ora',
+    'perform_random_controls',
+    'get_phosphorylation_status',
+    'shuffle_dict_keys'
 ]
 
 import pandas as pd
 import networkx as nx
 import decoupler as dc
 import numpy as np
+
+import networkcommons._utils as utils
+
+import random
 
 
 def get_number_nodes(network: nx.Graph) -> int:
@@ -184,7 +191,6 @@ def get_graph_metrics(network, target_dict):
 
     elif isinstance(network, (nx.Graph, nx.DiGraph)):
         metrics = pd.DataFrame({
-            'network': 'Network1',
             'Number of nodes': get_number_nodes(network),
             'Number of edges': get_number_edges(network),
             'Mean degree': get_mean_degree(network),
@@ -204,20 +210,27 @@ def get_metric_from_networks(networks, function, **kwargs):
         networks (Dict[str, nx.Graph]): A dictionary of network names and
             their corresponding graphs.
         function (function): The function to get the graph metrics.
-        target_dicts (Dict[str, dict]): A dictionary of target dictionaries
-            for each network.
+        **kwargs: Additional keyword arguments to pass to the function.
 
     Returns:
         DataFrame: The graph metrics of the networks.
     """
     metrics = pd.DataFrame()
-    if function in globals():
-        function = globals()[function]
-    else:
-        raise ValueError(f"Function {function} not found in available functions.")
+    try:
+        callable(function)
+        if not callable(function):
+            raise NameError(f"Function {function} not callable from the given environment.")
+    except (KeyError, AttributeError, NameError):
+        raise NameError(f"Function {function} not found in available functions.")
+
     for network_name, graph in networks.items():
         network_df = function(graph, **kwargs)
         network_df['network'] = network_name
+        if 'random' in network_name:
+            network_df['type'] = 'random'
+        else:
+            network_df['type'] = 'real'
+        network_df['method'] = network_name.split('__')[0]
         metrics = pd.concat([metrics, network_df])
 
     metrics.reset_index(inplace=True, drop=True)
@@ -235,7 +248,7 @@ def get_ec50_evaluation(network, ec50_dict):
     Produces three columns
     - 'avg_EC50': The average EC50 value of the network.
     - 'nodes_with_EC50': The number of nodes with an EC50 value.
-    - coverage: The percentage of nodes with an EC50 value.
+    - 'coverage': The percentage of nodes with an EC50 value.
 
 
     Args:
@@ -288,3 +301,115 @@ def run_ora(graph, net, metric='ora_Combined score', ascending=False, **kwargs):
     ora_results['ora_rank'] = ora_results[metric].rank(ascending=ascending, method='min')
 
     return ora_results
+
+
+def perform_random_controls(graph,
+                            inference_function,
+                            n_iterations,
+                            network_name,
+                            randomise_measurements=True,
+                            item_list=None,
+                            **kwargs):
+    """
+    Performs random controls of a network by shuffling node labels and running the inference function.
+
+    Parameters:
+    graph (nx.DiGraph): The original directed graph.
+    inference_function (function): The network inference function to apply.
+    n_iterations (int): The number of iterations to perform.
+    network_name (str): The base name for the networks in the resulting dictionary.
+    randomise_measurements (bool, optional): Whether to randomise the measurements. Defaults to True.
+    Requires a target_dict in the kwargs and an item_list with the possible labels.
+    item_list (list, optional): A dictionary containing the measurements to randomise. Defaults to None.
+    If randomise_measurements is True, this is required.
+    **kwargs: Additional keyword arguments to pass to the inference function.
+
+    Returns:
+    dict: A dictionary containing the inferred networks.
+    """
+    # Initialize the dictionary to store the networks
+    inferred_networks = {}
+
+    # Get the list of nodes
+    nodes = list(graph.nodes)
+
+    for i in range(n_iterations):
+        # Shuffle the node labels
+        shuffled_nodes = nodes[:]
+        random.shuffle(shuffled_nodes)
+
+        # Create a mapping from original to shuffled node labels
+        mapping = {original: shuffled for original, shuffled in zip(nodes, shuffled_nodes)}
+
+        # Relabel the nodes in the graph
+        shuffled_graph = nx.relabel_nodes(graph, mapping, copy=True)
+
+        # Shuffle the target_dict if required
+        if randomise_measurements and item_list:
+            shuffled_target_dict = shuffle_dict_keys(kwargs['target_dict'], item_list)
+            # Update kwargs with the shuffled target_dict
+            kwargs['target_dict'] = shuffled_target_dict
+
+        # Perform the network inference on the shuffled graph
+        inferred_network, _ = inference_function(shuffled_graph, **kwargs)
+
+        # Add the inferred network to the dictionary with a unique name
+        network_label = f"{network_name}__random{i+1:03d}"
+        inferred_networks[network_label] = inferred_network
+
+    return inferred_networks
+
+
+def shuffle_dict_keys(dictionary, items):
+    """
+    Shuffle the keys of a dictionary.
+
+    Args:
+        dictionary (dict): The dictionary to shuffle.
+        items (list): The list of items to shuffle.
+
+    Returns:
+        dict: The dictionary with shuffled keys.
+    """
+    old_labels = list(dictionary.keys())
+    new_labels = random.sample(items, len(dictionary))
+
+    random_dict = {new_label: dictionary[old_label] for old_label, new_label in zip(old_labels, new_labels)}
+
+    return random_dict
+
+
+def get_phosphorylation_status(network, dataframe, col='stat'):
+    """
+    Calculates the phosphorylation status metrics for a given network and dataframe.
+
+    Parameters:
+    network (nx.DiGraph): The network graph.
+    dataframe (pandas DataFrame): The dataframe containing the phosphorylation data.
+    col (str, optional): The column name in the dataframe to use to infer the metrics. Defaults to 'stat' 
+    (from nc.data.omics.deseq2()).
+
+    Returns:
+    pandas DataFrame: A dataframe containing the calculated metrics:
+    - avg_relabundance: The average value of the nodes with phosphorylation information, in absolute values
+    (we don't consider the sign of the dysregulation, but how severe it is).
+    - avg_relabundance_overall: The average value of all the elements, irrespective of whether
+    they are present in the network or not, in absolute values.
+    - diff_dysregulation: The overall difference of dysregulation between nodes in the network and those
+    outside of it.
+    - nodes_with_phosphoinfo: The number of nodes with phosphorylation information.
+    - coverage: The percentage of nodes with phosphorylation information.
+    """
+
+    subset_df = utils.subset_df_with_nodes(network, dataframe)
+    metric_in = abs(subset_df[col].values)
+    metric_out = abs(dataframe[col].values)
+    coverage = len(subset_df) / len(network.nodes) * 100 if len(network.nodes) > 0 else 0
+
+    return pd.DataFrame({
+        'avg_relabundance': np.mean(metric_in),
+        'avg_relabundance_overall': np.mean(metric_out),
+        'diff_dysregulation': np.mean(metric_in) - np.mean(metric_out),
+        'nodes_with_phosphoinfo': len(subset_df),
+        'coverage': coverage
+    }, index=[0])
