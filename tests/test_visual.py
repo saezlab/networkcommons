@@ -5,8 +5,9 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import networkcommons.visual as visual
 from unittest.mock import patch
+import pytest
 
-
+@pytest.mark.slow
 def test_pca_with_metadata_df():
     df = pd.DataFrame({
         'idx': ['A', 'B', 'C'],
@@ -25,6 +26,7 @@ def test_pca_with_metadata_df():
     assert 'group' in result_df.columns
 
 
+@pytest.mark.slow
 def test_pca_with_metadata_array():
     df = pd.DataFrame({
         'idx': ['A', 'B', 'C'],
@@ -40,6 +42,7 @@ def test_pca_with_metadata_array():
     assert 'group' in result_df.columns
 
 
+@pytest.mark.slow
 def test_pca_no_numeric_columns():
     df = pd.DataFrame({'idx': ['A', 'B', 'C']})
     metadata_df = pd.DataFrame({
@@ -52,6 +55,7 @@ def test_pca_no_numeric_columns():
         assert str(e) == "The dataframe contains no numeric columns suitable for PCA."
 
 
+@pytest.mark.slow
 def test_pca_zero_std_columns():
     df_with_zero_std = pd.DataFrame({
         'idx': ['feature1', 'feature2', 'feature3'],
