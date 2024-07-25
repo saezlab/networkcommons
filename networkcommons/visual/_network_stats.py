@@ -124,17 +124,17 @@ def plot_rank(df,
 
 
 def plot_scatter(df,
-                              summarise_df=True,
-                              x_col='diff_dysregulation',
-                              y_col='coverage',
-                              size_col='nodes_with_phosphoinfo',
-                              hue_col='method',
-                              style_col='type',
-                              numeric_cols=None,
-                              xlabel='Difference in Average Abundance',
-                              ylabel='Coverage',
-                              title='Coverage vs Difference in Average Abundance',
-                              figsize=(10, 6)):
+                 summarise_df=True,
+                 x_col='diff_dysregulation',
+                 y_col='coverage',
+                 size_col='nodes_with_phosphoinfo',
+                 hue_col='method',
+                 style_col='type',
+                 numeric_cols=None,
+                 xlabel='Difference in Activity scores',
+                 ylabel='Coverage',
+                 title='Coverage vs Difference in Activity scores',
+                 figsize=(10, 6)):
     """
     Plots a scatter plot with customizable column labels. It is prepared to be used
     by default with a dataframe from get_phosphorylation_status, as shown in Vignette 4.
