@@ -32,3 +32,6 @@ licensetools11.0.1_linux64/
 api
 .nextflow
 .nextflow*
+report*
+trace*
+work/
