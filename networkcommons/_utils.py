@@ -142,7 +142,7 @@ def targetlayer_formatter(df, n_elements=25):
     return dict_df
 
 
-def handle_missing_values(df, threshold=0.1):
+def handle_missing_values(df, threshold=0.1, fill=True):
     """
     Handles missing values in a DataFrame by filling them with the mean of the row or dropping the rows.
 
@@ -184,7 +184,9 @@ def handle_missing_values(df, threshold=0.1):
     filled_count = (df[to_fill].isna().sum(axis=1) > 0).sum()
 
     # Replace NAs with the mean of the row for rows to fill
-    df.loc[to_fill] = df.loc[to_fill].apply(lambda row: row.fillna(row.mean()), axis=1)
+    if fill:
+        df.loc[to_fill] = df.loc[to_fill].apply(lambda row: row.fillna(row.mean()), axis=1)
+        print(f"Number of genes filled: {filled_count}")
 
     # Drop rows with NA percentage greater than or equal to threshold
     df = df[~to_drop]
@@ -194,7 +196,6 @@ def handle_missing_values(df, threshold=0.1):
 
     removed_count = to_drop.sum()
 
-    print(f"Number of genes filled: {filled_count}")
     print(f"Number of genes removed: {removed_count}")
 
     return df
