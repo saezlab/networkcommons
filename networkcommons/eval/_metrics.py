@@ -306,6 +306,8 @@ def perform_random_controls(graph,
                             inference_function,
                             n_iterations,
                             network_name,
+                            randomise_measurements=True,
+                            item_list=None,
                             **kwargs):
     """
     Performs random controls of a network by shuffling node labels and running the inference function.
@@ -315,6 +317,10 @@ def perform_random_controls(graph,
     inference_function (function): The network inference function to apply.
     n_iterations (int): The number of iterations to perform.
     network_name (str): The base name for the networks in the resulting dictionary.
+    randomise_measurements (bool, optional): Whether to randomise the measurements. Defaults to True.
+    Requires a target_dict in the kwargs and an item_list with the possible labels.
+    item_list (list, optional): A dictionary containing the measurements to randomise. Defaults to None.
+    If randomise_measurements is True, this is required.
     **kwargs: Additional keyword arguments to pass to the inference function.
 
     Returns:
@@ -337,6 +343,12 @@ def perform_random_controls(graph,
         # Relabel the nodes in the graph
         shuffled_graph = nx.relabel_nodes(graph, mapping, copy=True)
 
+        # Shuffle the target_dict if required
+        if randomise_measurements and item_list:
+            shuffled_target_dict = shuffle_dict_keys(kwargs['target_dict'], item_list)
+            # Update kwargs with the shuffled target_dict
+            kwargs['target_dict'] = shuffled_target_dict
+
         # Perform the network inference on the shuffled graph
         inferred_network, _ = inference_function(shuffled_graph, **kwargs)
 
@@ -345,6 +357,25 @@ def perform_random_controls(graph,
         inferred_networks[network_label] = inferred_network
 
     return inferred_networks
+
+
+def shuffle_dict_keys(dictionary, items):
+    """
+    Shuffle the keys of a dictionary.
+
+    Args:
+        dictionary (dict): The dictionary to shuffle.
+        items (list): The list of items to shuffle.
+
+    Returns:
+        dict: The dictionary with shuffled keys.
+    """
+    old_labels = list(dictionary.keys())
+    new_labels = random.sample(items, len(dictionary))
+
+    random_dict = {new_label: dictionary[old_label] for old_label, new_label in zip(old_labels, new_labels)}
+
+    return random_dict
 
 
 def get_phosphorylation_status(network, dataframe, col='stat'):
