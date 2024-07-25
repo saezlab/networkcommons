@@ -125,7 +125,7 @@ def plot_rank(df,
 
 def plot_scatter(df,
                               summarise_df=True,
-                              x_col='diff_avg_abundance',
+                              x_col='diff_dysregulation',
                               y_col='coverage',
                               size_col='nodes_with_phosphoinfo',
                               hue_col='method',
