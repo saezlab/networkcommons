@@ -30,3 +30,5 @@ licensetools11.0.1_linux64/
 /data/
 /_build/
 api
+.nextflow
+.nextflow*
