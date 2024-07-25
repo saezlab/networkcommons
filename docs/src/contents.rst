@@ -14,3 +14,4 @@
    vignettes/1_simple_example
    vignettes/2_moon
    vignettes/3_evaluation_decryptm
+   vignettes/4_cptac_phosphoactivity
