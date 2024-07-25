@@ -241,7 +241,7 @@ def plot_pca(dataframe, metadata, feature_col='idx', **kwargs):
     df = dataframe.copy()
 
     if df.isna().sum().sum() > 0:
-        print("Warning: Missing values were found in the standardized data and will be filled with the handle_missing_values function.")
+        print("Warning: Missing values were found in the input data and will be filled with the handle_missing_values function.")
         df = handle_missing_values(df, **kwargs)
 
     numeric_df = df.set_index(feature_col).T
