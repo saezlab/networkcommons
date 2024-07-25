@@ -238,7 +238,13 @@ def plot_pca(dataframe, metadata, feature_col='idx', **kwargs):
     """
 
     # Check if the dataframe contains any non-numeric columns
-    numeric_df = dataframe.set_index(feature_col).T
+    df = dataframe.copy()
+
+    if df.isna().sum().sum() > 0:
+        print("Warning: Missing values were found in the standardized data and will be filled with the handle_missing_values function.")
+        df = handle_missing_values(df, **kwargs)
+
+    numeric_df = df.set_index(feature_col).T
     if type(metadata) == pd.DataFrame:
         groups = metadata.group.values
     else:
@@ -257,10 +263,7 @@ def plot_pca(dataframe, metadata, feature_col='idx', **kwargs):
     # Standardizing the Data
     standardized_data = (numeric_df - numeric_df.mean()) / numeric_df.std()
 
-    if standardized_data.isna().sum().sum() > 0:
-        print("Warning: Missing values were found in the standardized data and will be filled with the handle_missing_values function.")
-        standardized_data = handle_missing_values(standardized_data, **kwargs)
-
+    
     # PCA
     pca = PCA(n_components=2)
     principal_components = pca.fit_transform(standardized_data)
