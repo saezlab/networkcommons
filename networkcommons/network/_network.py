@@ -66,7 +66,7 @@ class Network:
 
     def _load(self):
         """
-        Populates the object from the universe (initial graph).        
+        Populates the object from the universe (initial graph).
         """
         if isinstance(self.universe, str):
             self.universe = _universe.getattr(f'get_{self.universe}')
@@ -82,6 +82,24 @@ class Network:
         }
 
         getattr(self, f'_from_{type_dict[type(self.universe)]}')()
+
+
+    def _from_corneto(self):
+
+        self._co = self.universe
+        self._attrs_from_corneto()
+
+
+    def _from_networkx(self):
+
+        self._co = _utils.to_cornetograph(self.universe)
+        self._attrs_from_corneto()
+
+
+    def _attrs_from_corneto(self):
+
+        self._nodes = _utils.node_attrs_from_corneto(self._co)
+        self._edges = _utils.edge_attrs_from_corneto(self._co)
 
 
     def as_igraph(self, attrs: str | list[str]) -> "igraph.Graph":
