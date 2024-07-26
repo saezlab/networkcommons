@@ -42,7 +42,8 @@ def visualize_graph_simple(network,
                            source_dict,
                            target_dict,
                            prog='dot',
-                           is_sign_consistent=True):
+                           is_sign_consistent=True,
+                           max_nodes=75):
     """
     Visualize the graph using the provided network.
 
@@ -55,7 +56,12 @@ def visualize_graph_simple(network,
         prog (str, optional): The layout program to use. Defaults to 'dot'.
         is_sign_consistent (bool, optional): If True, only visualize sign
             consistent paths. Defaults to True.
+        max_nodes (int, optional): The maximum number of nodes a network can
+            contain to be visualized. Defaults to 75.
     """
+    if len(network.nodes) > max_nodes:
+        print("The network is too large to visualize.")
+        return
 
     A = nx.nx_agraph.to_agraph(network)
     A.graph_attr['ratio'] = '1.2'

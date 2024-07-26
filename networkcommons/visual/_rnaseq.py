@@ -38,22 +38,30 @@ import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
 from sklearn import decomposition as sklearn_decomp
+from networkcommons._utils import handle_missing_values
 
 
 def plot_density(df,
-                 ensembl_ids,
+                 gene_ids,
+                 metadata=None,
                  id_column='idx',
+                 sample_id_column='sample_ID',
+                 group_column='group',
                  quantiles=[10, 90],
                  title='Density Plot of Intensity Values',
                  xlabel='Intensity',
                  ylabel='Density'):
     """
-    Plots density of intensity values for specified genes, including mean and quantile lines.
+    Plots density of intensity values for specified genes, including mean and quantile lines, and separates distributions by groups if metadata is provided.
+    Each gene is displayed in a separate subplot.
 
     Args:
         df (pd.DataFrame): Input DataFrame containing gene data.
-        ensembl_ids (list of str): List of specific genes to highlight.
+        gene_ids (list of str): List of specific genes to highlight.
+        metadata (pd.DataFrame): Optional DataFrame containing metadata (sample_ID, group).
         id_column (str): Column name for identifying the gene.
+        sample_id_column (str): Column name in metadata for sample IDs.
+        group_column (str): Column name in metadata for groups.
         quantiles (list of int): List of quantiles to plot.
         title (str): Title of the plot.
         xlabel (str): Label for the x-axis.
@@ -62,32 +70,59 @@ def plot_density(df,
     Returns:
         None
     """
-    # Ensure all relevant columns are numeric
-    numeric_df = df.iloc[:, 1:].apply(pd.to_numeric, errors='coerce')
-    
-    plt.figure(figsize=(12, 6))
-    
-    for ensembl_id in ensembl_ids:
-        specific_gene = df[df[id_column].str.contains(ensembl_id, na=False)]
+    num_genes = len(gene_ids)
+    num_cols = 3
+    num_rows = (num_genes + num_cols - 1) // num_cols  # Calculate the number of rows needed
+
+    fig, axes = plt.subplots(num_rows, num_cols, figsize=(15, 5 * num_rows))
+    axes = axes.flatten()  # Flatten the axes array for easy iteration
+
+    for idx, gene_id in enumerate(gene_ids):
+        specific_gene = df[df[id_column].str.contains(gene_id, na=False)]
         if not specific_gene.empty:
             values = specific_gene.iloc[0, 1:].astype(float)
-            values.plot(kind='density', label=f'Gene: {ensembl_id}')
-            
-            # Mean value line
-            mean_value = values.mean()
-            plt.axvline(mean_value, color='k', linestyle='--', linewidth=1, label=f'Mean: {np.round(mean_value, 2)}')
-            
-            for quantile in quantiles:
-                q = np.percentile(values, quantile)
-                plt.axvline(q, color='k', linestyle=':', linewidth=1, label=f'Q{quantile}: {np.round(q, 2)}')
-    
-    plt.title(title)
-    plt.xlabel(xlabel)
-    plt.ylabel(ylabel)
-    plt.legend()
-    plt.tight_layout()
-    plt.show()
+            ax = axes[idx]
 
+            if metadata is not None:
+                merged_df = pd.DataFrame(values).reset_index()
+                merged_df.columns = [sample_id_column, 'intensity']
+                merged_df = merged_df.merge(metadata, left_on=sample_id_column, right_on=sample_id_column)
+
+                groups = merged_df[group_column].unique()
+                for group in groups:
+                    group_values = merged_df[merged_df[group_column] == group]['intensity']
+                    group_values.plot(kind='density', ax=ax, label=f'Group: {group}')
+
+                    # Mean value line for group
+                    mean_value = group_values.mean()
+                    ax.axvline(mean_value, linestyle='--', linewidth=1, label=f'Group {group} Mean: {np.round(mean_value, 2)}')
+
+                    for quantile in quantiles:
+                        q = np.percentile(group_values, quantile)
+                        ax.axvline(q, linestyle=':', linewidth=1, label=f'Group {group} Q{quantile}: {np.round(q, 2)}')
+            else:
+                values.plot(kind='density', ax=ax, label='Density')
+
+                # Mean value line
+                mean_value = values.mean()
+                ax.axvline(mean_value, linestyle='--', linewidth=1, label=f'Mean: {np.round(mean_value, 2)}')
+
+                for quantile in quantiles:
+                    q = np.percentile(values, quantile)
+                    ax.axvline(q, linestyle=':', linewidth=1, label=f'Q{quantile}: {np.round(q, 2)}')
+
+            ax.set_title(f'Gene: {gene_id}')
+            ax.set_xlabel(xlabel)
+            ax.set_ylabel(ylabel)
+            ax.legend(loc='upper left', bbox_to_anchor=(1, 1))
+
+    # Remove any unused subplots
+    for i in range(len(gene_ids), len(axes)):
+        fig.delaxes(axes[i])
+
+    plt.suptitle(title)
+    plt.tight_layout(rect=[0, 0, 1, 0.96])
+    plt.show()
 
 
 def build_volcano_plot(
@@ -221,7 +256,7 @@ def build_ma_plot(
     plt.show()
 
 
-def plot_pca(dataframe, metadata, feature_col='idx'):
+def plot_pca(dataframe, metadata, feature_col='idx', **kwargs):
     """
     Plots the PCA (Principal Component Analysis) of a dataframe.
 
@@ -237,12 +272,17 @@ def plot_pca(dataframe, metadata, feature_col='idx'):
     """
 
     # Check if the dataframe contains any non-numeric columns
-    numeric_df = dataframe.set_index(feature_col).T
+    df = dataframe.copy()
+
+    if df.isna().sum().sum() > 0:
+        print("Warning: Missing values were found in the input data and will be filled with the handle_missing_values function.")
+        df = handle_missing_values(df, **kwargs)
+
+    numeric_df = df.set_index(feature_col).T
     if type(metadata) == pd.DataFrame:
         groups = metadata.group.values
     else:
         groups = metadata
-
 
     # Handle cases where there are no numeric columns
     if numeric_df.empty:
@@ -257,6 +297,7 @@ def plot_pca(dataframe, metadata, feature_col='idx'):
     # Standardizing the Data
     standardized_data = (numeric_df - numeric_df.mean()) / numeric_df.std()
 
+    
     # PCA
     pca = PCA(n_components=2)
     principal_components = pca.fit_transform(standardized_data)

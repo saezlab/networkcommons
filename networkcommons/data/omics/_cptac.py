@@ -20,7 +20,11 @@ transcriptomics, proteomics and phosphoproteomics data.
 
 from __future__ import annotations
 
-__all__ = ['cptac_fileinfo', 'cptac_cohortsize', 'cptac_table', 'cptac_datatypes']
+__all__ = ['cptac_fileinfo',
+           'cptac_cohortsize',
+           'cptac_table',
+           'cptac_datatypes',
+           'cptac_extend_dataframe']
 
 import os
 import urllib.parse
@@ -131,3 +135,30 @@ def cptac_table(data_type: str, cancer_type: str, fname: str) -> pd.DataFrame:
         _common._commons_url('CPTAC', **locals()),
         df = {'sep': '\t'},
     )
+
+
+def cptac_extend_dataframe(df):
+    """
+    Extends the DataFrame by duplicating rows based on Tumor and Normal columns.
+    Built to extend the meta column from CPTAC data.
+    
+    Parameters:
+    df (pd.DataFrame): Original DataFrame with columns 'idx', 'Tumor', and 'Normal'.
+    
+    Returns:
+    pd.DataFrame: Extended DataFrame with modified sample names.
+    """
+    tumor_rows = df[df['Tumor'] == 'Yes'].copy()
+    normal_rows = df[df['Normal'] == 'Yes'].copy()
+    
+    # Modify the 'idx' column
+    tumor_rows['idx'] = tumor_rows['idx'] + '_tumor'
+    normal_rows['idx'] = normal_rows['idx'] + '_ctrl'
+    
+    # Combine the DataFrames
+    extended_df = pd.concat([tumor_rows, normal_rows]).drop_duplicates()
+
+    extended_df.drop(['Tumor', 'Normal'], axis=1, inplace=True)
+    extended_df.rename(columns={'idx': 'sample_ID'}, inplace=True)
+    
+    return extended_df
