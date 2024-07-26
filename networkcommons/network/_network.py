@@ -95,6 +95,13 @@ class Network:
         self._co = _utils.to_cornetograph(self.universe)
         self._attrs_from_corneto()
 
+    
+    def _from_pandas(self):
+
+        nxgraph = _utils.network_from_df(self.universe)
+        self._co = _utils.to_cornetograph(nxgraph)
+        self._attrs_from_corneto()
+
 
     def _attrs_from_corneto(self):
 
