@@ -2,6 +2,37 @@ import pandas as pd
 import networkx as nx
 import numpy as np
 import corneto as cn
+import corneto.contrib.networkx as cn_nx
+
+
+def node_attrs_from_corneto(graph: cn.Graph) -> pd.DataFrame:
+    """
+    Extract node attributes from a corneto graph to a pandas dataframe.
+
+    Args:
+        graph:
+            A corneto graph.
+
+    Returns:
+        A pandas dataframe of node attributes.
+    """
+
+    return pd.DataFrame.from_dict(graph.get_attr_vertices())
+
+
+def edge_attrs_from_corneto(graph: cn.Graph) -> pd.DataFrame:
+    """
+    Extract edge attributes from a corneto graph to a pandas dataframe.
+
+    Args:
+        graph:
+            A corneto graph.
+
+    Returns:
+        A pandas dataframe of edge attributes.
+    """
+
+    return pd.DataFrame.from_dict(graph.get_attr_edges())
 
 
 def to_cornetograph(graph):
