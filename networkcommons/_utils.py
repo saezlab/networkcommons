@@ -32,7 +32,10 @@ def edge_attrs_from_corneto(graph: cn.Graph) -> pd.DataFrame:
         A pandas dataframe of edge attributes.
     """
 
-    return pd.DataFrame.from_dict(graph.get_attr_edges())
+    edge_df = pd.DataFrame.from_dict(graph.get_attr_edges())
+    concat_df = pd.concat([edge_df['__source_attr'], edge_df['__target_attr']]).reset_index()
+    concat_df.rename(columns={0: 'node'}, inplace=True)
+
 
 
 def to_cornetograph(graph):
