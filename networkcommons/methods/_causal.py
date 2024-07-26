@@ -32,51 +32,7 @@ import networkx as nx
 import corneto as cn
 import corneto.contrib.networkx as cn_nx
 
-
-def to_cornetograph(graph):
-    """
-    Convert a networkx graph to a corneto graph, if needed.
-
-    Args:
-        graph (nx.Graph or nx.DiGraph): The corneto graph.
-
-    Returns:
-        cn.Graph: The corneto graph.
-    """
-    if isinstance(graph, cn._graph.Graph):
-        corneto_graph = graph
-    elif isinstance(graph, (nx.Graph, nx.DiGraph)):
-        # substitute 'sign' for 'interaction' in the graph
-        nx_graph = graph.copy()
-        for u, v, data in nx_graph.edges(data=True):
-            data['interaction'] = data.pop('sign')
-
-        corneto_graph = cn_nx.networkx_to_corneto_graph(nx_graph)
-
-    return corneto_graph
-
-
-def to_networkx(graph, skip_unsupported_edges=True):
-    """
-    Convert a corneto graph to a networkx graph, if needed.
-
-    Args:
-        graph (cn.Graph): The corneto graph.
-
-    Returns:
-        nx.Graph: The networkx graph.
-    """
-    if isinstance(graph, nx.Graph) or isinstance(graph, nx.DiGraph):
-        networkx_graph = graph
-    elif isinstance(graph, cn._graph.Graph):
-        networkx_graph = cn_nx.corneto_graph_to_networkx(
-            graph,
-            skip_unsupported_edges=skip_unsupported_edges)
-        # rename interaction for sign
-        for u, v, data in networkx_graph.edges(data=True):
-            data['sign'] = data.pop('interaction')
-
-    return networkx_graph
+from .. import _utils
 
 
 def run_corneto_carnival(network,
@@ -99,7 +55,7 @@ def run_corneto_carnival(network,
         nx.Graph: The subnetwork containing the paths found by CARNIVAL.
         list: A list containing the paths found by CARNIVAL.
     """
-    corneto_net = to_cornetograph(network)
+    corneto_net = _utils.to_cornetograph(network)
 
     problem, graph = cn.methods.runVanillaCarnival(
         perturbations=source_dict,
@@ -114,7 +70,7 @@ def run_corneto_carnival(network,
         cn.methods.carnival.get_selected_edges(problem, graph),
     )
 
-    network_nx = to_networkx(network_sol, skip_unsupported_edges=True)
+    network_nx = _utils.to_networkx(network_sol, skip_unsupported_edges=True)
 
     network_nx.remove_nodes_from(['_s', '_pert_c0', '_meas_c0'])
 
