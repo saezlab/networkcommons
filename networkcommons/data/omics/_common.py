@@ -276,7 +276,7 @@ def get_ensembl_mappings(update: bool = False) -> pd.DataFrame:
     return melted_df
 
 
-def convert_ensembl_to_gene_symbol(dataframe, equivalence_df, column_name='idx', summarisation='mean'):
+def convert_ensembl_to_gene_symbol(dataframe, equivalence_df, column_name='idx', summarisation=max):
     """
     Converts Ensembl IDs to gene symbols using an equivalence dataframe, handles partial matches, 
     and summarizes duplicated entries by taking the maximum value.
@@ -286,8 +286,7 @@ def convert_ensembl_to_gene_symbol(dataframe, equivalence_df, column_name='idx',
         equivalence_df (pd.DataFrame): The equivalence dataframe with Ensembl IDs as index and gene symbols.
         You can either use a custom one or use the one retrieved by get_ensembl_mappings().
         column_name (str): The name of the column containing Ensembl IDs in the input dataframe.
-        summarisation (str): The method to summarize duplicated entries. Options are 'max', 'min', 'mean', and 'median'.
-
+        summarisation (function): The method to summarize duplicated entries.
     Returns:
         pd.DataFrame: The dataframe with gene symbols and summarized duplicated entries.
     """
@@ -313,20 +312,9 @@ def convert_ensembl_to_gene_symbol(dataframe, equivalence_df, column_name='idx',
     # Drop temporary and original index columns
     merged_df.drop(columns=['partial_id', 'ensembl_id', column_name], inplace=True)
 
-    # Summarize duplicated entries by taking the max value
+    # Summarize duplicated entries by applying the summarisation function
     non_numeric_cols = merged_df.select_dtypes(exclude='number').columns.values
-    print(non_numeric_cols)
-
-    if summarisation == 'max':
-        summarized_df = merged_df.groupby(list(non_numeric_cols)).max().reset_index()
-    elif summarisation == 'min':
-        summarized_df = merged_df.groupby(list(non_numeric_cols)).min().reset_index()
-    elif summarisation == 'mean':
-        summarized_df = merged_df.groupby(list(non_numeric_cols)).mean().reset_index()
-    elif summarisation == 'median':
-        summarized_df = merged_df.groupby(list(non_numeric_cols)).median().reset_index()
-    else:
-        raise ValueError(f"Invalid summarisation method: {summarisation}")
+    summarized_df = merged_df.groupby(list(non_numeric_cols)).agg(summarisation).reset_index()
 
     # Calculate and print the number and percentage of summarized duplicated entries
     summarized_count = len(merged_df) - len(summarized_df)
