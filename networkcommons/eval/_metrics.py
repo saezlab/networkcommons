@@ -240,7 +240,7 @@ def get_metric_from_networks(networks, function, **kwargs):
 
 def get_ec50_evaluation(network, ec50_dict):
     """
-    Get the EC50 evaluation of multiple networks.
+    Get the EC50 evaluation of a network.
     This evaluation approach is based on the assumption that those
     elements important to explain the measurements will be more sensitive
     to the perturbation (lower EC50) than those less related to said
