@@ -33,6 +33,8 @@ cn = lazy_import.lazy_import('corneto')
 from networkcommons.data import _network as _universe
 from networkcommons.noi._noi import Noi
 
+from networkcommons import _utils
+
 
 class Network:
     """
@@ -42,7 +44,7 @@ class Network:
 
     def __init__(
         self,
-        universe: str | None = "omnipath",
+        universe: str | None = "omnipath", # this will be the initial graph ()
         noi: Noi | list[str] | list[list[str]] | dict[str, list[str]] = None,
     ):
         """
@@ -63,8 +65,23 @@ class Network:
 
 
     def _load(self):
+        """
+        Populates the object from the universe (initial graph).        
+        """
+        if isinstance(self.universe, str):
+            self.universe = _universe.getattr(f'get_{self.universe}')
 
-        self._co = _universe.getattr(f'get_{self.universe}')()
+        if callable(self.universe):
+            self.universe = self.universe()
+
+        type_dict = {
+            cn._graph.Graph: 'corneto',
+            nx.Graph: 'networkx',
+            nx.DiGraph: 'networkx',
+            pd.DataFrame: 'pandas',
+        }
+
+        getattr(self, f'_from_{type_dict[type(self.universe)]}')()
 
 
     def as_igraph(self, attrs: str | list[str]) -> "igraph.Graph":
