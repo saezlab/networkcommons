@@ -32,7 +32,8 @@ import urllib
 from networkcommons import _conf
 from networkcommons.data.omics import _common
 
-dc = lazy_import.lazy_module('decoupler')
+# dc = lazy_import.lazy_module('decoupler')
+import decoupler as dc
 
 
 def get_cosmos_pkn(update: bool = False):
