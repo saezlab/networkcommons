@@ -30,20 +30,6 @@ omics:
         This is a test dataset containing small RNA-Seq data.
         It is used for unit tests.
       path: unit_test/test__{table}data.tsv
-    moon:
-      name: MOON
-      description: Database files for running MOON
-      publication_link: NA
-      detailed_description: >-
-        This dataset contains database files required for running the MOON software.
-      path: moon/{table}_input.tsv
-    cosmos:
-      name: COSMOS
-      description: Database files for running COSMOS (MetaPKN)
-      publication_link: NA
-      detailed_description: >-
-        This dataset includes database files for the COSMOS software (MetaPKN).
-      path: moon/net/meta_network.sif
     CPTAC:
       name: CPTAC
       description: Clinical Proteomic Tumor Analysis Consortium data
