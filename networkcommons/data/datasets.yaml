@@ -60,4 +60,4 @@ omics:
         This dataset contains data from the NCI-60 cell line panel.
         It includes three files: TF activities from transcriptomics data,
         metabolite abundances and gene reads.
-      path: NCI60/{cell_line}/{cell_line}__{table}.tsv
+      path: NCI60/{cell_line}/{cell_line}__{data_type}.tsv
