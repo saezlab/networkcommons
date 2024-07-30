@@ -42,7 +42,8 @@ import re
 import lazy_import
 import networkx as nx
 import pandas as pd
-dc = lazy_import.lazy_module('decoupler')
+# dc = lazy_import.lazy_module('decoupler')
+import decoupler as dc
 import numpy as np
 
 from . import _graph
