@@ -13,7 +13,7 @@ NetworkCommons: Table of Contents
 
 .. toctree::
    :maxdepth: 2
-   :caption: COntribution guidelienes
+   :caption: Contribution guidelienes
 
    guidelines/guide_1_data
 
