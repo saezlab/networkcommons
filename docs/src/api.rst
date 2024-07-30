@@ -149,6 +149,19 @@ CPTAC
     data.omics.cptac_datatypes
     data.omics.cptac_extend_dataframe
 
+NCI60
+~~~~~
+.. module::networkcommons.data.omics
+.. currentmodule:: networkcommons
+
+.. autosummary::
+    :toctree: api
+    :recursive:
+
+    data.omics.nci60_datasets
+    data.omics.nci60_datatypes
+    data.omics.nci60_table
+
 
 Other
 ~~~~~~~~
