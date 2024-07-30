@@ -79,7 +79,7 @@ def get_phosphositeplus(update: bool = False):
 
     if update or not os.path.exists(path):
 
-        baseurl = urllib.parse.urljoin(_common._baseurl(), 'phosphosite')
+        baseurl = urllib.parse.urljoin(_common._baseurl(), 'prior_knowledge')
 
         file_legend = pd.read_csv(baseurl + '/kinase-substrate.tsv', sep='\t')
 

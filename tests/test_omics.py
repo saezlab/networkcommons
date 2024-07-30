@@ -25,8 +25,10 @@ def test_datasets_2():
 
     dsets = _common.datasets()
 
-    assert 'decryptm' in dsets
-    assert 'CPTAC' in dsets
+    assert isinstance(dsets, pd.DataFrame)
+    assert dsets.columns.tolist() == ['name', 'description', 'publication_link', 'detailed_description']
+    assert 'decryptm' in dsets.index
+    assert 'CPTAC' in dsets.index
 
 
 def test_commons_url():

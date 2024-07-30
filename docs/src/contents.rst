@@ -13,6 +13,13 @@ NetworkCommons: Table of Contents
 
 .. toctree::
    :maxdepth: 2
+   :caption: Contribution guidelines
+
+   guidelines/guide_1_data
+
+
+.. toctree::
+   :maxdepth: 2
    :caption: Vignettes
 
    vignettes/1_simple_example
