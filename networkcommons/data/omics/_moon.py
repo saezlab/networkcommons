@@ -29,7 +29,6 @@ from . import _common
 from networkcommons import _conf
 
 
-
 def nci60_datasets(update: bool = False) -> pd.DataFrame:
     """
     Table of all NCI60 datasets (cell types).
