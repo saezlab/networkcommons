@@ -11,7 +11,7 @@ NetworkCommons: Table of Contents
    api
 
 
-..toctree::
+.. toctree::
    :maxdepth: 2
    :caption: COntribution guidelienes
 
