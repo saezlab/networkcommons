@@ -11,6 +11,13 @@ NetworkCommons: Table of Contents
    api
 
 
+..toctree::
+   :maxdepth: 2
+   :caption: COntribution guidelienes
+
+   guidelines/
+
+
 .. toctree::
    :maxdepth: 2
    :caption: Vignettes
