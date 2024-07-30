@@ -19,7 +19,7 @@ Access to Moon example omics data.
 
 from __future__ import annotations
 
-__all__ = ['moon', 'nci60_datasets', 'nci60_datatypes', 'nci60_table']
+__all__ = ['nci60_datasets', 'nci60_datatypes', 'nci60_table']
 
 import pandas as pd
 import os
@@ -28,23 +28,6 @@ import urllib.parse
 from . import _common
 from networkcommons import _conf
 
-
-def moon() -> dict[str, pd.DataFrame]:
-    """
-    Example data for Moon.
-
-    Returns:
-        Three data frames: signaling, metabolite and gene activity
-        measurements.
-    """
-
-    return {
-        table: _common._open(
-            _common._commons_url('moon', table = table),
-            df = {'sep': '\t'},
-        )
-        for table in ('sig', 'metab', 'rna')
-    }
 
 
 def nci60_datasets(update: bool = False) -> pd.DataFrame:
