@@ -78,6 +78,7 @@ Prior Knowledge
     data.network.get_omnipath
     data.network.get_lianaplus
     data.network.get_phosphositeplus
+    data.network.get_cosmos_pkn
 
 
 Datasets
