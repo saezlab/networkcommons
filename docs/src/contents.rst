@@ -16,6 +16,7 @@ NetworkCommons: Table of Contents
    :caption: Contribution guidelines
 
    guidelines/guide_1_data
+   guidelines/guide_2_methods
 
 
 .. toctree::
