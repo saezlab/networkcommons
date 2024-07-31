@@ -64,6 +64,10 @@ Page rank
 
 The Page rank algorithm initially calculates a weight for each node in a graph based on a random walk with restart method. It starts at a set of source or target nodes and determines the importance of the other nodes in the graph based on the structure of the incoming or outgoing edges. It then builds a network considering the highest-ranking nodes starting from each of the source and the target nodes.
 
+.. image:: ../_static/ppr.png
+   :alt: PPR example
+   :width: 1000px
+
 **Input:** Set of source and target nodes, network graph
 
 **Node weights:** w(v) ∈ {1}
