@@ -60,9 +60,6 @@ CORNETO
     :recursive:
 
     methods.run_corneto_carnival
-    methods.to_cornetograph
-    methods.to_networkx   
-
 
 
 Prior Knowledge
@@ -164,17 +161,6 @@ NCI60
     data.omics.nci60_table
 
 
-Other
-~~~~~~~~
-.. module::networkcommons.data.omics
-.. currentmodule:: networkcommons
-
-.. autosummary::
-    :toctree: api
-    :recursive:
-
-    data.omics.moon
-
 
 Evaluation and description
 ==========================
@@ -231,3 +217,28 @@ Visualization
     visual.plot_density
     visual.plot_scatter
     visual.plot_rank
+
+
+Utilities
+=========
+
+.. module::networkcommons.utils
+.. currentmodule:: networkcommons
+
+.. autosummary::
+    :toctree: api
+    :recursive:
+
+    
+    utils.to_cornetograph
+    utils.to_networkx
+    utils.read_network_from_file
+    utils.network_from_df
+    utils.get_subnetwork
+    utils.decoupler_formatter
+    utils.targetlayer_formatter
+    utils.handle_missing_values
+    utils.subset_df_with_nodes
+    utils.node_attrs_from_corneto
+    utils.edge_attrs_from_corneto
+

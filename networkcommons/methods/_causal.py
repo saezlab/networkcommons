@@ -20,8 +20,6 @@ Causal network inference methods.
 from __future__ import annotations
 
 __all__ = [
-    'to_cornetograph',
-    'to_networkx',
     'run_corneto_carnival',
 ]
 
