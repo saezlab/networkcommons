@@ -1,6 +1,6 @@
-#################################
-Contribution's guideline: methods
-#################################
+#######
+Methods
+#######
 
 -------------------
 Topological methods
@@ -12,6 +12,10 @@ Shortest path
 
 The shortest path is an algorithm for finding one or multiple paths that minimize the distance from a set of starting nodes to a set of destination nodes in a weighted graph (https://doi.org/10.1007/BF01386390).
 
+.. image:: ./_static/sp.png
+   :alt: All paths
+   :width: 1000px
+   
 **Input:** Set of source and target nodes, (weighted) network graph
 
 **Node weights:** w(v) = 1
@@ -22,7 +26,11 @@ The shortest path is an algorithm for finding one or multiple paths that minimiz
 Sign consistency
 ----------------
 
-The sign consistency method checks for sign consistency between the nodes in a given graph. Hereby, source and target nodes, as well as the edges in the graph have an assigned sign. In biological graphs, these signs may represent, for example, the upregulation or downregulation of a protein (nodes) or an activating or inhibiting relationship between two proteins (edges). The sign consistency method then retains paths with consistent sign information.
+The sign consistency method checks for sign consistency between the nodes in a given graph. Hereby, source and target nodes, as well as the edges in the graph have an assigned sign. 
+
+.. image:: ./_static/sign.png
+   :alt: All paths
+   :width: 1000px
 
 **Input:** Set of source and target nodes (with a sign for up- or downregulation), network graph
 
@@ -36,6 +44,10 @@ Reachability filter
 
 The reachability filter generates a network consisting of all reachable nodes from a set of starting nodes.
 
+.. image:: ./_static/reach.png
+   :alt: All paths
+   :width: 1000px
+
 **Input:** Set of source nodes, network graph
 
 **Node weights:** w(v) ∈ {1}
@@ -47,6 +59,10 @@ All paths
 ---------
 
 All paths find all possible connections between a set of source nodes and a set of target nodes. In contrast to the shortest path method or the sign consistency method it doesn’t take the distance or any sign information into account, respectively.
+
+.. image:: ./_static/ap.png
+   :alt: All paths
+   :width: 1000px
 
 **Input:** Set of source and target nodes, network graph
 
@@ -64,8 +80,8 @@ Page rank
 
 The Page rank algorithm initially calculates a weight for each node in a graph based on a random walk with restart method. It starts at a set of source or target nodes and determines the importance of the other nodes in the graph based on the structure of the incoming or outgoing edges. It then builds a network considering the highest-ranking nodes starting from each of the source and the target nodes.
 
-.. image:: ../_static/ppr.png
-   :alt: PPR example
+.. image:: ./_static/ppr.png
+   :alt: PPR
    :width: 1000px
 
 **Input:** Set of source and target nodes, network graph
