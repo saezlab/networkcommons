@@ -10,6 +10,12 @@ NetworkCommons: Table of Contents
    installation
    api
 
+.. toctree::
+   :maxdepth: 2
+   :caption: Details
+   
+   methods
+
 
 .. toctree::
    :maxdepth: 2
