@@ -117,7 +117,9 @@ PANACEA
     :toctree: api
     :recursive:
 
-    data.omics.panacea
+    data.omics.panacea_experiments
+    data.omics.panacea_datatypes
+    data.omics.panacea_tables
 
 scPerturb
 ~~~~~~~~
