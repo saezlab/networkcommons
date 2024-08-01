@@ -20,7 +20,7 @@ resource.
 
 from __future__ import annotations
 
-__all__ = ['panacea', 'panacea_experiments', 'panacea_datatypes', 'panacea_tables']
+__all__ = ['panacea_experiments', 'panacea_datatypes', 'panacea_tables']
 
 import pandas as pd
 import os
