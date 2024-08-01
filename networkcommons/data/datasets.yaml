@@ -21,7 +21,7 @@ omics:
         Originally, this resource served as the basis for a DREAM Challenge
         assessing the accuracy and sensitivity of computational algorithms for
         de novo drug polypharmacology predictions.
-      path: panacea/panacea__{table}data.tsv
+      path: panacea/panacea__{table}.tsv
     test:
       name: Test data
       description: Small RNA-Seq data for unit tests
