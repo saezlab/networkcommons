@@ -71,9 +71,8 @@ def panacea_datatypes() -> pd.DataFrame:
     """
 
     return pd.DataFrame({
-        'type': ['countdata', 'metadata', 'diffexp', 'TF_scores'],
-        'description': ['RNA-Seq raw counts', 
-                        'Metadata containing sample name and group',
+        'type': ['raw', 'diffexp', 'TF_scores'],
+        'description': ['RNA-Seq raw counts and metadata containing sample, name, and group',
                         'Differential expression analysis with filterbyExpr+DESeq2',
                         'Transcription factor activity scores with CollecTRI + T-values'],
     })
