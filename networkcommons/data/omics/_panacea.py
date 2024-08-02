@@ -71,15 +71,18 @@ def panacea_datatypes() -> pd.DataFrame:
     """
 
     return pd.DataFrame({
-        'type': ['countdata', 'metadata'],
-        'description': ['RNA-Seq raw counts', 'Metadata containing sample name and group'],
+        'type': ['countdata', 'metadata', 'diffexp', 'TF_scores'],
+        'description': ['RNA-Seq raw counts', 
+                        'Metadata containing sample name and group',
+                        'Differential expression analysis with filterbyExpr+DESeq2',
+                        'Transcription factor activity scores with CollecTRI + T-values'],
     })
 
 
-
-def panacea_tables(cell_line=None, drug=None, type='countdata'):
+def panacea_tables(cell_line=None, drug=None, type='raw'):
     """
-    One table of countdata and one table of metadata from Panacea.
+    One table of countdata and one table of metadata from Panacea if raw data is selected.
+    If diffexp or TF_scores is selected, the corresponding table is returned.
 
     Args:
         cell_line:
@@ -92,34 +95,46 @@ def panacea_tables(cell_line=None, drug=None, type='countdata'):
     Returns:
         tuple[pd.DataFrame]: Two data frames: counts and meta data.
     """
+    if (cell_line is None and drug is None) and type != 'raw':
+        raise ValueError('Please specify cell line and drug.')
 
-    df_meta = _common._open(
-        _common._commons_url('panacea', table='metadata'),
-        df = {'sep': '\t'},
-    )
+    if type == 'raw':
 
-    df_meta[['cell', 'drug']] = df_meta['group'].str.split('_', expand=True)
+        df_meta = _common._open(
+            _common._commons_url('panacea', table='metadata'),
+            df = {'sep': '\t'},
+        )
 
-    if isinstance(cell_line, str):
-        cell_line = [cell_line]
+        df_meta[['cell', 'drug']] = df_meta['group'].str.split('_', expand=True)
 
-    if isinstance(drug, str):
-        drug = [drug]
+        if isinstance(cell_line, str):
+            cell_line = [cell_line]
 
-    if cell_line is not None:
-        df_meta = df_meta[df_meta['cell'].isin(cell_line)]
+        if isinstance(drug, str):
+            drug = [drug]
 
-    if drug is not None:
-        df_meta = df_meta[df_meta['drug'].isin(drug)]
+        if cell_line is not None:
+            df_meta = df_meta[df_meta['cell'].isin(cell_line)]
 
-    df_count = _common._open(
-        _common._commons_url('panacea', table='countdata'),
-        df={'sep': '\t'},
-    )
+        if drug is not None:
+            df_meta = df_meta[df_meta['drug'].isin(drug)]
 
-    subset_cols = df_meta['sample_ID'].tolist()
-    df_count = df_count.loc[:, ['gene_symbol'] + subset_cols]
+        df_count = _common._open(
+            _common._commons_url('panacea', table='countdata'),
+            df={'sep': '\t'},
+        )
 
-    return df_count, df_meta
+        subset_cols = df_meta['sample_ID'].tolist()
+        df_count = df_count.loc[:, ['gene_symbol'] + subset_cols]
 
-    return df_count, df_meta
+        return df_count, df_meta
+
+    elif type == 'diffexp' or type == 'TF_scores':
+        baseurl = urllib.parse.urljoin(_common._baseurl(), 'panacea/processed')
+
+        proc_file = pd.read_csv(baseurl + f'/{cell_line}_{drug}__{type}.tsv', sep='\t')
+
+        return proc_file
+
+    else:
+        raise ValueError(f'Unknown data type: {type}.')
