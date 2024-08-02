@@ -15,7 +15,7 @@ NetworkCommons: Table of Contents
    :caption: Details
    
    methods
-   data
+   datasets
 
 
 .. toctree::
