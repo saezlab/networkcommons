@@ -94,7 +94,7 @@ def panacea_tables(cell_line=None, drug=None, type='raw'):
     Returns:
         tuple[pd.DataFrame]: Two data frames: counts and meta data.
     """
-    if (cell_line is None and drug is None) and type != 'raw':
+    if (cell_line is None or drug is None) and type != 'raw':
         raise ValueError('Please specify cell line and drug.')
 
     if type == 'raw':
