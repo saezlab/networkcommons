@@ -14,8 +14,8 @@ NetworkCommons: Table of Contents
    :maxdepth: 2
    :caption: Details
    
-   methods
    datasets
+   methods
 
 
 .. toctree::
