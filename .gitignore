@@ -35,4 +35,4 @@ api
 report*
 trace*
 work/
-*.png
+test.ipynb
