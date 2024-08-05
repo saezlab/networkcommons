@@ -183,8 +183,8 @@ def decoupler_formatter(df,
     Format dataframe to be used by decoupler.
 
     Parameters:
-        df (DataFrame): A pandas DataFrame.
-        column (str): The column to be used as index.
+        df (DataFrame): A pandas DataFrame. Index should be populated
+        column (str): The columns to be subsetted.
 
     Returns:
         A formatted DataFrame.
@@ -211,7 +211,7 @@ def targetlayer_formatter(df, n_elements=25):
 
     # Sort the DataFrame by the absolute value of the
     # 'sign' column and get top n elements
-    df = df.sort_values(by='sign', key=lambda x: abs(x))
+    df = df.sort_values(by='sign', key=lambda x: abs(x), ascending=False)
 
     df = df.head(n_elements)
 
