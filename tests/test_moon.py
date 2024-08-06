@@ -1,6 +1,7 @@
 import networkx as nx
 import pandas as pd
 from networkcommons.methods import _moon
+from unittest.mock import patch
 
 
 def test_meta_network_cleanup():
@@ -33,6 +34,32 @@ def test_prepare_metab_inputs():
     assert 'Metab__fructose_m' in prepared_input
     assert 'Metab__glucose_invalid' not in prepared_input
     assert len(prepared_input) == 4, "Unexpected number of metabolite inputs"
+
+
+def test_prepare_metab_inputs_no_valid_compartments():
+    metab_input = {'glucose': 1.0, 'fructose': 2.0}
+    compartment_codes = ['invalid']
+
+    prepared_input = _moon.prepare_metab_inputs(metab_input, compartment_codes)
+
+    assert 'Metab__glucose' in prepared_input
+    assert 'Metab__fructose' in prepared_input
+    assert 'Metab__glucose_invalid' not in prepared_input
+    assert 'Metab__fructose_invalid' not in prepared_input
+    assert len(prepared_input) == 2, "Unexpected number of metabolite inputs when no valid compartments"
+
+
+def test_prepare_metab_inputs_with_valid_compartments():
+    metab_input = {'glucose': 1.0, 'fructose': 2.0}
+    compartment_codes = ['c', 'm']
+
+    prepared_input = _moon.prepare_metab_inputs(metab_input, compartment_codes)
+
+    assert 'Metab__glucose_c' in prepared_input
+    assert 'Metab__fructose_m' in prepared_input
+    assert 'Metab__glucose_m' in prepared_input
+    assert 'Metab__fructose_c' in prepared_input
+    assert len(prepared_input) == 4, "Unexpected number of metabolite inputs with valid compartments"
 
 
 def test_is_expressed():
@@ -94,13 +121,15 @@ def test_filter_input_nodes_not_in_pkn():
 
 
 def test_keep_controllable_neighbours():
-
     source_dict = {'Gene1': 1, 'Gene2': 1}
     graph = nx.DiGraph()
-    graph.add_edges_from([('Gene1', 'Gene3'),
-                          ('Gene2', 'Gene4'),
-                          ('Gene0', 'Gene1')])
+    graph.add_edges_from([
+        ('Gene1', 'Gene3'),
+        ('Gene2', 'Gene4'),
+        ('Gene0', 'Gene1')
+    ])
 
+    # Assume _graph.run_reachability_filter is correctly implemented and tested elsewhere
     filtered_sources = _moon.keep_controllable_neighbours(source_dict, graph)
 
     assert 'Gene1' in filtered_sources
@@ -111,14 +140,16 @@ def test_keep_controllable_neighbours():
 
 
 def test_keep_observable_neighbours():
-
     target_dict = {'Gene3': 1, 'Gene4': 1}
     graph = nx.DiGraph()
-    graph.add_edges_from([('Gene1', 'Gene3'),
-                          ('Gene2', 'Gene4'),
-                          ('Gene0', 'Gene1'),
-                          ('Gene4', 'Gene5')])
+    graph.add_edges_from([
+        ('Gene1', 'Gene3'),
+        ('Gene2', 'Gene4'),
+        ('Gene0', 'Gene1'),
+        ('Gene4', 'Gene5')
+    ])
 
+    # Assume _graph.run_reachability_filter is correctly implemented and tested elsewhere
     filtered_targets = _moon.keep_observable_neighbours(target_dict, graph)
 
     assert 'Gene2' in filtered_targets
@@ -171,6 +202,29 @@ def test_compress_same_children():
     assert len(subnetwork.nodes) == 4, "Unexpected number of nodes in subnetwork" # noqa E501
     assert len(node_signatures) == 3, "Unexpected number of node signatures" # noqa E501
     assert len(duplicated_parents) == 0, "Duplicated parents mismatch" # noqa E501
+
+
+def test_compress_same_children_conflicting_signatures():
+    graph = nx.DiGraph()
+    graph.add_edges_from([
+        ('A', 'B', {'sign': -1}),
+        ('A', 'C', {'sign': 1}),
+        ('B', 'D', {'sign': 1}),
+        ('C', 'D', {'sign': 1}),  # Conflicting sign
+    ])
+    sig_input = []
+    metab_input = []
+
+    (
+        subnetwork,
+        node_signatures,
+        duplicated_parents,
+    ) = _moon.compress_same_children(graph, sig_input, metab_input)
+    assert 'A' in subnetwork.nodes, "Node with conflicting signatures compressed"
+    assert 'B' in subnetwork.nodes, "Node with conflicting signatures compressed"
+    assert 'C' in subnetwork.nodes, "Node with conflicting signatures compressed"
+    assert 'D' in subnetwork.nodes, "Node with conflicting signatures compressed"
+    assert len(subnetwork.nodes) == 4, "Unexpected number of nodes in subnetwork"
 
 
 def test_run_moon_core():
@@ -336,3 +390,85 @@ def test_translate_res():
     assert 'Metab__Alpha_a' in translated_network.nodes, "Translation failed"
     assert 'Metab__Alpha_a' in translated_att['nodes'].values, \
         "Translation failed in attributes"
+
+
+def test_run_moon():
+    network = nx.DiGraph()
+    network.add_edges_from([
+        ('A', 'B', {'sign': 1}),
+        ('B', 'C', {'sign': 1}),
+        ('B', 'D', {'sign': 1}),
+        ('D', 'E', {'sign': 1}),
+        ('E', 'F', {'sign': -1}),
+    ])
+    sig_input = {'A': 1}
+    metab_input = {'E': 0.5, 'F': -2}
+    tf_regn = pd.DataFrame({'source': ['TF1', 'TF1'], 'target': ['Gene1', 'Gene2'], 'weight': [1, -1]})
+    rna_input = {'Gene1': -1, 'Gene2': -1}
+
+    moon_res, moon_network = _moon.run_moon(
+        network,
+        sig_input,
+        metab_input,
+        tf_regn,
+        rna_input,
+        n_layers=5,
+        method='ulm',
+        max_iter=3
+    )
+
+    assert 'score' in moon_res.columns, "Score column missing in result"
+    assert len(moon_network.nodes) > 0, "Empty moon network"
+
+
+def test_translate_res_edge_cases():
+    G = nx.DiGraph()
+    G.add_edges_from([
+        ("Metab__HMDB1_a", "Metab__HMDB2_b"),
+        ("Metab__HMDB3_b", "GeneC_c"),
+        ("Metab__HMDB4_d", "GeneD_e")
+    ])
+
+    att_data = {
+        "nodes": [
+            "Metab__HMDB1_a",
+            "Metab__HMDB2_b",
+            "Metab__HMDB3_b",
+            "GeneC_c",
+            "Metab__HMDB4_d",
+            "GeneD_e"
+        ],
+        "score": [1, 2, 3, 4, 5, 6]
+    }
+    att_df = pd.DataFrame(att_data)
+
+    mapping_dict = {
+        "HMDB1": "Alpha",
+        "HMDB2": "Beta",
+        "HMDB3": "Gamma",
+        "HMDB4": "Delta"
+    }
+
+    translated_network, translated_att = _moon.translate_res(
+        G, att_df, mapping_dict
+    )
+    expected_edges = [
+        ("Metab__Alpha_a", "Metab__Beta_b"),
+        ("Metab__Gamma_b", "EnzymeC"),
+        ("Metab__Delta_d", "EnzymeD")
+    ]
+    expected_att_nodes = [
+        "Metab__Alpha_a",
+        "Metab__Beta_b",
+        "Metab__Gamma_b",
+        "EnzymeC_c",
+        "Metab__Delta_d",
+        "EnzymeD_e"
+    ]
+
+    assert set(translated_network.edges()) == set(expected_edges), "Translated network edges are incorrect"
+    assert translated_att['nodes'].tolist() == expected_att_nodes, "Translated attribute table nodes are incorrect"
+    assert 'Metab__Alpha_a' in translated_network.nodes, "Translation failed"
+    assert 'Metab__Alpha_a' in translated_att['nodes'].values, "Translation failed in attributes"
+    assert 'Metab__Delta_d' in translated_network.nodes, "Translation failed for new node"
+    assert 'Metab__Delta_d' in translated_att['nodes'].values, "Translation failed in attributes for new node"
