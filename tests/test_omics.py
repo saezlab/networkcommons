@@ -307,37 +307,148 @@ def test_scperturb():
     assert adata.shape == (5768, 35635)
 
 
-@pytest.mark.slow
-def test_cptac_cohortsize():
-
-    expected_df = pd.DataFrame({
+@patch('networkcommons.data.omics._cptac._conf.get')
+@patch('os.path.exists', return_value=True)
+@patch('pandas.read_pickle')
+def test_cptac_cohortsize_cached(mock_read_pickle, mock_path_exists, mock_conf_get):
+    # Mock configuration and data
+    mock_conf_get.return_value = '/mock/path'
+    mock_df = pd.DataFrame({
         "Cancer_type": ["BRCA", "CCRCC", "COAD", "GBM", "HNSCC", "LSCC", "LUAD", "OV", "PDAC", "UCEC"],
         "Tumor": [122, 103, 110, 99, 108, 108, 110, 83, 105, 95],
         "Normal": [0, 80, 100, 0, 62, 99, 101, 20, 44, 18]
     })
+    mock_read_pickle.return_value = mock_df
 
-    output_df = omics.cptac_cohortsize()
+    # Run the function with the condition that the pickle file exists
+    result_df = omics.cptac_cohortsize()
 
-    assert output_df.equals(expected_df)
-
-
-@pytest.mark.slow
-def test_cptac_fileinfo():
-
-    fileinfo_df = omics.cptac_fileinfo()
-
-    assert isinstance(fileinfo_df, pd.DataFrame)
-    assert fileinfo_df.shape == (37, 2)
-    assert fileinfo_df.columns.tolist() == ['File name', 'Description']
+    # Check that the result is as expected
+    mock_read_pickle.assert_called_once_with('/mock/path/cptac_cohort.pickle')
+    pd.testing.assert_frame_equal(result_df, mock_df)
 
 
-@pytest.mark.slow
-def test_cptac_table():
+@patch('networkcommons.data.omics._cptac._conf.get')
+@patch('os.makedirs')  # Patch os.makedirs to prevent FileNotFoundError
+@patch('os.path.exists', return_value=False)
+@patch('pandas.read_excel')
+@patch('pandas.DataFrame.to_pickle')
+def test_cptac_cohortsize_download(mock_to_pickle, mock_read_excel, mock_makedirs, mock_conf_get, mock_path_exists):
+    # Mock configuration and data
+    mock_conf_get.return_value = '/mock/path'
+    mock_df = pd.DataFrame({
+        "Cancer_type": ["BRCA", "CCRCC", "COAD", "GBM", "HNSCC", "LSCC", "LUAD", "OV", "PDAC", "UCEC"],
+        "Tumor": [122, 103, 110, 99, 108, 108, 110, 83, 105, 95],
+        "Normal": [0, 80, 100, 0, 62, 99, 101, 20, 44, 18]
+    })
+    mock_read_excel.return_value = mock_df
 
-    df = omics.cptac_table('BRCA', 'meta')
+    # Run the function with the condition that the pickle file does not exist
+    result_df = omics.cptac_cohortsize(update=True)
+
+    # Check that the result is as expected
+    mock_read_excel.assert_called_once()
+    mock_to_pickle.assert_called_once()
+    pd.testing.assert_frame_equal(result_df, mock_df)
+
+
+@patch('networkcommons.data.omics._cptac._conf.get')
+@patch('os.path.exists', return_value=True)
+@patch('pandas.read_pickle')
+def test_cptac_fileinfo_cached(mock_read_pickle, mock_path_exists, mock_conf_get):
+    # Mock configuration and data
+    mock_conf_get.return_value = '/mock/path'
+    mock_df = pd.DataFrame({
+        "File name": ["file1.txt", "file2.txt"],
+        "Description": ["Description1", "Description2"]
+    })
+    mock_read_pickle.return_value = mock_df
+
+    # Run the function with the condition that the pickle file exists
+    result_df = omics.cptac_fileinfo()
+
+    # Check that the result is as expected
+    mock_read_pickle.assert_called_once_with('/mock/path/cptac_info.pickle')
+    pd.testing.assert_frame_equal(result_df, mock_df)
+
+
+@patch('networkcommons.data.omics._cptac._conf.get')
+@patch('os.makedirs')  # Patch os.makedirs to prevent FileNotFoundError
+@patch('os.path.exists', return_value=False)
+@patch('pandas.read_excel')
+@patch('pandas.DataFrame.to_pickle')
+def test_cptac_fileinfo_download(mock_to_pickle, mock_read_excel, mock_makedirs, mock_conf_get, mock_path_exists):
+    # Mock configuration and data
+    mock_conf_get.return_value = '/mock/path'
+    mock_df = pd.DataFrame({
+        "File name": ["file1.txt", "file2.txt"],
+        "Description": ["Description1", "Description2"]
+    })
+    mock_read_excel.return_value = mock_df
+
+    # Run the function with the condition that the pickle file does not exist
+    result_df = omics.cptac_fileinfo(update=True)
+
+    # Check that the result is as expected
+    mock_read_excel.assert_called_once()
+    mock_to_pickle.assert_called_once()
+    pd.testing.assert_frame_equal(result_df, mock_df)
+
+
+@patch('networkcommons.data.omics._cptac._common._ls')
+@patch('networkcommons.data.omics._cptac._common._baseurl', return_value='http://example.com/')
+def test_cptac_datatypes(mock_baseurl, mock_ls):
+    # Mock the return value of _ls to simulate the directory listing
+    mock_ls.return_value = [
+        'directory1',
+        'directory2',
+        'CPTAC_pancancer_data_freeze_cohort_size.xlsx',
+        'CPTAC_pancancer_data_freeze_file_description.xlsx'
+    ]
+
+    expected_directories = ['directory1', 'directory2']
+
+    # Call the function
+    directories = omics.cptac_datatypes()
+
+    # Check if the returned directories match the expected directories
+    assert directories == expected_directories
+
+
+@patch('networkcommons.data.omics._common._open')
+def test_cptac_table(mock_open):
+    mock_df = pd.DataFrame({
+        "sample_ID": ["sample1", "sample2"],
+        "value": [123, 456]
+    })
+    mock_open.return_value = mock_df
+
+    df = omics.cptac_table('proteomics', 'BRCA', 'file.tsv')
 
     assert isinstance(df, pd.DataFrame)
-    assert df.shape == (123, 201)
+    assert df.shape == (2, 2)
+    mock_open.assert_called_once_with(
+        _common._commons_url('CPTAC', data_type='proteomics', cancer_type='BRCA', fname='file.tsv'),
+        df={'sep': '\t'}
+    )
+
+
+def test_cptac_extend_dataframe():
+    df = pd.DataFrame({
+        "idx": ["sample1", "sample2", "sample3"],
+        "Tumor": ["Yes", "No", "Yes"],
+        "Normal": ["No", "Yes", "No"]
+    })
+
+    extended_df = omics.cptac_extend_dataframe(df)
+
+    print(extended_df)
+
+    expected_df = pd.DataFrame({
+        "sample_ID": ["sample1_tumor", "sample3_tumor", "sample2_ctrl"]
+    })
+
+    pd.testing.assert_frame_equal(extended_df, expected_df)
 
 
 @patch('networkcommons.data.omics._common._conf.get')
