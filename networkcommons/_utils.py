@@ -37,20 +37,19 @@ def edge_attrs_from_corneto(graph: cn.Graph) -> pd.DataFrame:
     concat_df.rename(columns={0: 'node'}, inplace=True)
 
 
-
 def to_cornetograph(graph):
     """
     Convert a networkx graph to a corneto graph, if needed.
 
     Args:
-        graph (nx.Graph or nx.DiGraph): The corneto graph.
+        graph (nx.DiGraph): The corneto graph.
 
     Returns:
         cn.Graph: The corneto graph.
     """
     if isinstance(graph, cn._graph.Graph):
         corneto_graph = graph
-    elif isinstance(graph, (nx.Graph, nx.DiGraph)):
+    elif isinstance(graph, nx.DiGraph):
         # substitute 'sign' for 'interaction' in the graph
         nx_graph = graph.copy()
         for u, v, data in nx_graph.edges(data=True):
