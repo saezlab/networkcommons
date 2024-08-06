@@ -219,7 +219,7 @@ def filter_input_nodes_not_in_pkn(data, pkn):
             node for node in data.keys() if node not in new_data.keys()
         ]
 
-        _log(f"COSMOS: {len(removed_nodes)} input/measured nodes are not in"
+        _log(f"COSMOS: {len(removed_nodes)} input/measured nodes are not in "
               f"PKN anymore: {removed_nodes}")
 
     return new_data
@@ -408,8 +408,8 @@ def run_moon_core(
         )
         if statistic == "norm_wmean":
             estimate = norm
+
     elif statistic == "ulm":
-        _log(decoupler_mat)
         estimate, pvals = dc.run_ulm(
             mat=decoupler_mat, net=regulons, weight='sign', min_n=1
         )
