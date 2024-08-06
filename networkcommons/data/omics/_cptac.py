@@ -160,6 +160,6 @@ def cptac_extend_dataframe(df):
 
     extended_df.drop(['Tumor', 'Normal'], axis=1, inplace=True)
     extended_df.rename(columns={'idx': 'sample_ID'}, inplace=True)
-    extended_df.reset_index(inplace=True)
+    extended_df.reset_index(inplace=True, drop=True)
     
     return extended_df
