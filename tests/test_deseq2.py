@@ -2,8 +2,7 @@ import pytest
 
 import pandas as pd
 
-from networkcommons.data.omics._deseq2 import deseq2
-
+from networkcommons.data import omics
 
 @pytest.mark.slow
 def test_deseq2():
@@ -22,7 +21,7 @@ def test_deseq2():
         'group': ['Control', 'Treatment', 'Treatment', 'Control']
     })
 
-    result = deseq2(
+    result = omics.deseq2(
         counts,
         metadata,
         ref_group='Control',
