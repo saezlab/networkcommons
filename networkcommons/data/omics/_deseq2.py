@@ -21,16 +21,13 @@ from __future__ import annotations
 
 __all__ = ['deseq2']
 
-from typing import TYPE_CHECKING
 import multiprocessing
 
-if TYPE_CHECKING:
-
-    import pandas as pd
+import pandas as pd
 
 from pypath_common import _misc as _ppcommon
 
-#for _mod in ('default_inference', 'dds', 'ds'):
+# for _mod in ('default_inference', 'dds', 'ds'):
 
 #    globals()[f'_deseq2_{_mod}'] = lazy_import.lazy_module(f'pydeseq2.{_mod}')
 
