@@ -512,8 +512,74 @@ def test_panacea_tables_unknown_type(mock_baseurl, mock_open):
         omics.panacea_tables(cell_line='CellLine1', drug='Drug1', type='unknown')
 
 
+# FILE: omics/_scperturb.py
+import pytest
+from unittest.mock import patch, MagicMock
+import json
+
+from networkcommons.data.omics import _scperturb
+
+@pytest.fixture
+def mock_metadata():
+    return {
+        'files': {
+            'entries': {
+                'dataset1.h5ad': {'links': {'content': 'https://example.com/dataset1.h5ad'}},
+                'dataset2.h5ad': {'links': {'content': 'https://example.com/dataset2.h5ad'}}
+            }
+        }
+    }
+
+
+@pytest.fixture
+def mock_ann_data():
+    return MagicMock(spec=ad.AnnData)
+
+
+@patch('networkcommons.data.omics._scperturb._common._open')
+@patch('networkcommons.data.omics._scperturb.json.loads')
+def test_scperturb_metadata(mock_json_loads, mock_open, mock_metadata):
+    mock_open.return_value = MagicMock()
+    mock_json_loads.return_value = mock_metadata
+
+    metadata = _scperturb.scperturb_metadata()
+    assert metadata == mock_metadata
+    mock_open.assert_called_once_with('https://zenodo.org/record/10044268', ftype='html')
+    mock_json_loads.assert_called_once()
+
+
+@patch('networkcommons.data.omics._scperturb.scperturb_metadata')
+def test_scperturb_datasets(mock_scperturb_metadata, mock_metadata):
+    mock_scperturb_metadata.return_value = mock_metadata
+
+    datasets = _scperturb.scperturb_datasets()
+    expected_datasets = {
+        'dataset1.h5ad': 'https://example.com/dataset1.h5ad',
+        'dataset2.h5ad': 'https://example.com/dataset2.h5ad'
+    }
+    assert datasets == expected_datasets
+    mock_scperturb_metadata.assert_called_once()
+
+
+@patch('networkcommons.data.omics._scperturb.scperturb_datasets')
+@patch('networkcommons.data.omics._scperturb._common._maybe_download')
+@patch('anndata.read_h5ad')
+def test_scperturb(mock_read_h5ad, mock_maybe_download, mock_scperturb_datasets, mock_ann_data):
+    mock_scperturb_datasets.return_value = {
+        'dataset1.h5ad': 'https://example.com/dataset1.h5ad'
+    }
+    mock_maybe_download.return_value = 'path/to/dataset1.h5ad'
+    mock_read_h5ad.return_value = mock_ann_data
+
+    result = _scperturb.scperturb('dataset1.h5ad')
+    assert result is mock_ann_data
+    mock_scperturb_datasets.assert_called_once()
+    mock_maybe_download.assert_called_once_with('https://example.com/dataset1.h5ad')
+    mock_read_h5ad.assert_called_once_with('path/to/dataset1.h5ad')
+
+
 @pytest.mark.slow
-def test_scperturb_metadata():
+def test_scperturb_metadata_slow():
 
     m = omics.scperturb_metadata()
 
@@ -523,7 +589,7 @@ def test_scperturb_metadata():
 
 
 @pytest.mark.slow
-def test_scperturb_datasets():
+def test_scperturb_datasets_slow():
 
     example_url = (
         'https://zenodo.org/api/records/10044268/files/'
@@ -537,7 +603,7 @@ def test_scperturb_datasets():
 
 
 @pytest.mark.slow
-def test_scperturb():
+def test_scperturb_slow():
 
     var_cols = ('ensembl_id', 'ncounts', 'ncells')
     adata = omics.scperturb('AdamsonWeissman2016_GSM2406675_10X001.h5ad')
