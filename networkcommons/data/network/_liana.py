@@ -19,9 +19,11 @@ Prior knowledge network used by LIANA+.
 
 __all__ = ['get_lianaplus']
 
-import lazy_import
+# import lazy_import
 
-liana = lazy_import.lazy_module('liana')
+# liana = lazy_import.lazy_module('liana')
+
+import liana
 
 
 def get_lianaplus(resource='Consensus'):
@@ -36,8 +38,6 @@ def get_lianaplus(resource='Consensus'):
     Returns:
         pandas.DataFrame: Liana+ network with source, target, and sign columns.
     """
-
-    import liana
 
     network = liana.resource.select_resource(resource).drop_duplicates()
     network.columns = ['source', 'target']
