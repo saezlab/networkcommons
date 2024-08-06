@@ -24,7 +24,6 @@ __all__ = ['scperturb', 'scperturb_metadata', 'scperturb_datasets']
 from typing import Any
 import json
 
-import bs4
 import anndata as ad
 
 from . import _common
