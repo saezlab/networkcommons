@@ -44,22 +44,6 @@ def test_commons_url():
 
 
 @pytest.mark.slow
-def test_download(tmp_path):
-
-    url = _common._commons_url('test', table = 'meta')
-    path = tmp_path / 'test_download.tsv'
-    _common._download(url, path)
-
-    assert path.exists()
-
-    with open(path) as fp:
-
-        line = next(fp)
-
-    assert line.startswith('sample_ID\t')
-
-
-@pytest.mark.slow
 def test_open():
 
     url = _common._commons_url('test', table = 'meta')
@@ -97,6 +81,7 @@ def test_open_html():
         result = _common._open(url, ftype='html')
         assert isinstance(result, bs4.BeautifulSoup)
         assert result.body.text == "Test"
+
 
 @patch('networkcommons.data.omics._common._download')
 @patch('networkcommons.data.omics._common._log')
@@ -220,43 +205,103 @@ def test_open_unknown_file_type(mock_maybe_download):
         _common._open(url, 'unknown')
 
 
-@pytest.mark.slow
-def test_decryptm_datasets():
-
-    dsets = omics.decryptm_datasets()
-
-    assert isinstance(dsets, pd.DataFrame)
-    assert dsets.shape == (51, 3)
-    assert dsets.fname.str.contains('curves').all()
-
-
+# FILE: omics/_decryptm.py
 @pytest.fixture
 def decryptm_args():
-
     return 'KDAC_Inhibitors', 'Acetylome', 'curves_CUDC101.txt'
 
 
-@pytest.mark.slow
-def test_decryptm_table(decryptm_args):
+@patch('networkcommons.data.omics._decryptm._common._ls')
+@patch('networkcommons.data.omics._decryptm._common._baseurl', return_value='http://example.com')
+@patch('pandas.read_pickle')
+@patch('os.path.exists', return_value=False)
+@patch('pandas.DataFrame.to_pickle')
+def test_decryptm_datasets_update(mock_to_pickle, mock_path_exists, mock_read_pickle, mock_baseurl, mock_ls):
+    # Mock the directory listing
+    mock_ls.side_effect = [
+        ['experiment1', 'experiment2'],  # First call, list experiments
+        ['data_type1', 'data_type2'],  # Second call, list data types for experiment1
+        ['curves_file1.txt', 'curves_file2.txt'],  # Third call, list files for experiment1/data_type1
+        ['curves_file3.txt', 'curves_file4.txt'],  # Fourth call, list files for experiment1/data_type2
+        ['data_type1', 'data_type2'],  # Fifth call, list data types for experiment2
+        ['curves_file5.txt', 'curves_file6.txt'],  # Sixth call, list files for experiment2/data_type1
+        ['curves_file7.txt', 'curves_file8.txt']   # Seventh call, list files for experiment2/data_type2
+    ]
+
+    dsets = omics.decryptm_datasets(update=True)
+
+    assert isinstance(dsets, pd.DataFrame)
+    assert dsets.shape == (8, 3)  # 4 experiments * 2 data types = 8 files
+    assert dsets.columns.tolist() == ['experiment', 'data_type', 'fname']
+    mock_to_pickle.assert_called_once()
+
+
+@patch('pandas.read_pickle')
+@patch('os.path.exists', return_value=True)
+def test_decryptm_datasets_cached(mock_path_exists, mock_read_pickle):
+    # Mock the cached DataFrame
+    mock_df = pd.DataFrame({
+        'experiment': ['experiment1', 'experiment2'],
+        'data_type': ['data_type1', 'data_type2'],
+        'fname': ['curves_file1.txt', 'curves_file2.txt']
+    })
+    mock_read_pickle.return_value = mock_df
+
+    dsets = omics.decryptm_datasets(update=False)
+
+    assert isinstance(dsets, pd.DataFrame)
+    assert dsets.shape == (2, 3)
+    assert dsets.columns.tolist() == ['experiment', 'data_type', 'fname']
+    mock_read_pickle.assert_called_once()
+
+
+@patch('networkcommons.data.omics._decryptm._common._open')
+def test_decryptm_table(mock_open, decryptm_args):
+    mock_df = pd.DataFrame({'EC50': [0.5, 1.0, 1.5]})
+    mock_open.return_value = mock_df
 
     df = omics.decryptm_table(*decryptm_args)
 
     assert isinstance(df, pd.DataFrame)
-    assert df.shape == (18007, 65)
+    assert df.shape == (3, 1)
     assert df.EC50.dtype == 'float64'
+    mock_open.assert_called_once()
 
 
-@pytest.mark.slow
-def test_decryptm_experiment(decryptm_args):
+@patch('networkcommons.data.omics._decryptm.decryptm_datasets')
+@patch('networkcommons.data.omics._decryptm.decryptm_table')
+def test_decryptm_experiment(mock_decryptm_table, mock_decryptm_datasets, decryptm_args):
+    mock_decryptm_datasets.return_value = pd.DataFrame({
+        'experiment': ['KDAC_Inhibitors', 'KDAC_Inhibitors'],
+        'data_type': ['Acetylome', 'Acetylome'],
+        'fname': ['curves_CUDC101.txt', 'curves_other.txt']
+    })
+    mock_df = pd.DataFrame({'EC50': [0.5, 1.0, 1.5]})
+    mock_decryptm_table.return_value = mock_df
 
-    dfs = omics.decryptm_experiment(*decryptm_args[:2])
+    dfs = omics.decryptm_experiment(decryptm_args[0], decryptm_args[1])
 
     assert isinstance(dfs, list)
-    assert len(dfs) == 4
+    assert len(dfs) == 2
     assert all(isinstance(df, pd.DataFrame) for df in dfs)
-    assert dfs[3].shape == (15993, 65)
-    assert dfs[3].EC50.dtype == 'float64'
+    assert dfs[0].shape == (3, 1)
+    assert dfs[0].EC50.dtype == 'float64'
+    mock_decryptm_table.assert_called()
 
+
+@patch('networkcommons.data.omics._decryptm.decryptm_datasets')
+def test_decryptm_experiment_no_dataset(mock_decryptm_datasets):
+    mock_decryptm_datasets.return_value = pd.DataFrame({
+        'experiment': ['KDAC_Inhibitors'],
+        'data_type': ['Acetylome'],
+        'fname': ['curves_CUDC101.txt']
+    })
+
+    with pytest.raises(ValueError, match='No such dataset in DecryptM: `Invalid_Experiment/Invalid_Type`.'):
+        omics.decryptm_experiment('Invalid_Experiment', 'Invalid_Type')
+
+
+# FILE: omics/_panacea.py
 
 @pytest.mark.slow
 def test_panacea():
