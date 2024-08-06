@@ -23,13 +23,11 @@ __all__ = ['deseq2']
 
 from typing import TYPE_CHECKING
 import multiprocessing
-import importlib
 
 if TYPE_CHECKING:
 
     import pandas as pd
 
-import lazy_import
 from pypath_common import _misc as _ppcommon
 
 #for _mod in ('default_inference', 'dds', 'ds'):
