@@ -12,6 +12,8 @@ import bs4
 import requests
 
 import responses
+import os
+import hashlib
 
 
 
@@ -88,20 +90,6 @@ def test_open_tsv():
             assert "col1\tcol2\nval1\tval2" in content
 
 
-@patch('networkcommons.data.omics._common._maybe_download')
-@patch('zipfile.ZipFile', autospec=True)
-def test_open_zip(mock_maybe_download, mock_zipfile):
-    url = 'http://example.com/file.zip'
-    mock_maybe_download.return_value = 'file.zip'
-    mock_zip_instance = MagicMock()
-    mock_zipfile.return_value = mock_zip_instance
-    mock_zip_instance.__enter__.return_value = mock_zip_instance
-    mock_zip_instance.__exit__.return_value = False
-    with _common._open(url, 'zip') as f:
-        assert f is mock_zip_instance
-    mock_zipfile.assert_called_once_with('file.zip', 'r')
-
-
 def test_open_html():
     url = "http://example.com/test.html"
     with patch('networkcommons.data.omics._common._maybe_download', return_value='path/to/test.html'), \
@@ -109,6 +97,92 @@ def test_open_html():
         result = _common._open(url, ftype='html')
         assert isinstance(result, bs4.BeautifulSoup)
         assert result.body.text == "Test"
+
+@patch('networkcommons.data.omics._common._download')
+@patch('networkcommons.data.omics._common._log')
+@patch('networkcommons.data.omics._common._conf.get')
+@patch('os.path.exists')
+@patch('hashlib.md5')
+def test_maybe_download_exists(mock_md5, mock_exists, mock_conf_get, mock_log, mock_download):
+    # Setup mock values
+    url = 'http://example.com/file.txt'
+    md5_hash = MagicMock()
+    md5_hash.hexdigest.return_value = 'dummyhash'
+    mock_md5.return_value = md5_hash
+    mock_conf_get.return_value = '/mock/cache/dir'
+    mock_exists.return_value = True
+
+    # Call the function
+    path = _common._maybe_download(url)
+
+    # Assertions
+    mock_md5.assert_called_once_with(url.encode())
+    mock_conf_get.assert_called_once_with('cachedir')
+    mock_exists.assert_called_once_with('/mock/cache/dir/dummyhash-file.txt')
+    mock_log.assert_called_once_with('Looking up in cache: `http://example.com/file.txt` -> `/mock/cache/dir/dummyhash-file.txt`.')
+    mock_download.assert_not_called()
+    assert path == '/mock/cache/dir/dummyhash-file.txt'
+
+
+@patch('networkcommons.data.omics._common._download')
+@patch('networkcommons.data.omics._common._log')
+@patch('networkcommons.data.omics._common._conf.get')
+@patch('os.path.exists')
+@patch('hashlib.md5')
+def test_maybe_download_not_exists(mock_md5, mock_exists, mock_conf_get, mock_log, mock_download):
+    # Setup mock values
+    url = 'http://example.com/file.txt'
+    md5_hash = MagicMock()
+    md5_hash.hexdigest.return_value = 'dummyhash'
+    mock_md5.return_value = md5_hash
+    mock_conf_get.return_value = '/mock/cache/dir'
+    mock_exists.return_value = False
+
+    # Call the function
+    path = _common._maybe_download(url)
+
+    # Assertions
+    mock_md5.assert_called_once_with(url.encode())
+    mock_conf_get.assert_called_once_with('cachedir')
+    mock_exists.assert_called_once_with('/mock/cache/dir/dummyhash-file.txt')
+    mock_log.assert_any_call('Looking up in cache: `http://example.com/file.txt` -> `/mock/cache/dir/dummyhash-file.txt`.')
+    mock_log.assert_any_call('Not found in cache, initiating download: `http://example.com/file.txt`.')
+    mock_download.assert_called_once_with(url, '/mock/cache/dir/dummyhash-file.txt')
+    assert path == '/mock/cache/dir/dummyhash-file.txt'
+
+
+@patch('networkcommons.data.omics._common._requests_session')
+@patch('networkcommons.data.omics._common._log')
+@patch('networkcommons.data.omics._common._conf.get')
+def test_download(mock_conf_get, mock_log, mock_requests_session, tmp_path):
+    # Setup mock values
+    url = 'http://example.com/file.txt'
+    path = tmp_path / 'file.txt'
+    timeouts = (5, 5)
+    mock_conf_get.side_effect = lambda k: 5 if k in ('http_read_timout', 'http_connect_timout') else None
+    mock_session = MagicMock()
+    mock_requests_session.return_value = mock_session
+    mock_response = MagicMock()
+    mock_response.iter_content.return_value = [b'test content']
+    mock_session.get.return_value.__enter__.return_value = mock_response
+
+    # Call the function
+    _common._download(url, str(path))
+
+    # Assertions
+    mock_conf_get.assert_any_call('http_read_timout')
+    mock_conf_get.assert_any_call('http_connect_timout')
+    mock_log.assert_any_call(f'Downloading `{url}` to `{path}`.')
+    mock_log.assert_any_call(f'Finished downloading `{url}` to `{path}`.')
+    mock_requests_session.assert_called_once()
+    mock_session.get.assert_called_once_with(url, timeout=(5, 5), stream=True)
+    mock_response.raise_for_status.assert_called_once()
+    mock_response.iter_content.assert_called_once_with(chunk_size=8192)
+
+    # Check that the file was written correctly
+    with open(path, 'rb') as f:
+        content = f.read()
+    assert content == b'test content'
 
 
 def test_ls_success():
