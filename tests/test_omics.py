@@ -664,3 +664,65 @@ def test_get_ensembl_mappings(mock_biomart_server):
     expected_df = pd.DataFrame(expected_data)
 
     pd.testing.assert_frame_equal(result_df.reset_index(drop=True), expected_df)
+
+
+# FILE: omics/_nci60.py
+
+@patch('networkcommons.data.omics._nci60._common._ls')
+@patch('networkcommons.data.omics._nci60._common._baseurl', return_value='http://example.com')
+@patch('pandas.read_pickle')
+@patch('os.path.exists', return_value=False)
+@patch('pandas.DataFrame.to_pickle')
+def test_nci60_datasets(mock_to_pickle, mock_path_exists, mock_read_pickle, mock_baseurl, mock_ls):
+    # Mock the directory listing
+    mock_ls.return_value = ['cell_line1', 'cell_line2', 'cell_line3']
+
+    dsets = omics.nci60_datasets(update=True)
+
+    expected_df = pd.DataFrame({
+        'cell_line': ['cell_line1', 'cell_line2', 'cell_line3']
+    })
+    pd.testing.assert_frame_equal(dsets, expected_df)
+    mock_to_pickle.assert_called_once()
+    mock_read_pickle.assert_not_called()
+
+
+@patch('pandas.read_pickle')
+@patch('os.path.exists', return_value=True)
+def test_nci60_datasets_cached(mock_path_exists, mock_read_pickle):
+    mock_df = pd.DataFrame({
+        'cell_line': ['cell_line1', 'cell_line2', 'cell_line3']
+    })
+    mock_read_pickle.return_value = mock_df
+
+    dsets = omics.nci60_datasets()
+
+    pd.testing.assert_frame_equal(dsets, mock_df)
+    mock_read_pickle.assert_called_once()
+    
+
+def test_nci60_datatypes():
+    dtypes = omics.nci60_datatypes()
+
+    expected_df = pd.DataFrame({
+        'data_type': ['TF_scores', 'RNA', 'metabolomic'],
+        'description': ['TF scores', 'RNA expression', 'metabolomic data']
+    })
+
+    pd.testing.assert_frame_equal(dtypes, expected_df)
+
+
+@patch('networkcommons.data.omics._nci60._common._open')
+def test_nci60_table(mock_open):
+    cell_line = 'cell_line1'
+    data_type = 'RNA'
+    mock_df = pd.DataFrame({
+        'gene': ['Gene1', 'Gene2'],
+        'expression': [100, 200]
+    })
+    mock_open.return_value = mock_df
+
+    result = omics.nci60_table(cell_line, data_type)
+
+    pd.testing.assert_frame_equal(result, mock_df)
+    mock_open.assert_called_once()
