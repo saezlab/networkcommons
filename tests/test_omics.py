@@ -303,17 +303,213 @@ def test_decryptm_experiment_no_dataset(mock_decryptm_datasets):
 
 # FILE: omics/_panacea.py
 
-@pytest.mark.slow
-def test_panacea():
+@patch('networkcommons.data.omics._panacea._common._baseurl', return_value='http://example.com')
+@patch('pandas.read_pickle')
+@patch('os.path.exists', return_value=False)
+@patch('os.makedirs')
+@patch('pandas.DataFrame.to_pickle')
+@patch('urllib.request.urlopen')
+def test_panacea_experiments(mock_urlopen, mock_to_pickle, mock_makedirs, mock_path_exists, mock_read_pickle, mock_baseurl):
+    # Mock the HTTP response for the metadata file
+    mock_response = MagicMock()
+    mock_response.read.return_value = b"group\tsample_ID\nA_B\tID1\nC_D\tID2"
+    mock_response.__enter__.return_value = mock_response
+    mock_urlopen.return_value = mock_response
 
-    dfs = omics.panacea()
+    result_df = omics.panacea_experiments(update=True)
 
-    assert isinstance(dfs, tuple)
-    assert len(dfs) == 2
-    assert all(isinstance(df, pd.DataFrame) for df in dfs)
-    assert dfs[0].shape == (24961, 1217)
-    assert dfs[1].shape == (1216, 2)
-    assert (dfs[0].drop('gene_symbol', axis = 1).dtypes == 'int64').all()
+    assert isinstance(result_df, pd.DataFrame)
+    assert 'cell' in result_df.columns
+    assert 'drug' in result_df.columns
+
+    mock_to_pickle.assert_called_once()
+
+
+@patch('networkcommons.data.omics._panacea._common._baseurl', return_value='http://example.com')
+@patch('pandas.read_pickle')
+@patch('os.path.exists', return_value=True)
+def test_panacea_experiments_cached(mock_path_exists, mock_read_pickle, mock_baseurl):
+    # Mock the cached data
+    mock_df = pd.DataFrame({'cell': ['A', 'C'], 'drug': ['B', 'D']})
+    mock_read_pickle.return_value = mock_df
+
+    result_df = omics.panacea_experiments(update=False)
+
+    mock_read_pickle.assert_called_once()
+    assert result_df.equals(mock_df)
+
+
+def test_panacea_datatypes():
+    dtypes = omics.panacea_datatypes()
+
+    expected_df = pd.DataFrame({
+        'type': ['raw', 'diffexp', 'TF_scores'],
+        'description': [
+            'RNA-Seq raw counts and metadata containing sample, name, and group',
+            'Differential expression analysis with filterbyExpr+DESeq2',
+            'Transcription factor activity scores with CollecTRI + T-values'
+        ]
+    })
+
+    pd.testing.assert_frame_equal(dtypes, expected_df)
+
+
+@patch('pandas.read_csv')
+@patch('networkcommons.data.omics._panacea._common._baseurl', return_value='http://example.com')
+def test_panacea_tables_diffexp(mock_baseurl, mock_read_csv):
+    # Mock the data
+    mock_df = pd.DataFrame({
+        'gene': ['gene1', 'gene2'],
+        'log2FoldChange': [1.5, -2.3],
+        'pvalue': [0.01, 0.05]
+    })
+    mock_read_csv.return_value = mock_df
+
+    result_df = omics.panacea_tables(cell_line='cell1', drug='drug1', type='diffexp')
+
+    assert isinstance(result_df, pd.DataFrame)
+    assert 'gene' in result_df.columns
+    assert 'log2FoldChange' in result_df.columns
+    assert 'pvalue' in result_df.columns
+
+
+@patch('networkcommons.data.omics._panacea._common._open')
+@patch('networkcommons.data.omics._panacea._common._baseurl', return_value='http://example.com')
+def test_panacea_tables_convert_to_list(mock_baseurl, mock_open):
+    # Mock the metadata
+    mock_meta = pd.DataFrame({
+        'sample_ID': ['sample1', 'sample2', 'sample3', 'sample4', 'sample5', 'sample6'],
+        'group': ['cell1_drug1', 'cell1_drug2', 'cell2_drug1', 'cell2_drug2', 'cell1_drug1', 'cell1_drug2']
+    })
+    # Mock the count data
+    mock_count = pd.DataFrame({
+        'gene_symbol': ['gene1', 'gene2'],
+        'sample1': [100, 200],
+        'sample2': [150, 250],
+        'sample3': [100, 200],
+        'sample4': [150, 250],
+        'sample5': [100, 200],
+        'sample6': [150, 250]
+    })
+    mock_open.side_effect = [mock_meta, mock_count] * 5
+
+
+    # Test with cell_line and drug as strings
+    df_count, df_meta = omics.panacea_tables(cell_line='cell1', drug='drug1', type='raw')
+    assert isinstance(df_count, pd.DataFrame)
+    assert isinstance(df_meta, pd.DataFrame)
+    assert df_count.shape == (2, 3)
+    assert df_meta.shape == (2, 4)
+
+    # Test with cell_line and drug as lists
+    df_count, df_meta = omics.panacea_tables(cell_line=['cell1'], drug=['drug1'], type='raw')
+    assert isinstance(df_count, pd.DataFrame)
+    assert isinstance(df_meta, pd.DataFrame)
+    assert df_count.shape == (2, 3)
+    assert df_meta.shape == (2, 4)
+
+    # Test with cell_line and drug both None
+    df_count, df_meta = omics.panacea_tables(type='raw')
+    assert isinstance(df_count, pd.DataFrame)
+    assert isinstance(df_meta, pd.DataFrame)
+    assert df_count.shape == (2, 7)
+    assert df_meta.shape == (6, 4)
+
+    # Test with cell_line as None and drug as string
+    df_count, df_meta = omics.panacea_tables(cell_line=None, drug='drug1', type='raw')
+    assert isinstance(df_count, pd.DataFrame)
+    assert isinstance(df_meta, pd.DataFrame)
+    assert df_count.shape == (2, 4)
+    assert df_meta.shape == (3, 4)
+
+    # Test with cell_line as string and drug as None
+    df_count, df_meta = omics.panacea_tables(cell_line='cell1', drug=None, type='raw')
+    assert isinstance(df_count, pd.DataFrame)
+    assert isinstance(df_meta, pd.DataFrame)
+    assert df_count.shape == (2, 5)
+    assert df_meta.shape == (4, 4)
+
+    # Test with unknown type to trigger the ValueError
+    with pytest.raises(ValueError, match='Unknown data type: unknown_type'):
+        omics.panacea_tables(cell_line='cell1', drug='drug1', type='unknown_type')
+
+
+@patch('pandas.read_csv')
+@patch('networkcommons.data.omics._panacea._common._baseurl', return_value='http://example.com')
+def test_panacea_tables_diffexp(mock_baseurl, mock_read_csv):
+    # Mock the data
+    mock_df = pd.DataFrame({
+        'gene': ['gene1', 'gene2'],
+        'log2FoldChange': [1.5, -2.3],
+        'pvalue': [0.01, 0.05]
+    })
+    mock_read_csv.return_value = mock_df
+
+    result_df = omics.panacea_tables(cell_line='cell1', drug='drug1', type='diffexp')
+
+    assert isinstance(result_df, pd.DataFrame)
+    assert 'gene' in result_df.columns
+    assert 'log2FoldChange' in result_df.columns
+    assert 'pvalue' in result_df.columns
+
+
+@patch('pandas.read_csv')
+@patch('networkcommons.data.omics._panacea._common._baseurl', return_value='http://example.com')
+def test_panacea_tables_tf_scores(mock_baseurl, mock_read_csv):
+    # Mock the data
+    mock_df = pd.DataFrame({
+        'TF': ['TF1', 'TF2'],
+        'score': [2.5, -1.3],
+        'pvalue': [0.02, 0.07]
+    })
+    mock_read_csv.return_value = mock_df
+
+    result_df = omics.panacea_tables(cell_line='cell1', drug='drug1', type='TF_scores')
+
+    assert isinstance(result_df, pd.DataFrame)
+    assert 'TF' in result_df.columns
+    assert 'score' in result_df.columns
+    assert 'pvalue' in result_df.columns
+
+
+def test_panacea_tables_value_error():
+    with pytest.raises(ValueError, match='Please specify cell line and drug.'):
+        omics.panacea_tables(type='diffexp')
+
+
+@patch('networkcommons.data.omics._panacea._common._open')
+@patch('networkcommons.data.omics._panacea._common._baseurl', return_value='http://example.com')
+def test_panacea_tables_raw(mock_baseurl, mock_open):
+    cell_line = 'CellLine1'
+    drug = 'Drug1'
+    data_type = 'raw'
+
+    # Mock the DataFrames returned by _common._open
+    mock_meta_df = pd.DataFrame({'group': ['CellLine1_Drug1', 'CellLine2_Drug2'], 'sample_ID': ['ID1', 'ID2']})
+    mock_count_df = pd.DataFrame({'gene_symbol': ['Gene1', 'Gene2'], 'ID1': [10, 20], 'ID2': [30, 40]})
+    mock_open.side_effect = [mock_meta_df, mock_count_df]
+
+    result_count_df, result_meta_df = omics.panacea_tables(cell_line=cell_line, drug=drug, type=data_type)
+
+    assert isinstance(result_count_df, pd.DataFrame)
+    assert 'gene_symbol' in result_count_df.columns
+    assert 'ID1' in result_count_df.columns
+    assert isinstance(result_meta_df, pd.DataFrame)
+    assert 'group' in result_meta_df.columns
+    assert 'sample_ID' in result_meta_df.columns
+    mock_open.assert_called()
+
+
+def test_panacea_tables_no_cell_line_drug():
+    with pytest.raises(ValueError, match='Please specify cell line and drug.'):
+        omics.panacea_tables(type='diffexp')
+
+
+@patch('networkcommons.data.omics._panacea._common._open')
+@patch('networkcommons.data.omics._panacea._common._baseurl', return_value='http://example.com')
+def test_panacea_tables_unknown_type(mock_baseurl, mock_open):
+    with pytest.raises(ValueError, match='Unknown data type: unknown.'):
+        omics.panacea_tables(cell_line='CellLine1', drug='Drug1', type='unknown')
 
 
 @pytest.mark.slow
@@ -547,7 +743,6 @@ def test_get_ensembl_mappings_download(mock_biomart_server, mock_path_exists, mo
 
         pd.testing.assert_frame_equal(result_df.reset_index(drop=True), expected_df)
         mock_to_pickle.assert_called_once_with('/path/to/pickle/dir/ensembl_map.pickle')
-
 
 
 def test_convert_ensembl_to_gene_symbol_max():
