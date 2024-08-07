@@ -1,19 +1,15 @@
 import pytest
-
 import networkx as nx
 import pandas as pd
 import numpy as np
+from unittest.mock import patch, MagicMock
+import random
 
 from networkcommons.eval import _metrics
 
-from unittest.mock import patch
-import networkcommons._utils as utils
-
-import unittest
 
 @pytest.fixture
 def network():
-
     network = nx.DiGraph()
     network.add_edge('A', 'B', weight=1)
     network.add_edge('B', 'C', weight=2)
@@ -22,75 +18,43 @@ def network():
     network.add_edge('A', 'D', weight=6)
     network.add_edge('A', 'E', weight=4)
     network.add_edge('E', 'F', weight=5)
-
     return network
 
 
 def test_get_number_nodes():
-
     assert _metrics.get_number_nodes(nx.Graph()) == 0
     assert _metrics.get_number_nodes(nx.Graph([(1, 2)])) == 2
     assert _metrics.get_number_nodes(nx.Graph([(1, 2), (2, 3)])) == 3
 
 
 def test_get_number_edges():
-
     assert _metrics.get_number_edges(nx.Graph()) == 0
     assert _metrics.get_number_edges(nx.Graph([(1, 2)])) == 1
     assert _metrics.get_number_edges(nx.Graph([(1, 2), (2, 3)])) == 2
 
 
 def test_get_mean_degree(network):
-
-    assert _metrics.get_mean_degree(network) == 7/3
+    assert _metrics.get_mean_degree(network) == 7 / 3
 
 
 def test_get_mean_betweenness(network):
-
     assert _metrics.get_mean_betweenness(network) == 0.05833333333333334
 
 
 def test_get_mean_closeness(network):
-
     assert _metrics.get_mean_closeness(network) == 0.29444444444444445
 
 
 def test_get_connected_targets(network):
-
     target_dict = {'D': 1, 'F': 1, 'W': 1}
-
     assert _metrics.get_connected_targets(network, target_dict) == 2
-    assert (
-        _metrics.get_connected_targets(network, target_dict, percent=True) ==
-        2 / 3 * 100
-    )
+    assert _metrics.get_connected_targets(network, target_dict, percent=True) == 2 / 3 * 100
 
 
 def test_get_recovered_offtargets(network):
-
     offtargets = ['B', 'D', 'W']
-
     assert _metrics.get_recovered_offtargets(network, offtargets) == 2
-    assert (
-        _metrics.get_recovered_offtargets(network, offtargets, percent=True) ==
-        2 / 3 * 100
-    )# noqa: E501
-
-
-def test_get_graph_metrics(network):
-
-    target_dict = {'D': 1, 'F': 1, 'W': 1}
-
-    metrics = pd.DataFrame({
-        'Number of nodes': 6,
-        'Number of edges': 7,
-        'Mean degree': 7/3,
-        'Mean betweenness': 0.05833333333333334,
-        'Mean closeness': 0.29444444444444445,
-        'Connected targets': 2
-    }, index=[0])
-
-    assert _metrics.get_graph_metrics(network, target_dict).equals(metrics)
+    assert _metrics.get_recovered_offtargets(network, offtargets, percent=True) == 2 / 3 * 100
 
 
 def test_all_nodes_in_ec50_dict():
@@ -102,7 +66,6 @@ def test_all_nodes_in_ec50_dict():
         'nodes_with_EC50': [3],
         'coverage': [100.0]
     })
-
     result = _metrics.get_ec50_evaluation(network, ec50_dict)
     pd.testing.assert_frame_equal(result, expected_result)
 
@@ -114,9 +77,8 @@ def test_some_nodes_in_ec50_dict():
         'avg_EC50_in': [7.5],
         'avg_EC50_out': [20.0],
         'nodes_with_EC50': [2],
-        'coverage': [2/3 * 100]
+        'coverage': [2 / 3 * 100]
     })
-
     result = _metrics.get_ec50_evaluation(network, ec50_dict)
     pd.testing.assert_frame_equal(result, expected_result)
 
@@ -130,7 +92,6 @@ def test_no_nodes_in_ec50_dict():
         'nodes_with_EC50': [0],
         'coverage': [0.0]
     })
-
     result = _metrics.get_ec50_evaluation(network, ec50_dict)
     pd.testing.assert_frame_equal(result, expected_result)
 
@@ -144,23 +105,19 @@ def test_empty_network():
         'nodes_with_EC50': [0],
         'coverage': [np.nan]
     })
-
     result = _metrics.get_ec50_evaluation(network, ec50_dict)
     pd.testing.assert_frame_equal(result, expected_result)
 
 
 def test_run_ora():
-    # Create an example graph
     graph = nx.DiGraph()
     graph.add_nodes_from(["geneA", "geneB", "geneC", "geneD", "geneE", "geneF"])
 
-    # Create an example net DataFrame
     net = pd.DataFrame({
         'source': ['gene_set_1', 'gene_set_1', 'gene_set_2', 'gene_set_2', 'gene_set_2'],
         'target': ['geneA', 'geneB', 'geneC', 'geneD', 'geneE']
     })
 
-    # Expected output DataFrame (you need to adjust this based on expected results)
     expected_results = pd.DataFrame({
         'ora_Term': ["gene_set_1", "gene_set_2"],
         'ora_Set size': [2, 3],
@@ -173,19 +130,15 @@ def test_run_ora():
         'ora_rank': [2.0, 1.0]
     })
 
-    # Run the ORA function
     ora_results = _metrics.run_ora(graph, net, metric='ora_Combined score', ascending=False)
 
-    # Assertions to verify the results
     pd.testing.assert_frame_equal(ora_results, expected_results)
 
 
 def test_get_phosphorylation_status():
-    # Create a sample network graph
     network = nx.DiGraph()
     network.add_nodes_from(['node1', 'node2', 'node3'])
 
-    # Create a sample dataframe
     data = {
         'stat': [0.5, 1.5, -0.5, 0.0],
     }
@@ -196,7 +149,6 @@ def test_get_phosphorylation_status():
     metric_overall = abs(dataframe['stat'].values)
 
     result_df = _metrics.get_phosphorylation_status(network, dataframe, col='stat')
-    print(result_df)
 
     expected_data = {
         'avg_relabundance': np.mean(metric_in),
@@ -206,13 +158,10 @@ def test_get_phosphorylation_status():
         'coverage': [3 / 3 * 100]
     }
     expected_df = pd.DataFrame(expected_data)
-    print(expected_data)
-
     pd.testing.assert_frame_equal(result_df.reset_index(drop=True), expected_df)
 
 
 def test_get_metric_from_networks():
-    # Create mock networks
     real_graph = nx.DiGraph()
     real_graph.add_edges_from([
         ('A', 'B'),
@@ -230,7 +179,6 @@ def test_get_metric_from_networks():
         ('W', 'Y')
     ])
 
-    # Create mock networks
     networks = {
         'shortest_path__real': real_graph,
         'shortest_path__random_1': random_graph
@@ -238,7 +186,6 @@ def test_get_metric_from_networks():
 
     target_dict = {'D': 1, 'F': 1, 'W': 1}
 
-    # Expected data
     expected_data = {
         'Number of nodes': [5, 4],
         'Number of edges': [4, 5],
@@ -251,16 +198,11 @@ def test_get_metric_from_networks():
         'method': ['shortest_path', 'shortest_path']
     }
     expected_df = pd.DataFrame(expected_data)
-
-    # Call the function
     result_df = _metrics.get_metric_from_networks(
         networks,
         _metrics.get_graph_metrics,
         target_dict=target_dict
-        )
-    print(result_df)
-
-    # Verify the results
+    )
     pd.testing.assert_frame_equal(result_df.reset_index(drop=True), expected_df)
 
 
@@ -268,5 +210,121 @@ def test_function_not_found():
     networks = {
         'real_network__1': nx.path_graph(5),
     }
-    with unittest.TestCase().assertRaises(NameError):
+    with pytest.raises(NameError):
         _metrics.get_metric_from_networks(networks, nonexistent_function)
+
+
+@patch('random.shuffle')
+def test_perform_random_controls(mock_shuffle, network):
+    mock_shuffle.side_effect = lambda x: x.reverse()
+    inference_function = lambda g, **kw: (g, None)
+    n_iterations = 2
+    network_name = 'test_network'
+    item_list = ['A', 'B', 'C', 'D', 'E', 'F']
+    target_dict = {'A': 1, 'B': 1, 'C': 1}
+
+    results = _metrics.perform_random_controls(
+        network,
+        inference_function,
+        n_iterations,
+        network_name,
+        randomise_measurements=True,
+        item_list=item_list,
+        target_dict=target_dict
+    )
+
+    assert len(results) == n_iterations
+    for i in range(n_iterations):
+        assert f"{network_name}__random{i+1:03d}" in results
+
+
+def test_get_graph_metrics():
+    target_dict = {'D': 1, 'F': 1, 'W': 1}
+    network1 = nx.DiGraph()
+    network1.add_edges_from([
+        ('A', 'B'),
+        ('B', 'C'),
+        ('C', 'D'),
+        ('D', 'E')
+    ])
+
+    network2 = nx.DiGraph()
+    network2.add_edges_from([
+        ('W', 'X'),
+        ('X', 'Y'),
+        ('Y', 'Z'),
+        ('Z', 'W'),
+        ('W', 'Y')
+    ])
+    networks = {'network1': network1, 'network2': network2}
+
+    expected_metrics = pd.DataFrame({
+        'Number of nodes': [5, 4],
+        'Number of edges': [4, 5],
+        'Mean degree': [1.6, 2.5],
+        'Mean betweenness': [0.166667, 0.375000],
+        'Mean closeness': [0.271667, 0.587500],
+        'Connected targets': [1, 1],
+        'network': ['network1', 'network2']
+    })
+
+    metrics = _metrics.get_graph_metrics(networks, target_dict)
+    pd.testing.assert_frame_equal(metrics.reset_index(drop=True), expected_metrics)
+    assert 'network' in metrics.columns
+
+    expected_metrics = pd.DataFrame({
+        'Number of nodes': [5],
+        'Number of edges': [4],
+        'Mean degree': [1.6],
+        'Mean betweenness': [0.166667],
+        'Mean closeness': [0.271667],
+        'Connected targets': [1]
+    })
+    print(type(network1))
+    metrics = _metrics.get_graph_metrics(network1, target_dict)
+    pd.testing.assert_frame_equal(metrics.reset_index(drop=True), expected_metrics)
+    assert 'network' not in metrics.columns
+
+
+def test_shuffle_dict_keys():
+    original_dict = {'A': 1, 'B': 2, 'C': 3}
+    items = ['A', 'B', 'C', 'X', 'Y', 'Z']
+
+    random.seed(42)
+    shuffled_dict = _metrics.shuffle_dict_keys(original_dict, items)
+
+    expected_dict = {'A': 2, 'Y': 3, 'Z': 1}
+    assert shuffled_dict == expected_dict
+
+
+def test_get_metric_from_networks_non_callable():
+    networks = {
+        'real_network__1': nx.path_graph(5),
+    }
+    non_callable = "I am not callable"
+    with pytest.raises(NameError):
+        _metrics.get_metric_from_networks(networks, non_callable)
+
+
+def test_perform_random_controls_with_item_list(network):
+    inference_function = lambda g, **kw: (g, None)
+    n_iterations = 2
+    network_name = 'test_network'
+    item_list = ['A', 'B', 'C', 'D', 'E', 'F']
+    target_dict = {'A': 1, 'B': 1, 'C': 1}
+
+    results = _metrics.perform_random_controls(
+        network,
+        inference_function,
+        n_iterations,
+        network_name,
+        randomise_measurements=True,
+        item_list=item_list,
+        target_dict=target_dict
+    )
+
+    assert len(results) == n_iterations
+    for i in range(n_iterations):
+        assert f"{network_name}__random{i+1:03d}" in results
+
+
