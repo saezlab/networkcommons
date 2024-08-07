@@ -189,7 +189,7 @@ def get_graph_metrics(network, target_dict):
 
         metrics.reset_index(inplace=True, drop=True)
 
-    elif isinstance(network, (nx.Graph, nx.DiGraph)):
+    elif isinstance(network, (nx.DiGraph)):
         metrics = pd.DataFrame({
             'Number of nodes': get_number_nodes(network),
             'Number of edges': get_number_edges(network),
