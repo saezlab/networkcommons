@@ -75,11 +75,6 @@ def _commons_url(dataset: str, **kwargs) -> str:
     return urllib.parse.urljoin(baseurl, path)
 
 
-def _dataset(key: str) -> dict | None:
-
-    return _datasets()['datasets'].get(key.lower(), None)
-
-
 def _requests_session() -> requests.Session:
 
     ses = requests.Session()
