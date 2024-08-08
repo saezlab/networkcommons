@@ -3,7 +3,9 @@ import networkx as nx
 import numpy as np
 import corneto as cn
 from unittest.mock import patch
+import pytest
 import networkcommons._utils as utils
+import pygraphviz as pgv
 
 
 def test_to_cornetograph():
@@ -21,6 +23,27 @@ def test_to_cornetograph():
     corneto_graph = cn.Graph.from_sif_tuples([('node1', 1, 'node2')])
     result = utils.to_cornetograph(corneto_graph)
     assert isinstance(result, cn._graph.Graph)
+
+
+def test_to_cornetograph_when_cornetograph():
+    corneto_graph = cn.Graph.from_sif_tuples([('node1', 1, 'node2')])
+
+    result = utils.to_cornetograph(corneto_graph)
+    assert isinstance(result, cn._graph.Graph)
+
+
+def test_to_cornetograph_when_not_supported():
+    multi_graph = nx.MultiDiGraph()
+    with pytest.raises(NotImplementedError, match="Only nx.DiGraph graphs and corneto graphs are supported."):
+        utils.to_cornetograph(multi_graph)
+
+    undir_graph = nx.Graph()
+    with pytest.raises(NotImplementedError, match="Only nx.DiGraph graphs and corneto graphs are supported."):
+        utils.to_cornetograph(undir_graph)
+
+    graphviz_grpah = pgv.AGraph()
+    with pytest.raises(NotImplementedError, match="Only nx.DiGraph graphs and corneto graphs are supported."):
+        utils.to_cornetograph(graphviz_grpah)
 
 
 def test_to_networkx():
@@ -57,6 +80,32 @@ def test_to_networkx():
         assert data['sign'] == expected_graph.get_edge_data(u, v)['sign']
 
 
+def test_to_networkx_when_networkx_graph():
+    nx_graph = nx.DiGraph()
+    nx_graph.add_edge('a', 'b', sign=1)
+
+    result = utils.to_networkx(nx_graph)
+    assert isinstance(result, nx.DiGraph)
+    assert nx.is_isomorphic(result, nx_graph)
+    for u, v, data in nx_graph.edges(data=True):
+        assert data['sign'] == result.get_edge_data(u, v)['sign']
+        assert 'interaction' not in data.keys()
+
+
+def test_to_networkx_when_not_supported():
+    multi_graph = nx.MultiDiGraph()
+    with pytest.raises(NotImplementedError, match="Only nx.DiGraph graphs and corneto graphs are supported."):
+        utils.to_networkx(multi_graph)
+
+    undir_graph = nx.Graph()
+    with pytest.raises(NotImplementedError, match="Only nx.DiGraph graphs and corneto graphs are supported."):
+        utils.to_networkx(undir_graph)
+
+    graphviz_grpah = pgv.AGraph()
+    with pytest.raises(NotImplementedError, match="Only nx.DiGraph graphs and corneto graphs are supported."):
+        utils.to_networkx(graphviz_grpah)
+
+
 def test_read_network_from_file():
     with patch('pandas.read_csv') as mock_read_csv, patch('networkcommons._utils.network_from_df') as mock_network_from_df:
         mock_read_csv.return_value = pd.DataFrame({'source': ['a'], 'target': ['b']})
@@ -71,6 +120,20 @@ def test_network_from_df():
     assert list(result.edges(data=True)) == [('a', 'b', {'sign': 1})]
 
 
+def test_network_from_df_no_attrs():
+    df = pd.DataFrame({'source': ['a'], 'target': ['b']})
+    result = utils.network_from_df(df)
+    assert isinstance(result, nx.DiGraph)
+    assert list(result.edges(data=True)) == [('a', 'b', {})]
+
+
+def test_network_from_df_negative_weights():
+    df = pd.DataFrame({'source': ['a'], 'target': ['b'], 'weight':-3})
+    result = utils.network_from_df(df)
+    assert isinstance(result, nx.DiGraph)
+    assert list(result.edges(data=True)) == [('a', 'b', {'weight': 3, 'sign': -1})]
+
+
 def test_get_subnetwork():
     G = nx.path_graph(4)
     paths = [[0, 1, 2], [2, 3]]
@@ -81,6 +144,13 @@ def test_get_subnetwork():
 def test_decoupler_formatter():
     df = pd.DataFrame({'ID': ['Gene1', 'Gene2', 'Gene3'], 'stat': [3.5, 4, 3]}).set_index('ID')
     result = utils.decoupler_formatter(df, ['stat'])
+    expected = df.T
+    pd.testing.assert_frame_equal(result, expected)
+
+
+def test_decoupler_formatter_string():
+    df = pd.DataFrame({'ID': ['Gene1', 'Gene2', 'Gene3'], 'stat': [3.5, 4, 3]}).set_index('ID')
+    result = utils.decoupler_formatter(df, 'stat')
     expected = df.T
     pd.testing.assert_frame_equal(result, expected)
 
@@ -103,7 +173,7 @@ def test_subset_df_with_nodes():
 
 def test_handle_missing_values_fill():
     df = pd.DataFrame({'A': [1, 2, np.nan], 'B': [3, 2, np.nan], 'C': [np.nan, 7, 8]})
-    result = utils.handle_missing_values(df, 0.5)
+    result = utils.handle_missing_values(df, 0.5, fill=True)
     expected = pd.DataFrame({'index': [0, 1], 'A': [1.0, 2.0], 'B': [3.0, 2.0], 'C': [2.0, 7.0]}).astype({'index': 'int64'})
     pd.testing.assert_frame_equal(result, expected)
 
@@ -117,7 +187,7 @@ def test_handle_missing_values_fill_and_drop():
 
 def test_handle_missing_values_drop():
     df = pd.DataFrame({'A': [1, np.nan, np.nan], 'B': [np.nan, np.nan, np.nan], 'C': [np.nan, np.nan, 8]})
-    result = utils.handle_missing_values(df, 0.1)
+    result = utils.handle_missing_values(df, 0.1, fill=False)
     expected = pd.DataFrame({'index': [], 'A': [], 'B': [], 'C': []}).astype({'index': 'int64'})
     pd.testing.assert_frame_equal(result, expected)
 
