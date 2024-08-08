@@ -198,6 +198,8 @@ def get_graph_metrics(network, target_dict):
             'Mean closeness': get_mean_closeness(network),
             'Connected targets': get_connected_targets(network, target_dict)
         }, index=[0])
+    else:
+        raise TypeError("The network must be a networkx graph or a dictionary of networkx graphs.")
 
     return metrics
 
