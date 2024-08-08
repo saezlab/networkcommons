@@ -115,8 +115,7 @@ def read_network_from_file(file_path,
 def network_from_df(network_df,
                     source_col='source',
                     target_col='target',
-                    directed=True,
-                    multigraph=False):
+                    directed=True):
     """
     Create a network from a DataFrame.
 
@@ -130,9 +129,6 @@ def network_from_df(network_df,
         nx.Graph or nx.DiGraph: The network.
     """
     network_type = nx.DiGraph if directed else nx.Graph
-
-    if multigraph:
-        network_type = nx.MultiDiGraph if directed else nx.MultiGraph
 
     if list(network_df.columns) == list([source_col, target_col]):
         network = nx.from_pandas_edgelist(network_df,
