@@ -286,6 +286,11 @@ def test_get_graph_metrics():
     assert 'network' not in metrics.columns
 
 
+def test_get_graph_metrics_invalid_type():
+    with pytest.raises(TypeError, match="The network must be a networkx graph or a dictionary of networkx graphs."):
+        _metrics.get_graph_metrics(123, {})
+
+
 def test_shuffle_dict_keys():
     original_dict = {'A': 1, 'B': 2, 'C': 3}
     items = ['A', 'B', 'C', 'X', 'Y', 'Z']
@@ -326,5 +331,29 @@ def test_perform_random_controls_with_item_list(network):
     assert len(results) == n_iterations
     for i in range(n_iterations):
         assert f"{network_name}__random{i+1:03d}" in results
+
+@patch("networkcommons.eval._metrics.shuffle_dict_keys")
+def test_perform_random_controls_without_item_list(mock_shuffle, network):
+    inference_function = lambda g, **kw: (g, None)
+    n_iterations = 2
+    network_name = 'test_network'
+    target_dict = {'A': 1, 'B': 1, 'C': 1}
+
+    results = _metrics.perform_random_controls(
+        network,
+        inference_function,
+        n_iterations,
+        network_name,
+        randomise_measurements=False,
+        target_dict=target_dict
+    )
+
+    assert len(results) == n_iterations
+    for i in range(n_iterations):
+        assert f"{network_name}__random{i+1:03d}" in results
+    mock_shuffle.assert_not_called()
+    
+    
+    
 
 
