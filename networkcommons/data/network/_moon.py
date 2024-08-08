@@ -17,7 +17,7 @@
 Prior knowledge network used by MOON.
 """
 
-__all__ = ['build_moon_regulons', 'get_cosmos_pkn']
+__all__ = ['get_cosmos_pkn']
 
 import lazy_import
 import numpy as np
