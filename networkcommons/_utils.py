@@ -47,7 +47,9 @@ def to_cornetograph(graph):
     Returns:
         cn.Graph: The corneto graph.
     """
-    if isinstance(graph, cn._graph.Graph):
+    if isinstance(graph, nx.MultiDiGraph):
+        raise NotImplementedError("Only nx.DiGraph graphs and corneto graphs are supported.")
+    elif isinstance(graph, cn.Graph):
         corneto_graph = graph
     elif isinstance(graph, nx.DiGraph):
         # substitute 'sign' for 'interaction' in the graph
@@ -56,6 +58,10 @@ def to_cornetograph(graph):
             data['interaction'] = data.pop('sign')
 
         corneto_graph = cn_nx.networkx_to_corneto_graph(nx_graph)
+    elif isinstance(graph, nx.Graph):
+        raise NotImplementedError("Only nx.DiGraph graphs and corneto graphs are supported.")
+    else:
+        raise NotImplementedError("Only nx.DiGraph graphs and corneto graphs are supported.")
 
     return corneto_graph
 
@@ -70,15 +76,21 @@ def to_networkx(graph, skip_unsupported_edges=True):
     Returns:
         nx.Graph: The networkx graph.
     """
-    if isinstance(graph, nx.Graph) or isinstance(graph, nx.DiGraph):
+    if isinstance(graph, nx.MultiDiGraph):
+        raise NotImplementedError("Only nx.DiGraph graphs and corneto graphs are supported.")
+    elif isinstance(graph, nx.DiGraph):
         networkx_graph = graph
-    elif isinstance(graph, cn._graph.Graph):
+    elif isinstance(graph, cn.Graph):
         networkx_graph = cn_nx.corneto_graph_to_networkx(
             graph,
             skip_unsupported_edges=skip_unsupported_edges)
         # rename interaction for sign
         for u, v, data in networkx_graph.edges(data=True):
             data['sign'] = data.pop('interaction')
+    elif isinstance(graph, nx.Graph):
+        raise NotImplementedError("Only nx.DiGraph graphs and corneto graphs are supported.")
+    else:
+        raise NotImplementedError("Only nx.DiGraph graphs and corneto graphs are supported.")
 
     return networkx_graph
 
