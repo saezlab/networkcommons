@@ -219,7 +219,7 @@ def filter_input_nodes_not_in_pkn(data, pkn):
             node for node in data.keys() if node not in new_data.keys()
         ]
 
-        _log(f"COSMOS: {len(removed_nodes)} input/measured nodes are not in"
+        _log(f"COSMOS: {len(removed_nodes)} input/measured nodes are not in "
               f"PKN anymore: {removed_nodes}")
 
     return new_data
@@ -408,11 +408,14 @@ def run_moon_core(
         )
         if statistic == "norm_wmean":
             estimate = norm
+
     elif statistic == "ulm":
-        _log(decoupler_mat)
         estimate, pvals = dc.run_ulm(
             mat=decoupler_mat, net=regulons, weight='sign', min_n=1
         )
+
+    else:
+        raise ValueError("Invalid method. Currently supported: 'ulm' or 'wmean'.")
 
     n_plus_one = estimate.T
     n_plus_one.columns = ["score"]
@@ -437,7 +440,7 @@ def run_moon_core(
             )
             if statistic == "norm_wmean":
                 estimate = norm
-        elif statistic == "ulm":
+        else:
             estimate, pvals = dc.run_ulm(
                 mat=previous_n_plus_one,
                 net=regulons,
@@ -539,7 +542,7 @@ def run_moon(network,
         print(f'Optimisation iteration {i} - Before: {before}, After: {after}')
 
     if i == max_iter:
-        print("MOON: Maximum number of iterations reached."
+        _log("MOON: Maximum number of iterations reached."
               "Solution might not have converged")
     else:
         print("MOON: Solution converged after", i, "iterations")

@@ -277,11 +277,14 @@ def add_pagerank_scores(network,
 
     if personalize_for == "source":
         personalized_prob = {n: 1/len(sources) for n in sources}
+        attribute_name = 'pagerank_from_sources'
     elif personalize_for == "target":
         personalized_prob = {n: 1/len(targets) for n in targets}
         network = network.reverse()
+        attribute_name = 'pagerank_from_targets'
     else:
         personalized_prob = None
+        attribute_name = 'pagerank'
 
     pagerank = nx.pagerank(network,
                            alpha=alpha,
@@ -295,12 +298,6 @@ def add_pagerank_scores(network,
         network = network.reverse()
 
     for node, pr_value in pagerank.items():
-        if personalize_for == "target":
-            attribute_name = 'pagerank_from_targets'
-        elif personalize_for == "source":
-            attribute_name = 'pagerank_from_sources'
-        elif personalize_for is None:
-            attribute_name = 'pagerank'
         network.nodes[node][attribute_name] = pr_value
 
     return network
@@ -321,19 +318,19 @@ def compute_ppr_overlap(network, percentage=20):
     """
     # Sorting nodes by PageRank score from sources and targets
     try:
-        sorted_nodes_sources = sorted(network.nodes(data=True),
-                                      key=lambda x: x[1].get(
-                                          'pagerank_from_sources'
-                                          ),
-                                      reverse=True)
-        sorted_nodes_targets = sorted(network.nodes(data=True),
-                                      key=lambda x: x[1].get(
-                                          'pagerank_from_targets'
-                                          ),
-                                      reverse=True)
+        nodes_sources = [(node, data['pagerank_from_sources']) for node, data in network.nodes(data=True)]
+        nodes_targets = [(node, data['pagerank_from_targets']) for node, data in network.nodes(data=True)]
+
     except KeyError:
-        raise KeyError("Please run the add_pagerank_scores method first with\
+        raise KeyError("Please run the add_pagerank_scores method first with \
                         personalization options.")
+    
+    sorted_nodes_sources = sorted(nodes_sources,
+                                key=lambda x: x[1],
+                                reverse=True)
+    sorted_nodes_targets = sorted(nodes_targets,
+                                key=lambda x: x[1],
+                                reverse=True)
 
     # Calculating the number of nodes to keep
     num_nodes_to_keep_sources = int(

@@ -37,26 +37,31 @@ def edge_attrs_from_corneto(graph: cn.Graph) -> pd.DataFrame:
     concat_df.rename(columns={0: 'node'}, inplace=True)
 
 
-
 def to_cornetograph(graph):
     """
     Convert a networkx graph to a corneto graph, if needed.
 
     Args:
-        graph (nx.Graph or nx.DiGraph): The corneto graph.
+        graph (nx.DiGraph): The corneto graph.
 
     Returns:
         cn.Graph: The corneto graph.
     """
-    if isinstance(graph, cn._graph.Graph):
+    if isinstance(graph, nx.MultiDiGraph):
+        raise NotImplementedError("Only nx.DiGraph graphs and corneto graphs are supported.")
+    elif isinstance(graph, cn.Graph):
         corneto_graph = graph
-    elif isinstance(graph, (nx.Graph, nx.DiGraph)):
+    elif isinstance(graph, nx.DiGraph):
         # substitute 'sign' for 'interaction' in the graph
         nx_graph = graph.copy()
         for u, v, data in nx_graph.edges(data=True):
             data['interaction'] = data.pop('sign')
 
         corneto_graph = cn_nx.networkx_to_corneto_graph(nx_graph)
+    elif isinstance(graph, nx.Graph):
+        raise NotImplementedError("Only nx.DiGraph graphs and corneto graphs are supported.")
+    else:
+        raise NotImplementedError("Only nx.DiGraph graphs and corneto graphs are supported.")
 
     return corneto_graph
 
@@ -71,15 +76,21 @@ def to_networkx(graph, skip_unsupported_edges=True):
     Returns:
         nx.Graph: The networkx graph.
     """
-    if isinstance(graph, nx.Graph) or isinstance(graph, nx.DiGraph):
+    if isinstance(graph, nx.MultiDiGraph):
+        raise NotImplementedError("Only nx.DiGraph graphs and corneto graphs are supported.")
+    elif isinstance(graph, nx.DiGraph):
         networkx_graph = graph
-    elif isinstance(graph, cn._graph.Graph):
+    elif isinstance(graph, cn.Graph):
         networkx_graph = cn_nx.corneto_graph_to_networkx(
             graph,
             skip_unsupported_edges=skip_unsupported_edges)
         # rename interaction for sign
         for u, v, data in networkx_graph.edges(data=True):
             data['sign'] = data.pop('interaction')
+    elif isinstance(graph, nx.Graph):
+        raise NotImplementedError("Only nx.DiGraph graphs and corneto graphs are supported.")
+    else:
+        raise NotImplementedError("Only nx.DiGraph graphs and corneto graphs are supported.")
 
     return networkx_graph
 
@@ -116,8 +127,7 @@ def read_network_from_file(file_path,
 def network_from_df(network_df,
                     source_col='source',
                     target_col='target',
-                    directed=True,
-                    multigraph=False):
+                    directed=True):
     """
     Create a network from a DataFrame.
 
@@ -131,9 +141,6 @@ def network_from_df(network_df,
         nx.Graph or nx.DiGraph: The network.
     """
     network_type = nx.DiGraph if directed else nx.Graph
-
-    if multigraph:
-        network_type = nx.MultiDiGraph if directed else nx.MultiGraph
 
     if list(network_df.columns) == list([source_col, target_col]):
         network = nx.from_pandas_edgelist(network_df,
@@ -183,8 +190,8 @@ def decoupler_formatter(df,
     Format dataframe to be used by decoupler.
 
     Parameters:
-        df (DataFrame): A pandas DataFrame.
-        column (str): The column to be used as index.
+        df (DataFrame): A pandas DataFrame. Index should be populated
+        column (str): The columns to be subsetted.
 
     Returns:
         A formatted DataFrame.
@@ -211,7 +218,7 @@ def targetlayer_formatter(df, n_elements=25):
 
     # Sort the DataFrame by the absolute value of the
     # 'sign' column and get top n elements
-    df = df.sort_values(by='sign', key=lambda x: abs(x))
+    df = df.sort_values(by='sign', key=lambda x: abs(x), ascending=False)
 
     df = df.head(n_elements)
 
