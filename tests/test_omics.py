@@ -9,14 +9,12 @@ from networkcommons.data import omics
 from unittest.mock import patch, MagicMock, mock_open
 import zipfile
 import bs4
-import requests
 
 import responses
-import os
-import hashlib
+import contextlib
 
 
-
+# FILE: omics/_common.py
 def test_datasets():
 
     dsets = _common._datasets()
@@ -65,6 +63,18 @@ def test_open_df():
     assert df.shape == (4, 2)
 
 
+@patch('networkcommons.data.omics._common._maybe_download')
+@patch('pandas.read_csv')
+def test_open_with_pandas_readers(mock_csv, mock_download):
+    mock_download.return_value = 'test.csv'
+    ftype = 'csv'
+    _common._open('http://example.com/test.csv', ftype, df=True)
+
+    mock_download.assert_called_once_with('http://example.com/test.csv')
+
+    mock_csv.assert_called_once_with('test.csv')
+
+
 def test_open_tsv():
     url = "http://example.com/test.tsv"
     with patch('networkcommons.data.omics._common._maybe_download', return_value='path/to/test.tsv'), \
@@ -81,6 +91,19 @@ def test_open_html():
         result = _common._open(url, ftype='html')
         assert isinstance(result, bs4.BeautifulSoup)
         assert result.body.text == "Test"
+
+
+@patch('networkcommons.data.omics._common._maybe_download')
+@patch('contextlib.closing')
+@patch('zipfile.ZipFile')
+def test_open_zip(mock_zip, contextlib_mock, mock_maybe_download):
+    url = "http://example.com/test.zip"
+    mock_maybe_download.return_value = 'path/to/test.zip'
+    mock_zip.return_value = MagicMock()
+
+    result = _common._open(url, ftype='zip')
+    mock_zip.assert_called_once_with('path/to/test.zip', 'r')
+    contextlib_mock.assert_called_once_with(mock_zip.return_value)
 
 
 @patch('networkcommons.data.omics._common._download')
@@ -203,6 +226,14 @@ def test_open_unknown_file_type(mock_maybe_download):
     mock_maybe_download.return_value = 'file.unknown'
     with pytest.raises(NotImplementedError, match='Can not open file type `unknown`.'):
         _common._open(url, 'unknown')
+
+
+@patch('networkcommons.data.omics._common._maybe_download')
+def test_open_no_extension(mock_maybe_download):
+    url = 'http://example.com/file'
+    mock_maybe_download.return_value = 'file'
+    with pytest.raises(RuntimeError, match='Cannot determine file type for http://example.com/file.'):
+        _common._open(url)
 
 
 # FILE: omics/_decryptm.py
@@ -866,7 +897,7 @@ def test_convert_ensembl_to_gene_symbol_median():
     dataframe = pd.DataFrame({
         'idx': ['ENSG000001.10', 'ENSG000002', 'ENSG000001.2'],
         'value': [10, 20, 15]
-    })
+    }).set_index('idx')
     equivalence_df = pd.DataFrame({
         'ensembl_id': ['ENSG000001', 'ENSG000002'],
         'gene_symbol': ['GeneA', 'GeneB']
