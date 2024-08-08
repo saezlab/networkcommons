@@ -282,7 +282,7 @@ def add_pagerank_scores(network,
         personalized_prob = {n: 1/len(targets) for n in targets}
         network = network.reverse()
         attribute_name = 'pagerank_from_targets'
-    elif personalize_for is None:
+    else:
         personalized_prob = None
         attribute_name = 'pagerank'
 
