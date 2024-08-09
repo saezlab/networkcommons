@@ -16,6 +16,7 @@ NetworkCommons: Table of Contents
    
    datasets
    methods
+   benchmarks
 
 
 .. toctree::
@@ -24,6 +25,7 @@ NetworkCommons: Table of Contents
 
    guidelines/guide_1_data
    guidelines/guide_2_methods
+   guidelines/guide_3_eval
 
 
 .. toctree::
