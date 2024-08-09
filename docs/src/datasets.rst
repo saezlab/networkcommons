@@ -2,7 +2,8 @@
 Data
 ####
 NetworkCommons provides a collection of omics datasets and prior knowledge resources. The datasets are available in the form of files that can be downloaded and used for further analysis. The prior knowledge resources are available in the form of networks (either Network objects or pd.DataFrames).
-All the data can be accessed via the NetworkCommons API.
+All the data can be accessed via the NetworkCommons API. 
+If you want to contribute with your own, please check our :doc:`Contribution guidelines <guidelines/guide_1_data>`.
 
 .. _details-omics:
 

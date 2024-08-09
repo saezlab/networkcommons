@@ -2,6 +2,9 @@
 Methods
 #######
 
+Here you can find a collection of the methods implemented in **NetworkCommons**, along with detailed descriptions.
+If you want to contribute with your own, please check our :doc:`Contribution guidelines <guidelines/guide_2_methods>`.
+
 -------------------
 Topological methods
 -------------------
