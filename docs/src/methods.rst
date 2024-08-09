@@ -22,6 +22,8 @@ The shortest path is an algorithm for finding one or multiple paths that minimiz
 
 **Edge weights:** 0 ≤ w(e) ≤ 1
 
+**Functions:** See API documentation for :ref:`Topological methods <api-topological>`.
+
 
 Sign consistency
 ----------------
@@ -37,6 +39,8 @@ The sign consistency method checks for sign consistency between the nodes in a g
 **Node weights:** w(v) ∈ {1, −1}
 
 **Edge weights:** w(e) ∈ {1, −1}
+
+**Functions:** See API documentation for :ref:`Topological methods <api-topological>`.
 
 
 Reachability filter
@@ -54,6 +58,8 @@ The reachability filter generates a network consisting of all reachable nodes fr
 
 **Edge weights:** w(e) ∈ {1}
 
+**Functions:** See API documentation for :ref:`Topological methods <api-topological>`.
+
 
 All paths
 ---------
@@ -70,10 +76,11 @@ All paths find all possible connections between a set of source nodes and a set 
 
 **Edge weights:** w(e) ∈ {1}
 
+**Functions:** See API documentation for :ref:`Topological methods <api-topological>`.
+
 --------------------------------------
 Random walk with restart (RWR) methods
 --------------------------------------
-
 
 Page rank
 ---------
@@ -90,6 +97,8 @@ The Page rank algorithm initially calculates a weight for each node in a graph b
 
 **Edge weights:** w(e) ∈ {1}
 
+**Functions:** See API documentation for :ref:`RWR methods <api-rwr>`.
+
 ----------------------------
 Recursive enrichment methods
 ----------------------------
@@ -105,6 +114,8 @@ MOON (meta-footprint method) performs iterative footprint activity scoring and n
 
 **Edge weights:** w(e) ∈ ℝ
 
+**Functions:** See API documentation for :ref:`MOON <api-moon>`.
+
 -----------------
 ILP-based methods
 -----------------
@@ -119,3 +130,5 @@ CORNETO (Constraint-based Optimization for the Reconstruction of NETworks from O
 **Node weights:** w(v) ∈ ℝ
 
 **Edge weights:** w(e) ∈ {1, −1}
+
+**Functions:** See API documentation for :ref:`CORNETO <api-corneto>`.
