@@ -19,10 +19,10 @@ See :ref:`PANACEA <details-panacea>`.
 (e.g KO, KD, drug perturbation), but also of other origins of perturbation that are not directly targeted by the perturbation agent (e.g a drug offtarget).
 
 .. image:: ./_static/nc_offtarget.png
-   :alt: PPR
+   :alt: Evaluation based on offtarget recovery
    :width: 1000px
 
-**Performance metric:** 
+**Performance metric:** Share (%) of offtargets recovered in the solution network
     
 .. note::
     Methods that recover a higher share of offtargets, compared to a random control, will be more successful in contextualising the perturbation, since the method incorporates
@@ -42,7 +42,11 @@ See :ref:`DecryptM <details-decryptm>`.
 **Assumption**: In this setting, we assume that, in a perturbational context, those elements in a network that respond quicker to a perturbation (have a lower EC50) will be more
 important in the contextualisation of said perturbation
 
-**Performance metric:** Average EC50 values for nodes included and excluded of the solution network.
+**Performance metric:** EC50 values for nodes included and excluded of the solution network.
+
+.. image:: ./_static/nc_ec50.png
+   :alt: Evaluation based on ensitivity to drug perturbation
+   :width: 1000px
     
 .. note::
     Methods producing result networks whose nodes have a low average EC50 (compared to nodes not included in the network) are better performers that those producing network 
@@ -63,6 +67,10 @@ See :ref:`PANACEA <details-decryptm>`.
 (for example, a specific pathway will be overrepresented if said pathway is perturbed, or is especially active/inactive in a given profile)
 
 **Performance metric:** rank of the selected gene set among all gene sets, according to ORA score
+
+.. image:: ./_static/nc_pathway.png
+   :alt: Evaluation based on pathway enrichment
+   :width: 1000px
     
 .. note::
     Having preselected a gene set of interest, the methods producing networks in which the said geneset is ranked high, according to their ORA score, against others, will have a better performance. 
