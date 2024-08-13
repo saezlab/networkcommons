@@ -92,11 +92,14 @@ See :ref:`CPTAC <details-cptac>`.
 * **Transcriptomics**: we performed TF enrichment analysis, in order to get the TFs that are dysregulated in the tumor samples compared to the healthy control.
 * **Phosphoproteomics**: we performed kinase activity estimation and then evaluate the level of dysregulation in the resulting subnetwork.
 
-**Performance metric:** share (%) of nodes that are dysregulated according to their kinase activity score
+**Performance metric:** difference between kinase activity score in the solution network and the overall PKN.
 
+.. image:: ./_static/nc_multiomics.png
+   :alt: Evaluation based on ensitivity to drug perturbation
+   :width: 1000px
 
 .. note::
-    Methods whose result subnetworks contain a higher share of dysregulated elements compared to the overall phosphoproteome, will show better performance.
+    Methods whose result subnetworks have an average higher kinase activity score, compared to the overall PKN, will be better performers.
 
 **Example:** :doc:`Vignette 4: Recovery of dysregulated kinases in response to cancer mutations <vignettes/4_cptac_phosphoactivity>`
 
