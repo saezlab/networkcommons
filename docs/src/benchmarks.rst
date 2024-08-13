@@ -18,6 +18,10 @@ See :ref:`PANACEA <details-panacea>`.
 **Assumption**: In this setting, we assume that, in a perturbational context, the effects that are measured via omics data is not only a product of the perturbation origin 
 (e.g KO, KD, drug perturbation), but also of other origins of perturbation that are not directly targeted by the perturbation agent (e.g a drug offtarget).
 
+.. image:: ./_static/nc_offtarget.png
+   :alt: PPR
+   :width: 1000px
+
 **Performance metric:** 
     
 .. note::
