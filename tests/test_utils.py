@@ -4,7 +4,7 @@ import numpy as np
 import corneto as cn
 from unittest.mock import patch
 import pytest
-import networkcommons._utils as utils
+import networkcommons.utils as utils
 import pygraphviz as pgv
 
 
@@ -107,7 +107,7 @@ def test_to_networkx_when_not_supported():
 
 
 def test_read_network_from_file():
-    with patch('pandas.read_csv') as mock_read_csv, patch('networkcommons._utils.network_from_df') as mock_network_from_df:
+    with patch('pandas.read_csv') as mock_read_csv, patch('networkcommons.utils.network_from_df') as mock_network_from_df:
         mock_read_csv.return_value = pd.DataFrame({'source': ['a'], 'target': ['b']})
         utils.read_network_from_file('dummy_path')
         mock_network_from_df.assert_called_once()
