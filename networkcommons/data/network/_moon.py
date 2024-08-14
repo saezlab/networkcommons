@@ -23,7 +23,7 @@ import lazy_import
 import numpy as np
 import pandas as pd
 
-from networkcommons import _utils
+from networkcommons import utils
 from . import _omnipath
 from . import _liana
 

@@ -32,7 +32,7 @@ __all__ = [
 import networkx as nx
 import numpy as np
 
-from networkcommons import _utils
+from networkcommons import utils
 from networkcommons._session import session as _session
 
 from collections import defaultdict, Counter
@@ -75,7 +75,7 @@ def run_shortest_paths(network, source_dict, target_dict, verbose=False):
                 # _session.log_traceback(console = verbose)
                 pass
 
-    subnetwork = _utils.get_subnetwork(network, shortest_paths_res)
+    subnetwork = utils.get_subnetwork(network, shortest_paths_res)
 
     return subnetwork, shortest_paths_res
 
@@ -148,7 +148,7 @@ def run_sign_consistency(network, paths, source_dict, target_dict=None):
             if np.sign(source_sign * product_sign) == np.sign(target_sign):
                 sign_consistency_res.append(path)
 
-    subnetwork = _utils.get_subnetwork(network, sign_consistency_res)
+    subnetwork = utils.get_subnetwork(network, sign_consistency_res)
 
     if not target_dict:
         return subnetwork, sign_consistency_res, inferred_target_sign
@@ -215,7 +215,7 @@ def run_all_paths(network,
             # _session.log_traceback(console = verbose)
             pass
 
-    subnetwork = _utils.get_subnetwork(network, all_paths_res)
+    subnetwork = utils.get_subnetwork(network, all_paths_res)
 
     return subnetwork, all_paths_res
 

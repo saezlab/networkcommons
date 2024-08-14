@@ -2,13 +2,17 @@
 Data
 ####
 NetworkCommons provides a collection of omics datasets and prior knowledge resources. The datasets are available in the form of files that can be downloaded and used for further analysis. The prior knowledge resources are available in the form of networks (either Network objects or pd.DataFrames).
-All the data can be accessed via the NetworkCommons API.
+All the data can be accessed via the NetworkCommons API. 
+If you want to contribute with your own, please check our :doc:`Contribution guidelines <guidelines/guide_1_data>`.
+
+.. _details-omics:
 
 ----------
 Omics data
 ----------
 Below, we provide a list of all the omics datasets currently available in NetworkCommons. For each data, we provide a link to the original publication, a description, processing (if applicable), and a link to the data location.
 
+.. _details-decryptm:
 
 DecryptM
 --------
@@ -26,6 +30,7 @@ Networkcommons contains the files containing, per phosphosite, EC50 values obtai
 
 **Functions:** See API documentation for :ref:`DecryptM <api-decryptm>`.
 
+.. _details-panacea:
 
 PANACEA
 -------
@@ -49,6 +54,7 @@ in `decoupler <https://doi.org/10.1093/bioadv/vbac016>`_.
 
 **Functions:** See API documentation for :ref:`PANACEA <api-panacea>`.
 
+.. _details-cptac:
 
 CPTAC
 -----
@@ -67,6 +73,8 @@ can be found in the STAR Methods of `'Proteogenomic Data and Resources for Pan-C
 
 **Functions:** See API documentation for :ref:`CPTAC <api-cptac>`.
 
+.. _details-nci60:
+
 NCI60
 -----
 
@@ -82,10 +90,14 @@ NCI60
 
 **Functions:** See API documentation for :ref:`NCI60 <api-nci60>`.
 
+.. _details-pk:
+
 ---------------
 Prior Knowledge
 ---------------
 Below, we provide a list of all the prior knowledge resources currently available in NetworkCommons. For each resource, we provide a description and a link to the original publication.
+
+.. _details-omnipath:
 
 OmniPath
 --------
@@ -101,6 +113,8 @@ Our aim is to expand the API to more data sources within OmniPath. For more info
 
 **Functions:** See API documentation for :ref:`Prior knowledge <api-pk>`.
 
+.. _details-liana:
+
 Liana
 -----
 
@@ -113,6 +127,8 @@ Liana
 **Detailed Description:** The Prior Knowledge from Liana contains ligand-receptor interactions. For more information, please refer to the `Liana documentation page <https://liana-py.readthedocs.io/en/latest/>`_.
 
 **Functions:** See API documentation for :ref:`Prior knowledge <api-pk>`.
+
+.. _details-phosphositeplus:
 
 PhosphositePlus 
 ---------------
