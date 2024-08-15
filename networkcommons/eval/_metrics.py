@@ -270,6 +270,7 @@ def get_ec50_evaluation(network, ec50_dict):
     return pd.DataFrame({
         'avg_EC50_in': np.mean(ec50_values_in),
         'avg_EC50_out': np.mean(ec50_values_out),
+        'diff_EC50': np.mean(ec50_values_in) - np.mean(ec50_values_out),
         'nodes_with_EC50': len(ec50_values_in),
         'coverage': coverage
     }, index=[0])
