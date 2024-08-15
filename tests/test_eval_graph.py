@@ -66,6 +66,7 @@ def test_all_nodes_in_ec50_dict():
     expected_result = pd.DataFrame({
         'avg_EC50_in': [10.0],
         'avg_EC50_out': [np.nan],
+        'diff_EC50': [np.nan],
         'nodes_with_EC50': [3],
         'coverage': [100.0]
     })
@@ -79,6 +80,7 @@ def test_some_nodes_in_ec50_dict():
     expected_result = pd.DataFrame({
         'avg_EC50_in': [7.5],
         'avg_EC50_out': [20.0],
+        'diff_EC50': [-12.5],
         'nodes_with_EC50': [2],
         'coverage': [2 / 3 * 100]
     })
@@ -92,6 +94,7 @@ def test_no_nodes_in_ec50_dict():
     expected_result = pd.DataFrame({
         'avg_EC50_in': [np.nan],
         'avg_EC50_out': [22.5],
+        'diff_EC50': [np.nan],
         'nodes_with_EC50': [0],
         'coverage': [0.0]
     })
@@ -105,6 +108,7 @@ def test_empty_network():
     expected_result = pd.DataFrame({
         'avg_EC50_in': [np.nan],
         'avg_EC50_out': [7.5],
+        'diff_EC50': [np.nan],
         'nodes_with_EC50': [0],
         'coverage': [np.nan]
     })
