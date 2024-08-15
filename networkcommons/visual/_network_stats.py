@@ -169,11 +169,11 @@ def plot_scatter(df,
     # Plot
     plt.figure(figsize=figsize)
     sns.scatterplot(data=summary_df, x=x_col, y=y_col, size=size_col, hue=hue_col, style=style_col, sizes=(50, 200))
-    
+
     plt.xlabel(xlabel)
     plt.ylabel(ylabel)
     plt.title(title)
-    plt.legend()
+    plt.legend(loc='upper left', bbox_to_anchor=(1, 1))
     plt.show()
 
 
