@@ -53,8 +53,11 @@ def test_get_connected_targets(network):
 
 def test_get_recovered_offtargets(network):
     offtargets = ['B', 'D', 'W']
-    assert _metrics.get_recovered_offtargets(network, offtargets) == 2
-    assert _metrics.get_recovered_offtargets(network, offtargets, percent=True) == 2 / 3 * 100
+    result = _metrics.get_recovered_offtargets(network, offtargets)
+    assert isinstance(result, pd.DataFrame)
+    assert result.shape == (1, 2)
+    assert result['n_offtargets'][0] == 2
+    assert result['perc_offtargets'][0] == 2 / 3 * 100
 
 
 def test_all_nodes_in_ec50_dict():
