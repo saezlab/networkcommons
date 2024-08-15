@@ -20,7 +20,7 @@ resource.
 
 from __future__ import annotations
 
-__all__ = ['panacea_experiments', 'panacea_datatypes', 'panacea_tables']
+__all__ = ['panacea_experiments', 'panacea_datatypes', 'panacea_tables', 'panacea_gold_standard']
 
 import pandas as pd
 import os
@@ -137,3 +137,29 @@ def panacea_tables(cell_line=None, drug=None, type='raw'):
 
     else:
         raise ValueError(f'Unknown data type: {type}.')
+
+
+def panacea_gold_standard(update: bool = False) -> pd.DataFrame:
+    """
+    Retrieves the gold standard (primary targets and offtargets linked to drugs) 
+    used in Panacea from the server. To be used in the offtarget evaluation strategy.
+
+    Returns:
+        network (pandas.DataFrame): gold standard network with
+        cmpd, cmpd_id, target and rank
+    """
+    path = os.path.join(_conf.get('pickle_dir'), 'panacea_gold_standard.pickle')
+
+    if update or not os.path.exists(path):
+
+        baseurl = urllib.parse.urljoin(_common._baseurl(), 'panacea')
+
+        file_legend = pd.read_csv(baseurl + '/panacea_gold_standard.csv')
+
+        file_legend.to_pickle(path)
+
+    else:
+
+        file_legend = pd.read_pickle(path)
+
+    return file_legend

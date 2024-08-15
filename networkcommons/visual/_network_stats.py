@@ -161,7 +161,7 @@ def plot_scatter(df,
     if numeric_cols is None:
         numeric_cols = df.select_dtypes(include=['number']).columns
 
-    if summarise_df:
+    if summarise_df and style_col is not None:
         summary_df = df.groupby([hue_col, style_col])[numeric_cols].mean().reset_index()
     else:
         summary_df = df
@@ -169,11 +169,11 @@ def plot_scatter(df,
     # Plot
     plt.figure(figsize=figsize)
     sns.scatterplot(data=summary_df, x=x_col, y=y_col, size=size_col, hue=hue_col, style=style_col, sizes=(50, 200))
-    
+
     plt.xlabel(xlabel)
     plt.ylabel(ylabel)
     plt.title(title)
-    plt.legend()
+    plt.legend(loc='upper left', bbox_to_anchor=(1, 1))
     plt.show()
 
 
