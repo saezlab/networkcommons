@@ -161,7 +161,7 @@ def plot_scatter(df,
     if numeric_cols is None:
         numeric_cols = df.select_dtypes(include=['number']).columns
 
-    if summarise_df:
+    if summarise_df and style_col is not None:
         summary_df = df.groupby([hue_col, style_col])[numeric_cols].mean().reset_index()
     else:
         summary_df = df
