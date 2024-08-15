@@ -32,7 +32,7 @@ NetworkCommons: Table of Contents
    :maxdepth: 2
    :caption: Vignettes
 
-   vignettes/1_simple_example
+   vignettes/1_offtarget_panacea
    vignettes/2_moon
    vignettes/3_evaluation_decryptm
    vignettes/4_cptac_phosphoactivity
