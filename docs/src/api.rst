@@ -146,6 +146,7 @@ PANACEA
     data.omics.panacea_experiments
     data.omics.panacea_datatypes
     data.omics.panacea_tables
+    data.omics.panacea_gold_standard
 
 .. _api-scperturb:
 
