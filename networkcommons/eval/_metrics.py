@@ -41,7 +41,7 @@ import networkx as nx
 import decoupler as dc
 import numpy as np
 
-import networkcommons._utils as utils
+import networkcommons.utils as utils
 
 import random
 
@@ -189,7 +189,7 @@ def get_graph_metrics(network, target_dict):
 
         metrics.reset_index(inplace=True, drop=True)
 
-    elif isinstance(network, (nx.Graph, nx.DiGraph)):
+    elif isinstance(network, nx.DiGraph):
         metrics = pd.DataFrame({
             'Number of nodes': get_number_nodes(network),
             'Number of edges': get_number_edges(network),
@@ -198,6 +198,8 @@ def get_graph_metrics(network, target_dict):
             'Mean closeness': get_mean_closeness(network),
             'Connected targets': get_connected_targets(network, target_dict)
         }, index=[0])
+    else:
+        raise TypeError("The network must be a networkx graph or a dictionary of networkx graphs.")
 
     return metrics
 

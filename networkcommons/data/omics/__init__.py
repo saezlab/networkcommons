@@ -22,5 +22,5 @@ from ._decryptm import *
 from ._deseq2 import *
 from ._panacea import *
 from ._scperturb import *
-from ._moon import *
+from ._nci60 import *
 from ._cptac import *

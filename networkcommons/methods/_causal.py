@@ -20,8 +20,6 @@ Causal network inference methods.
 from __future__ import annotations
 
 __all__ = [
-    'to_cornetograph',
-    'to_networkx',
     'run_corneto_carnival',
 ]
 
@@ -32,7 +30,7 @@ import networkx as nx
 import corneto as cn
 import corneto.contrib.networkx as cn_nx
 
-from .. import _utils
+from .. import utils
 
 
 def run_corneto_carnival(network,
@@ -55,7 +53,7 @@ def run_corneto_carnival(network,
         nx.Graph: The subnetwork containing the paths found by CARNIVAL.
         list: A list containing the paths found by CARNIVAL.
     """
-    corneto_net = _utils.to_cornetograph(network)
+    corneto_net = utils.to_cornetograph(network)
 
     problem, graph = cn.methods.runVanillaCarnival(
         perturbations=source_dict,
@@ -70,7 +68,7 @@ def run_corneto_carnival(network,
         cn.methods.carnival.get_selected_edges(problem, graph),
     )
 
-    network_nx = _utils.to_networkx(network_sol, skip_unsupported_edges=True)
+    network_nx = utils.to_networkx(network_sol, skip_unsupported_edges=True)
 
     network_nx.remove_nodes_from(['_s', '_pert_c0', '_meas_c0'])
 

@@ -38,7 +38,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
 from sklearn import decomposition as sklearn_decomp
-from networkcommons._utils import handle_missing_values
+from networkcommons.utils import handle_missing_values
 
 
 def plot_density(df,

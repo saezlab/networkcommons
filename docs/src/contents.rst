@@ -10,6 +10,23 @@ NetworkCommons: Table of Contents
    installation
    api
 
+.. toctree::
+   :maxdepth: 2
+   :caption: Details
+   
+   datasets
+   methods
+   benchmarks
+
+
+.. toctree::
+   :maxdepth: 2
+   :caption: Contribution guidelines
+
+   guidelines/guide_1_data
+   guidelines/guide_2_methods
+   guidelines/guide_3_eval
+
 
 .. toctree::
    :maxdepth: 2

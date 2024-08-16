@@ -39,7 +39,7 @@ from ._metadata import __author__, __version__
 from ._session import log, _log, session
 from ._conf import config, setup
 
-from . import _utils as utils
+from . import utils as utils
 
 
 _MODULES = [

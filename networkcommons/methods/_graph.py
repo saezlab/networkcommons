@@ -32,7 +32,7 @@ __all__ = [
 import networkx as nx
 import numpy as np
 
-from networkcommons import _utils
+from networkcommons import utils
 from networkcommons._session import session as _session
 
 from collections import defaultdict, Counter
@@ -75,7 +75,7 @@ def run_shortest_paths(network, source_dict, target_dict, verbose=False):
                 # _session.log_traceback(console = verbose)
                 pass
 
-    subnetwork = _utils.get_subnetwork(network, shortest_paths_res)
+    subnetwork = utils.get_subnetwork(network, shortest_paths_res)
 
     return subnetwork, shortest_paths_res
 
@@ -148,7 +148,7 @@ def run_sign_consistency(network, paths, source_dict, target_dict=None):
             if np.sign(source_sign * product_sign) == np.sign(target_sign):
                 sign_consistency_res.append(path)
 
-    subnetwork = _utils.get_subnetwork(network, sign_consistency_res)
+    subnetwork = utils.get_subnetwork(network, sign_consistency_res)
 
     if not target_dict:
         return subnetwork, sign_consistency_res, inferred_target_sign
@@ -215,7 +215,7 @@ def run_all_paths(network,
             # _session.log_traceback(console = verbose)
             pass
 
-    subnetwork = _utils.get_subnetwork(network, all_paths_res)
+    subnetwork = utils.get_subnetwork(network, all_paths_res)
 
     return subnetwork, all_paths_res
 
@@ -277,11 +277,14 @@ def add_pagerank_scores(network,
 
     if personalize_for == "source":
         personalized_prob = {n: 1/len(sources) for n in sources}
+        attribute_name = 'pagerank_from_sources'
     elif personalize_for == "target":
         personalized_prob = {n: 1/len(targets) for n in targets}
         network = network.reverse()
+        attribute_name = 'pagerank_from_targets'
     else:
         personalized_prob = None
+        attribute_name = 'pagerank'
 
     pagerank = nx.pagerank(network,
                            alpha=alpha,
@@ -295,12 +298,6 @@ def add_pagerank_scores(network,
         network = network.reverse()
 
     for node, pr_value in pagerank.items():
-        if personalize_for == "target":
-            attribute_name = 'pagerank_from_targets'
-        elif personalize_for == "source":
-            attribute_name = 'pagerank_from_sources'
-        elif personalize_for is None:
-            attribute_name = 'pagerank'
         network.nodes[node][attribute_name] = pr_value
 
     return network
@@ -321,19 +318,19 @@ def compute_ppr_overlap(network, percentage=20):
     """
     # Sorting nodes by PageRank score from sources and targets
     try:
-        sorted_nodes_sources = sorted(network.nodes(data=True),
-                                      key=lambda x: x[1].get(
-                                          'pagerank_from_sources'
-                                          ),
-                                      reverse=True)
-        sorted_nodes_targets = sorted(network.nodes(data=True),
-                                      key=lambda x: x[1].get(
-                                          'pagerank_from_targets'
-                                          ),
-                                      reverse=True)
+        nodes_sources = [(node, data['pagerank_from_sources']) for node, data in network.nodes(data=True)]
+        nodes_targets = [(node, data['pagerank_from_targets']) for node, data in network.nodes(data=True)]
+
     except KeyError:
-        raise KeyError("Please run the add_pagerank_scores method first with\
+        raise KeyError("Please run the add_pagerank_scores method first with \
                         personalization options.")
+    
+    sorted_nodes_sources = sorted(nodes_sources,
+                                key=lambda x: x[1],
+                                reverse=True)
+    sorted_nodes_targets = sorted(nodes_targets,
+                                key=lambda x: x[1],
+                                reverse=True)
 
     # Calculating the number of nodes to keep
     num_nodes_to_keep_sources = int(

@@ -21,18 +21,13 @@ from __future__ import annotations
 
 __all__ = ['deseq2']
 
-from typing import TYPE_CHECKING
 import multiprocessing
-import importlib
 
-if TYPE_CHECKING:
+import pandas as pd
 
-    import pandas as pd
-
-import lazy_import
 from pypath_common import _misc as _ppcommon
 
-#for _mod in ('default_inference', 'dds', 'ds'):
+# for _mod in ('default_inference', 'dds', 'ds'):
 
 #    globals()[f'_deseq2_{_mod}'] = lazy_import.lazy_module(f'pydeseq2.{_mod}')
 
@@ -50,8 +45,7 @@ def deseq2(
         ref_group: str,
         sample_col: str = 'sample_ID',
         feature_col: str = 'gene_symbol',
-        covariates: list | None = None,
-        round_values: bool = False
+        covariates: list | None = None
     ) -> pd.DataFrame:
     """
     Runs DESeq2 analysis on the given counts and metadata.
@@ -67,8 +61,6 @@ def deseq2(
             Defaults to 'gene_symbol'.
         covariates (list, optional): List of covariates to include in the analysis.
             Defaults to None.
-        round_values (bool, optional): Whether to round the counts to integers. Otherwise, the
-            counts will be left as floats and the function will fail. Defaults to False.
 
 
     Returns:
@@ -85,11 +77,6 @@ def deseq2(
         test_group = test_group.replace('_', '-')
     if '_' in ref_group:
         ref_group = ref_group.replace('_', '-')
-
-    if round_values and not counts.select_dtypes(include=['float64', 'float32']).empty:
-        counts = counts.round(0)
-        _log('Float values found. Rounded counts to integers.')
-
 
     n_cpus = _conf.get('cpu_count', multiprocessing.cpu_count())
     inference = _deseq2_default_inference.DefaultInference(n_cpus = n_cpus)

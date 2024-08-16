@@ -4,24 +4,46 @@ omics:
     decryptm:
       name: DecryptM
       description: Drug perturbation proteomics and phosphoproteomics data
+      publication_link: https://doi.org/10.1126/science.ade3925
+      detailed_description: >-
+        This dataset contains the profiling of 31 cancer drugs in 13 human cancer
+        cell line models resulted in 1.8 million dose-response curves, including
+        47,502 regulated phosphopeptides, 7316 ubiquitinylated peptides,
+        and 546 regulated acetylated peptides.
       path: decryptm/{experiment}/{data_type}/{fname}
     panacea:
       name: Panacea
       description: Pancancer Analysis of Chemical Entity Activity RNA-Seq data
-      path: panacea/panacea__{table}data.tsv
+      publication_link: https://doi.org/10.1016/j.xcrm.2021.100492
+      detailed_description: >-
+        PANACEA contains dose-response and perturbational profiles for 32
+        kinase inhibitors in 11 cancer cell lines, in addition to a DMSO control.
+        Originally, this resource served as the basis for a DREAM Challenge
+        assessing the accuracy and sensitivity of computational algorithms for
+        de novo drug polypharmacology predictions.
+      path: panacea/panacea__{table}.tsv
     test:
       name: Test data
       description: Small RNA-Seq data for unit tests
+      publication_link: NA
+      detailed_description: >-
+        This is a test dataset containing small RNA-Seq data.
+        It is used for unit tests.
       path: unit_test/test__{table}data.tsv
-    moon:
-      name: MOON
-      description: Database files for running MOON
-      path: moon/{table}_input.tsv
-    cosmos:
-      name: COSMOS
-      description: Database files for running COSMOS (MetaPKN)
-      path: moon/net/meta_network.sif
     CPTAC:
       name: CPTAC
       description: Clinical Proteomic Tumor Analysis Consortium data
+      publication_link: https://doi.org/10.1158/2159-8290.CD-13-0219
+      detailed_description: >-
+        This dataset contains data from the Clinical Proteomic Tumor Analysis Consortium.
+        It includes various cancer types and proteomic data.
       path: CPTAC/{data_type}/{cancer_type}_{fname}.txt
+    NCI60:
+      name: NCI60
+      description: NCI-60 cell line data
+      publication_link: https://doi.org/10.1038/nrc1951
+      detailed_description: >-
+        This dataset contains data from the NCI-60 cell line panel.
+        It includes three files: TF activities from transcriptomics data,
+        metabolite abundances and gene reads.
+      path: NCI60/{cell_line}/{cell_line}__{data_type}.tsv

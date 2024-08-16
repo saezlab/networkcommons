@@ -43,18 +43,20 @@ def _datasets() -> dict[str, dict]:
     return _module_data('datasets').get('omics', {})
 
 
-def datasets() -> dict[str, str]:
+def datasets() -> pd.DataFrame:
     """
     Built-in omics datasets.
 
     Returns:
-        A dict with dataset labels as keys and descriptions as values.
+        A DataFrame with dataset details.
     """
+    data = _datasets().get('datasets', {})
+    df = pd.DataFrame.from_dict(data, orient='index')
+    pd.set_option('display.max_colwidth', None)
 
-    return {
-        k: v['description']
-        for k, v in _datasets().get('datasets', {}).items()
-    }
+    df = df[df.index != 'test']  # Exclude the 'test' dataset
+
+    return df[['name', 'description', 'publication_link', 'detailed_description']]
 
 
 def _baseurl() -> str:
@@ -69,11 +71,6 @@ def _commons_url(dataset: str, **kwargs) -> str:
     path = dsets['datasets'][dataset]['path'].format(**kwargs)
 
     return urllib.parse.urljoin(baseurl, path)
-
-
-def _dataset(key: str) -> dict | None:
-
-    return _datasets()['datasets'].get(key.lower(), None)
 
 
 def _requests_session() -> requests.Session:

@@ -33,7 +33,7 @@ cn = lazy_import.lazy_import('corneto')
 from networkcommons.data import _network as _universe
 from networkcommons.noi._noi import Noi
 
-from networkcommons import _utils
+from networkcommons import utils
 
 
 class Network:
@@ -92,21 +92,21 @@ class Network:
 
     def _from_networkx(self):
 
-        self._co = _utils.to_cornetograph(self.universe)
+        self._co = utils.to_cornetograph(self.universe)
         self._attrs_from_corneto()
 
     
     def _from_pandas(self):
 
-        nxgraph = _utils.network_from_df(self.universe)
-        self._co = _utils.to_cornetograph(nxgraph)
+        nxgraph = utils.network_from_df(self.universe)
+        self._co = utils.to_cornetograph(nxgraph)
         self._attrs_from_corneto()
 
 
     def _attrs_from_corneto(self):
 
-        self._nodes = _utils.node_attrs_from_corneto(self._co)
-        self._edges = _utils.edge_attrs_from_corneto(self._co)
+        self._nodes = utils.node_attrs_from_corneto(self._co)
+        self._edges = utils.edge_attrs_from_corneto(self._co)
 
 
     def as_igraph(self, attrs: str | list[str]) -> "igraph.Graph":
