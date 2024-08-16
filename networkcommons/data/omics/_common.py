@@ -33,8 +33,6 @@ import requests
 import bs4
 import pandas as pd
 
-import biomart
-
 from networkcommons import _conf
 from networkcommons._session import _log
 from .._builtin import _module_data
@@ -235,6 +233,8 @@ def get_ensembl_mappings(update: bool = False) -> pd.DataFrame:
             - ensembl_peptide_id: Ensembl peptide ID
     """
 
+    import biomart
+
     path = os.path.join(_conf.get('pickle_dir'), 'ensembl_map.pickle')
 
     if update or not os.path.exists(path):
@@ -278,7 +278,7 @@ def get_ensembl_mappings(update: bool = False) -> pd.DataFrame:
 
 def convert_ensembl_to_gene_symbol(dataframe, equivalence_df, column_name='idx', summarisation=max):
     """
-    Converts Ensembl IDs to gene symbols using an equivalence dataframe, handles partial matches, 
+    Converts Ensembl IDs to gene symbols using an equivalence dataframe, handles partial matches,
     and summarizes duplicated entries by taking the maximum value.
 
     Parameters:
