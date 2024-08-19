@@ -26,14 +26,38 @@ from __future__ import annotations
 
 __all__ = ['Network']
 
+from typing import Iterable
+
 import lazy_import
 import pandas as pd
 cn = lazy_import.lazy_import('corneto')
+
+from pypath_common import _misc
+from pypath_common import _constants
 
 from networkcommons.data import _network as _universe
 from networkcommons.noi._noi import Noi
 
 from networkcommons import utils
+
+from . import _bootstrap
+from . import _constants as _nconstants
+
+
+class NetworkBase:
+
+
+    def __init__(
+            self,
+            edges: Iterable[dict | tuple],
+            nodes: list[str | dict] | dict[dict],
+            node_key: str | tuple[str] | None,
+            source_key: str = 'source',
+            target_key: str = 'target',
+            edge_attrs: list[str] | None = None,
+        ):
+
+        pass
 
 
 class Network:
@@ -95,7 +119,7 @@ class Network:
         self._co = utils.to_cornetograph(self.universe)
         self._attrs_from_corneto()
 
-    
+
     def _from_pandas(self):
 
         nxgraph = utils.network_from_df(self.universe)
