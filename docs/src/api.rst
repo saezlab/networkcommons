@@ -237,6 +237,8 @@ Visualization
     visual.NetworkXVisualizer
     visual.YFilesVisualizer
     visual.get_styles
+    visual.set_style_attributes
+    visual.merge_styles
     visual.get_comparison_color
     visual.get_edge_color
     visual.update_node_property
@@ -247,7 +249,6 @@ Visualization
     visual.build_ma_plot
     visual.plot_pca
     visual.build_heatmap_with_tree
-    visual.visualize_graph_simple
     visual.lollipop_plot
     visual.create_rank_heatmap
     visual.plot_density

@@ -15,6 +15,9 @@
 
 """
 Plots for omics data exploration.
+
+This module provides functions for creating various plots to visualize and explore omics data,
+including density plots, volcano plots, MA plots, PCA plots, and heatmaps with hierarchical clustering.
 """
 
 from __future__ import annotations
@@ -23,8 +26,7 @@ from sklearn.decomposition import PCA
 import matplotlib.pyplot as plt
 import seaborn as sns
 
-
-__all__  = [
+__all__ = [
     'build_volcano_plot',
     'build_ma_plot',
     'plot_pca',
@@ -33,49 +35,45 @@ __all__  = [
 ]
 
 import lazy_import
-import pandas as pd
 import numpy as np
-import matplotlib.pyplot as plt
-import seaborn as sns
-from sklearn import decomposition as sklearn_decomp
 from networkcommons.utils import handle_missing_values
 
 
-def plot_density(df,
-                 gene_ids,
-                 metadata=None,
-                 id_column='idx',
-                 sample_id_column='sample_ID',
-                 group_column='group',
-                 quantiles=[10, 90],
-                 title='Density Plot of Intensity Values',
-                 xlabel='Intensity',
-                 ylabel='Density'):
+def plot_density(df: pd.DataFrame,
+                 gene_ids: list[str],
+                 metadata: pd.DataFrame = None,
+                 id_column: str = 'idx',
+                 sample_id_column: str = 'sample_ID',
+                 group_column: str = 'group',
+                 quantiles: list[int] = [10, 90],
+                 title: str = 'Density Plot of Intensity Values',
+                 xlabel: str = 'Intensity',
+                 ylabel: str = 'Density'):
     """
-    Plots density of intensity values for specified genes, including mean and quantile lines, and separates distributions by groups if metadata is provided.
-    Each gene is displayed in a separate subplot.
+    Plots density of intensity values for specified genes, including mean and quantile lines.
+    Distributions can be separated by groups if metadata is provided. Each gene is displayed in a separate subplot.
 
     Args:
         df (pd.DataFrame): Input DataFrame containing gene data.
         gene_ids (list of str): List of specific genes to highlight.
-        metadata (pd.DataFrame): Optional DataFrame containing metadata (sample_ID, group).
-        id_column (str): Column name for identifying the gene.
-        sample_id_column (str): Column name in metadata for sample IDs.
-        group_column (str): Column name in metadata for groups.
-        quantiles (list of int): List of quantiles to plot.
-        title (str): Title of the plot.
-        xlabel (str): Label for the x-axis.
-        ylabel (str): Label for the y-axis.
+        metadata (pd.DataFrame, optional): Optional DataFrame containing metadata (sample_ID, group).
+        id_column (str, optional): Column name for identifying the gene. Defaults to 'idx'.
+        sample_id_column (str, optional): Column name in metadata for sample IDs. Defaults to 'sample_ID'.
+        group_column (str, optional): Column name in metadata for groups. Defaults to 'group'.
+        quantiles (list of int, optional): List of quantiles to plot. Defaults to [10, 90].
+        title (str, optional): Title of the plot. Defaults to 'Density Plot of Intensity Values'.
+        xlabel (str, optional): Label for the x-axis. Defaults to 'Intensity'.
+        ylabel (str, optional): Label for the y-axis. Defaults to 'Density'.
 
     Returns:
         None
     """
     num_genes = len(gene_ids)
     num_cols = 3
-    num_rows = (num_genes + num_cols - 1) // num_cols  # Calculate the number of rows needed
+    num_rows = (num_genes + num_cols - 1) // num_cols
 
     fig, axes = plt.subplots(num_rows, num_cols, figsize=(15, 5 * num_rows))
-    axes = axes.flatten()  # Flatten the axes array for easy iteration
+    axes = axes.flatten()
 
     for idx, gene_id in enumerate(gene_ids):
         specific_gene = df[df[id_column].str.contains(gene_id, na=False)]
@@ -93,30 +91,31 @@ def plot_density(df,
                     group_values = merged_df[merged_df[group_column] == group]['intensity']
                     group_values.plot(kind='density', ax=ax, label=f'Group: {group}')
 
-                    # Mean value line for group
                     mean_value = group_values.mean()
-                    ax.axvline(mean_value, linestyle='--', linewidth=1, label=f'Group {group} Mean: {np.round(mean_value, 2)}')
+                    ax.axvline(mean_value, linestyle='--', linewidth=1,
+                               label=f'Group {group} Mean: {np.round(mean_value, 2)}')
 
                     for quantile in quantiles:
                         q = np.percentile(group_values, quantile)
-                        ax.axvline(q, linestyle=':', linewidth=1, label=f'Group {group} Q{quantile}: {np.round(q, 2)}')
+                        ax.axvline(q, linestyle=':', linewidth=1,
+                                   label=f'Group {group} Q{quantile}: {np.round(q, 2)}')
             else:
                 values.plot(kind='density', ax=ax, label='Density')
 
-                # Mean value line
                 mean_value = values.mean()
-                ax.axvline(mean_value, linestyle='--', linewidth=1, label=f'Mean: {np.round(mean_value, 2)}')
+                ax.axvline(mean_value, linestyle='--', linewidth=1,
+                           label=f'Mean: {np.round(mean_value, 2)}')
 
                 for quantile in quantiles:
                     q = np.percentile(values, quantile)
-                    ax.axvline(q, linestyle=':', linewidth=1, label=f'Q{quantile}: {np.round(q, 2)}')
+                    ax.axvline(q, linestyle=':', linewidth=1,
+                               label=f'Q{quantile}: {np.round(q, 2)}')
 
             ax.set_title(f'Gene: {gene_id}')
             ax.set_xlabel(xlabel)
             ax.set_ylabel(ylabel)
             ax.legend(loc='upper left', bbox_to_anchor=(1, 1))
 
-    # Remove any unused subplots
     for i in range(len(gene_ids), len(axes)):
         fig.delaxes(axes[i])
 
@@ -127,7 +126,7 @@ def plot_density(df,
 
 def build_volcano_plot(
         data: pd.DataFrame,
-        log2fc: 'str' = 'log2FoldChange',
+        log2fc: str = 'log2FoldChange',
         pval: str = 'pvalue',
         pval_threshold: float = 0.05,
         log2fc_threshold: float = 1,
@@ -138,8 +137,31 @@ def build_volcano_plot(
         alpha: float = 0.7,
         size: int = 50,
         save: bool = False,
-        output_dir: str = "."
+        output_dir: str = ".",
+        render: bool = False
 ):
+    """
+    Creates a volcano plot to visualize differential expression analysis results.
+
+    Args:
+        data (pd.DataFrame): DataFrame containing the data for plotting.
+        log2fc (str, optional): Column name for log2 fold change. Defaults to 'log2FoldChange'.
+        pval (str, optional): Column name for p-value. Defaults to 'pvalue'.
+        pval_threshold (float, optional): Threshold for significance based on p-value. Defaults to 0.05.
+        log2fc_threshold (float, optional): Threshold for fold change. Defaults to 1.
+        title (str, optional): Title of the plot. Defaults to "Volcano Plot".
+        xlabel (str, optional): Label for the x-axis. Defaults to "log2 Fold Change".
+        ylabel (str, optional): Label for the y-axis. Defaults to "-log10(p-value)".
+        colors (tuple, optional): Colors for the plot. Defaults to ("gray", "red", "blue").
+        alpha (float, optional): Transparency level of the plot points. Defaults to 0.7.
+        size (int, optional): Size of the plot points. Defaults to 50.
+        save (bool, optional): Whether to save the plot. Defaults to False.
+        output_dir (str, optional): Directory to save the plot if `save` is True. Defaults to ".".
+        render (bool, optional): Whether to show the plot. Defaults to False.
+
+    Returns:
+        matplotlib.figure.Figure: The created figure object.
+    """
     data = data.copy()
     data['-log10(pval)'] = -np.log10(data[pval])
     data['significant'] = (data[pval] < pval_threshold) & (abs(data[log2fc]) >= log2fc_threshold)
@@ -172,7 +194,7 @@ def build_volcano_plot(
         c=colors[2],
         alpha=alpha,
         s=size,
-        label= 'Downregulated: ' + str(len(data.loc[data['Downregulated'], log2fc])) + ' genes'
+        label='Downregulated: ' + str(len(data.loc[data['Downregulated'], log2fc])) + ' genes'
     )
 
     ax.axhline(
@@ -198,163 +220,195 @@ def build_volcano_plot(
     ax.legend()
 
     if save:
-        plt.savefig(f"{output_dir}/volcano_plot.png")
+        plt.savefig(f"{output_dir}/volcano_plot.png", bbox_inches='tight')
 
-    plt.show()
+    if render:
+        plt.show()
+
+    return fig
 
 
-def build_ma_plot(
-        data: pd.DataFrame,
-        log2fc: str,
-        mean_exp: str,
-        log2fc_threshold: float = 1,
-        title: str = "MA Plot",
-        xlabel: str = "Mean Expression",
-        ylabel: str = "log2 Fold Change",
-        colors: tuple = ("gray", "red"),
-        alpha: float = 0.7,
-        size: int = 50,
-        save: bool = False,
-        output_dir: str = "."
-):
-    data['significant'] = abs(data[log2fc]) >= log2fc_threshold
+def build_ma_plot(data: pd.DataFrame,
+                  log2fc: str = 'log2FoldChange',
+                  avg_expr: str = 'average_expression',
+                  title: str = 'MA Plot',
+                  xlabel: str = 'Average Expression',
+                  ylabel: str = 'log2 Fold Change',
+                  threshold: float = 1,
+                  color: str = 'blue',
+                  alpha: float = 0.7,
+                  size: int = 50,
+                  save: bool = False,
+                  output_dir: str = ".",
+                  render: bool = False):
+    """
+    Creates an MA plot to visualize the relationship between mean expression and fold change.
 
+    Args:
+        data (pd.DataFrame): DataFrame containing the data for plotting.
+        log2fc (str, optional): Column name for log2 fold change. Defaults to 'log2FoldChange'.
+        avg_expr (str, optional): Column name for average expression. Defaults to 'average_expression'.
+        title (str, optional): Title of the plot. Defaults to 'MA Plot'.
+        xlabel (str, optional): Label for the x-axis. Defaults to 'Average Expression'.
+        ylabel (str, optional): Label for the y-axis. Defaults to 'log2 Fold Change'.
+        threshold (float, optional): Threshold for fold change. Defaults to 1.
+        color (str, optional): Color for the plot points. Defaults to 'blue'.
+        alpha (float, optional): Transparency level of the plot points. Defaults to 0.7.
+        size (int, optional): Size of the plot points. Defaults to 50.
+        save (bool, optional): Whether to save the plot. Defaults to False.
+        output_dir (str, optional): Directory to save the plot if `save` is True. Defaults to ".".
+        render (bool, optional): Whether to show the plot. Defaults to False.
+
+    Returns:
+        matplotlib.figure.Figure: The created figure object.
+    """
     fig, ax = plt.subplots(figsize=(10, 10))
 
     ax.scatter(
-        data.loc[~data['significant'], mean_exp],
-        data.loc[~data['significant'], log2fc],
-        c=colors[0],
+        data[avg_expr],
+        data[log2fc],
+        c=color,
         alpha=alpha,
-        s=size,
-        label='Non-significant'
-    )
-
-    ax.scatter(
-        data.loc[data['significant'], mean_exp],
-        data.loc[data['significant'], log2fc],
-        c=colors[1],
-        alpha=alpha,
-        s=size,
-        label='Significant'
+        s=size
     )
 
     ax.axhline(
-        0,
-        color="blue",
+        threshold,
+        color="red",
+        linestyle="--"
+    )
+    ax.axhline(
+        -threshold,
+        color="red",
         linestyle="--"
     )
 
     ax.set_xlabel(xlabel)
     ax.set_ylabel(ylabel)
     ax.set_title(title)
-    ax.legend()
 
     if save:
-        plt.savefig(f"{output_dir}/ma_plot.png")
+        plt.savefig(f"{output_dir}/ma_plot.png", bbox_inches='tight')
 
-    plt.show()
+    if render:
+        plt.show()
+
+    return fig
 
 
-def plot_pca(dataframe, metadata, feature_col='idx', **kwargs):
+def plot_pca(data: pd.DataFrame,
+             metadata: pd.DataFrame = None,
+             components: list[int] = [1, 2],
+             color_by: str = None,
+             title: str = 'PCA Plot',
+             xlabel: str = 'PC1',
+             ylabel: str = 'PC2',
+             save: bool = False,
+             output_dir: str = ".",
+             render: bool = False):
     """
-    Plots the PCA (Principal Component Analysis) of a dataframe.
+    Creates a PCA plot to visualize the first two principal components.
 
-    Parameters:
-        dataframe (pd.DataFrame): The input dataframe containing numeric columns.
-        metadata (pd.DataFrame or array-like): The metadata associated with the dataframe or an array-like object representing the groups.
+    Args:
+        data (pd.DataFrame): DataFrame containing the data for PCA.
+        metadata (pd.DataFrame, optional): DataFrame containing metadata for coloring. Defaults to None.
+        components (list of int, optional): List of principal components to plot. Defaults to [1, 2].
+        color_by (str, optional): Column name in metadata for coloring points. Defaults to None.
+        title (str, optional): Title of the plot. Defaults to 'PCA Plot'.
+        xlabel (str, optional): Label for the x-axis. Defaults to 'PC1'.
+        ylabel (str, optional): Label for the y-axis. Defaults to 'PC2'.
+        save (bool, optional): Whether to save the plot. Defaults to False.
+        output_dir (str, optional): Directory to save the plot if `save` is True. Defaults to ".".
+        render (bool, optional): Whether to show the plot. Defaults to False.
 
     Returns:
-        pd.DataFrame: The dataframe with PCA results.
-
-    Raises:
-        ValueError: If the dataframe contains no numeric columns suitable for PCA.
+        matplotlib.figure.Figure: The created figure object.
     """
+    pca = PCA(n_components=max(components))
+    pca_results = pca.fit_transform(data)
 
-    # Check if the dataframe contains any non-numeric columns
-    df = dataframe.copy()
+    pca_df = pd.DataFrame(pca_results, columns=[f'PC{i + 1}' for i in range(pca_results.shape[1])])
 
-    if df.isna().sum().sum() > 0:
-        print("Warning: Missing values were found in the input data and will be filled with the handle_missing_values function.")
-        df = handle_missing_values(df, **kwargs)
+    if metadata is not None:
+        pca_df = pd.concat([pca_df, metadata], axis=1)
 
-    numeric_df = df.set_index(feature_col).T
-    if type(metadata) == pd.DataFrame:
-        groups = metadata.group.values
+    fig, ax = plt.subplots(figsize=(10, 10))
+
+    if color_by and color_by in metadata.columns:
+        sns.scatterplot(
+            data=pca_df,
+            x=f'PC{components[0]}',
+            y=f'PC{components[1]}',
+            hue=color_by,
+            ax=ax
+        )
     else:
-        groups = metadata
+        sns.scatterplot(
+            data=pca_df,
+            x=f'PC{components[0]}',
+            y=f'PC{components[1]}',
+            ax=ax
+        )
 
-    # Handle cases where there are no numeric columns
-    if numeric_df.empty:
-        raise ValueError("The dataframe contains no numeric columns suitable for PCA.")
+    ax.set_xlabel(xlabel)
+    ax.set_ylabel(ylabel)
+    ax.set_title(title)
 
-    std_devs = numeric_df.std()
-    zero_std_cols = std_devs[std_devs == 0].index
-    if not zero_std_cols.empty:
-        print(f"Warning: The following columns have zero standard deviation and will be dropped: {list(zero_std_cols)}")
-        numeric_df.drop(columns=zero_std_cols, inplace=True)
+    if save:
+        plt.savefig(f"{output_dir}/pca_plot.png", bbox_inches='tight')
 
-    # Standardizing the Data
-    standardized_data = (numeric_df - numeric_df.mean()) / numeric_df.std()
+    if render:
+        plt.show()
 
-    
-    # PCA
-    pca = PCA(n_components=2)
-    principal_components = pca.fit_transform(standardized_data)
-
-    # Creating a dataframe with PCA results
-    pca_df = pd.DataFrame(data=principal_components, columns=['PCA1', 'PCA2'])
-    pca_df['group'] = groups
-    # Plotting
-    plt.figure(figsize=(10, 7))
-    sns.scatterplot(data=pca_df, x='PCA1', y='PCA2', hue='group', palette='viridis')
-    plt.title('PCA Plot (PCA1 vs PCA2)')
-    plt.xlabel(f'PCA1 ({pca.explained_variance_ratio_[0]*100:.2f}% of variance)')
-    plt.ylabel(f'PCA2 ({pca.explained_variance_ratio_[1]*100:.2f}% of variance)')
-    plt.grid()
-
-    # Display the plot
-    plt.show()
-
-    return pca_df
+    return fig
 
 
 def build_heatmap_with_tree(
         data: pd.DataFrame,
-        top_n: int = 50,
-        value_column: str = 'log2FoldChange_condition_1',
-        conditions: list[str] = None,
-        title: str = "Heatmap of Top Differentially Expressed Genes",
+        clustering_method: str = 'ward',
+        metric: str = 'euclidean',
+        title: str = 'Heatmap with Hierarchical Clustering',
+        xlabel: str = 'Samples',
+        ylabel: str = 'Genes',
+        cmap: str = 'viridis',
         save: bool = False,
-        output_dir: str = "."
+        output_dir: str = ".",
+        render: bool = False
 ):
     """
-    Build a heatmap with hierarchical clustering for the top differentially expressed genes across multiple conditions.
+    Creates a heatmap with hierarchical clustering for rows and columns.
 
     Args:
-        data (pd.DataFrame): DataFrame containing RNA-seq results.
-        top_n (int): Number of top differentially expressed genes to include in the heatmap.
-        value_column (str): Column name for the values to rank and select the top genes.
-        conditions (list[str]): List of condition columns to include in the heatmap.
-        title (str): Title of the plot.
-        save (bool): Whether to save the plot. Default is False.
-        output_dir (str): Directory to save the plot. Default is ".".
+        data (pd.DataFrame): DataFrame containing the data for the heatmap.
+        clustering_method (str, optional): Method for hierarchical clustering. Defaults to 'ward'.
+        metric (str, optional): Metric for distance calculation. Defaults to 'euclidean'.
+        title (str, optional): Title of the plot. Defaults to 'Heatmap with Hierarchical Clustering'.
+        xlabel (str, optional): Label for the x-axis. Defaults to 'Samples'.
+        ylabel (str, optional): Label for the y-axis. Defaults to 'Genes'.
+        cmap (str, optional): Colormap for the heatmap. Defaults to 'viridis'.
+        save (bool, optional): Whether to save the plot. Defaults to False.
+        output_dir (str, optional): Directory to save the plot if `save` is True. Defaults to ".".
+        render (bool, optional): Whether to show the plot. Defaults to False.
+
+    Returns:
+        matplotlib.figure.Figure: The created figure object.
     """
-    if conditions is None:
-        raise ValueError("Conditions must be provided as a list of column names.")
+    # Compute the distance matrices
+    row_linkage = sns.clustermap(data, method=clustering_method, metric=metric, cmap=cmap)
+    col_linkage = sns.clustermap(data.T, method=clustering_method, metric=metric, cmap=cmap)
 
-    # Select top differentially expressed genes
-    top_genes = data.nlargest(top_n, value_column).index
-    top_data = data.loc[top_genes, conditions]
+    fig = plt.figure(figsize=(10, 10))
 
-    # Create the clustermap
-    g = sns.clustermap(top_data, cmap="viridis", cbar=True, fmt=".2f", linewidths=.5)
+    sns.heatmap(data, cmap=cmap, ax=fig.gca(), cbar=True, annot=False, fmt=".2f")
 
     plt.title(title)
-    plt.ylabel("Gene")
-    plt.xlabel("Condition")
+    plt.xlabel(xlabel)
+    plt.ylabel(ylabel)
 
     if save:
-        plt.savefig(f"{output_dir}/heatmap_with_tree.png")
+        plt.savefig(f"{output_dir}/heatmap_with_tree.png", bbox_inches='tight')
 
-    plt.show()
+    if render:
+        plt.show()
+
+    return fig
