@@ -238,9 +238,14 @@ class Bootstrap(BootstrapBase):
 
         if isinstance(nodes, dict):
 
-            nodes = {
-                    _misc.to_tuple(k): {**dict(zip(node_key, _misc.to_tuple(k))), **v}
-                    for k, v in nodes.items()}
+            nodes_proc = {}
+
+            for k, v in nodes.items():
+
+                k = _misc.to_tuple(k)
+                nodes_proc[k] = {**dict(zip(node_key, k)), **v}
+
+            nodes = nodes_proc
 
         if isinstance(nodes, list):
 
