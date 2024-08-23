@@ -59,6 +59,7 @@ class BootstrapBase(abc.ABC):
         self._node_edge_attrs = pd.DataFrame()
 
         args.pop('self')
+        args.pop('__class__', None)
         self.directed = args.pop('directed')
 
         self._bootstrap(**args)
