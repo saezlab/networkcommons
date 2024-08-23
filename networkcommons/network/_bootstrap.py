@@ -180,7 +180,7 @@ class Bootstrap(BootstrapBase):
         mandatory_keys = {source_key}
         if self.directed: mandatory_keys.add(target_key)
 
-        for e in edges:
+        for e in edges or ():
 
             if isinstance(e, dict):
 
