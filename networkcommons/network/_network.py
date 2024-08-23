@@ -30,12 +30,12 @@ from typing import Iterable
 
 import lazy_import
 import pandas as pd
-cn = lazy_import.lazy_import('corneto')
+cn = lazy_import.lazy_module('corneto')
 
 from pypath_common import _misc
 from pypath_common import _constants
 
-from networkcommons.data import _network as _universe
+from networkcommons.data import network as _universe
 from networkcommons.noi._noi import Noi
 
 from networkcommons import utils
