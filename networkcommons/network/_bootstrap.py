@@ -19,6 +19,7 @@ Preprocess arguments of the Network object into its internal representation.
 
 from typing import Iterable
 
+import abc
 import itertools
 
 import pandas as pd
@@ -28,7 +29,48 @@ from pypath_common import _constants
 from . import _constants as _nconstants
 
 
-class Bootstrap:
+class BootstrapBase(abc.ABC):
+
+
+    def __init__(self, args: dict):
+        """
+        Attributes:
+            _edges:
+                Adjacency information. A dict with numeric edge IDs as keys and
+                tuples of two sets of node IDs (source and target nodes) as
+                values.
+            _nodes:
+                Adjacency information. A dict with node IDs as keys and tuples
+                of two sets of edge IDs (source vs target side) as values.
+            _node_attrs:
+                Data frame of node attributes.
+            _edge_attrs:
+                Data frame of edge attributes.
+            _node_edge_attrs:
+                Data frame of node edge attributes.
+            directed:
+                Whether the network is directed.
+        """
+
+        self._edges = {}
+        self._nodes = {}
+        self._node_attrs = pd.DataFrame()
+        self._edge_attrs = pd.DataFrame()
+        self._node_edge_attrs = pd.DataFrame()
+
+        args.pop('self')
+        self.directed = args.pop('directed')
+
+        self._bootstrap(**args)
+
+
+    @abc.abstractmethod
+    def _bootstrap(self, *args, **kwargs):
+
+        raise NotImplementedError
+
+
+class Bootstrap(BootstrapBase):
     """
     Bootstrap network data structures from a variety of Python objects.
     """
