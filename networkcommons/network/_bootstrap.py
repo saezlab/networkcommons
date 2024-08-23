@@ -78,9 +78,9 @@ class Bootstrap(BootstrapBase):
 
     def __init__(
             self,
-            edges: Iterable[dict | tuple],
-            nodes: list[str | dict] | dict[dict],
-            node_key: str | tuple[str] | None,
+            edges: Iterable[dict | tuple] | None = None,
+            nodes: list[str | dict] | dict[dict] | None = None,
+            node_key: str | tuple[str] | None = None,
             source_key: str = 'source',
             target_key: str = 'target',
             edge_attrs: list[str] | None = None,
