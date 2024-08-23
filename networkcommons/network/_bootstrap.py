@@ -85,18 +85,26 @@ class Bootstrap(BootstrapBase):
             edge_attrs: list[str] | None = None,
             directed: bool = True,
         ):
+        """
+        Args:
+            node_key:
+                Name of the variable(s) among node attributes that uniquely
+                define each node. If `nodes` is provided, unless it has an "id"
+                column, `node_key` must be defined. If only an `edges` data
+                frame is provided, the contents of the source and target
+                columns will be used as node key, and `node_key` will be used
+                as column name for this node attribute.
+            source_key:
+                Key in the edge dictionary containing the source node identifiers.
+            target_key:
+                Key in the edge dictionary containing the target node identifiers.
+            directed:
+                Is the network directed? If yes, nodes of each edge will
+                be separated to source and target, otherwise all nodes will be
+                considered "source", rendering the edges undirected.
+        """
 
-        self._edges = {}
-        self._nodes = {}
-        self._node_attrs = pd.DataFrame()
-        self._edge_attrs = pd.DataFrame()
-        self._node_edge_attrs = pd.DataFrame()
-
-        args = locals()
-        args.pop('self')
-        self.directed = args.pop('directed')
-
-        self._bootstrap(**args)
+        super().__init__(locals())
 
 
     def _bootstrap(
@@ -262,3 +270,84 @@ class Bootstrap(BootstrapBase):
             raise ValueError(f'Node with empty key: `{node}`.')
 
         return key, node
+
+
+class BootstrapDf(BootstrapBase):
+    """
+    Bootstrap Network object data structures from data frames.
+    """
+
+    def __init__(
+            self,
+            edges: pd.DataFrame,
+            nodes: pd.DataFrame | None = None,
+            node_key: str | tuple[str] | None = None,
+            source_col: str = 'source',
+            target_col: str = 'target',
+            edge_node_attrs: pd.DataFrame | None = None,
+            directed: bool = True,
+            ignore: list[str] | None = None,
+        ):
+        """
+        Args:
+            edges:
+                Adjacency information, edge attributes and node edge
+                attributes. The columns defined in `source_col` and
+                `target_col` contain the source and target nodes. These have to
+                be single node identifiers (for a binary graph) or sets of node
+                identifiers. Node identifiers are either atomic variables or
+                tuples, as defined by the `node_key` argument. The rest of the
+                columns will be used as edge attributes.
+            nodes:
+                Node attributes. Each node must be represented by a single row.
+                One or more of the attributes defined in `node_key`, the value
+                of this attribute or the combination of these has to be unique.
+            node_key:
+                Name of the variable(s) among node attributes that uniquely
+                define each node. If `nodes` is provided, unless it has an "id"
+                column, `node_key` must be defined. If only an `edges` data
+                frame is provided, the contents of the source and target
+                columns will be used as node key, and `node_key` will be used
+                as column name(s) for this/these node attribute(s).
+            source_col:
+                Name of the column containing the source node identifiers.
+            target_col:
+                Name of the column containing the target node identifiers.
+            directed:
+                Is the network directed? If yes, nodes of each edge will
+                be separated to source and target, otherwise all nodes will be
+                considered "source", rendering the edges undirected.
+            ignore:
+                List of columns to ignore: won't be processed into edge
+                attributes.
+        """
+
+        super().__init__(locals())
+
+
+    def _bootstrap(
+            self,
+            edges: pd.DataFrame,
+            nodes: pd.DataFrame | None = None,
+            node_key: str | tuple[str] | None = None,
+            source_col: str = 'source',
+            target_col: str = 'target',
+            edge_node_attrs: pd.DataFrame | None = None,
+            ignore: list[str] | None = None,
+        ):
+
+        node_key = _misc.to_tuple(node_key or _nconstants.DEFAULT_KEY)
+
+        if nodes is not None:
+
+            if missing := set(node_key) - set(nodes.columns):
+
+                raise ValueError(
+                    'Columns in `node_key` not found '
+                    f'in `nodes` data frame: `{", ".join(missing)}`.'
+                )
+
+            self._nodes = {
+                tuple(node_id): (set(), set())
+                for node_id in nodes[list(node_key)].itertuples()
+            }
