@@ -143,7 +143,7 @@ def get_connected_targets(network, target_dict, percent=False):
         return connected_nodes
 
 
-def get_recovered_offtargets(network, offtargets, percent=False):
+def get_recovered_offtargets(network, offtargets):
     """
     Get the number of off-targets recovered by the network.
 
@@ -161,10 +161,10 @@ def get_recovered_offtargets(network, offtargets, percent=False):
         set(network.nodes()))
         )
 
-    if percent:
-        return recovered_offtargets / len(offtargets) * 100
-    else:
-        return recovered_offtargets
+    return pd.DataFrame({
+        'n_offtargets': recovered_offtargets,
+        'perc_offtargets': recovered_offtargets / len(offtargets) * 100
+    }, index=[0])
 
 
 def get_graph_metrics(network, target_dict):
@@ -270,6 +270,7 @@ def get_ec50_evaluation(network, ec50_dict):
     return pd.DataFrame({
         'avg_EC50_in': np.mean(ec50_values_in),
         'avg_EC50_out': np.mean(ec50_values_out),
+        'diff_EC50': np.mean(ec50_values_in) - np.mean(ec50_values_out),
         'nodes_with_EC50': len(ec50_values_in),
         'coverage': coverage
     }, index=[0])

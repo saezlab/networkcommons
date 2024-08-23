@@ -19,65 +19,70 @@ Plot network (graph) metrics.
 
 from __future__ import annotations
 
-__all__ = ['plot_n_nodes_edges',
-           'plot_n_nodes_edges_from_df',
-           'build_heatmap_with_tree',
-           'lollipop_plot',
-           'create_rank_heatmap',
-           'plot_scatter',
-           'plot_rank'
-           ]
+__all__ = [
+    'plot_n_nodes_edges',
+    'plot_n_nodes_edges_from_df',
+    'build_heatmap_with_tree',
+    'lollipop_plot',
+    'create_rank_heatmap',
+    'plot_scatter',
+    'plot_rank'
+]
 
 from typing import List, Dict, Union
-
-import lazy_import
 import pandas as pd
 import networkx as nx
 import matplotlib.pyplot as plt
 import seaborn as sns
 import numpy as np
+import os
+import logging
 from scipy.cluster.hierarchy import linkage
 from scipy.spatial.distance import squareform
 
 
-def plot_rank(df, 
-                   bio_ids=None,
-                   figsize=(12, 6),
-                   x_label='Proteins',
-                   y_label='Average Intensity',
-                   title='Protein abundance Rank Plot',
-                   legend_labels=None,
-                   id_column='idx',
-                   average_color='blue',
-                   stdev_color='gray',
-                   stdev_alpha=0.2,
-                   highlight_color='red',
-                   highlight_size=5,
-                   highlight_zorder=5):
+def plot_rank(df,
+              bio_ids=None,
+              figsize=(12, 6),
+              x_label='Proteins',
+              y_label='Average Intensity',
+              title='Protein abundance Rank Plot',
+              legend_labels=None,
+              id_column='idx',
+              average_color='blue',
+              stdev_color='gray',
+              stdev_alpha=0.2,
+              highlight_color='red',
+              highlight_size=5,
+              highlight_zorder=5,
+              filepath=None,
+              render=False):
     """
-    Plots gene data with customizable attributes.
+    Plots a protein abundance rank plot with customizable attributes.
 
     Args:
-        df (pd.DataFrame): Input DataFrame containing gene data.
-        bio_ids (list of str): List of specific genes to highlight.
-        figsize (tuple): Size of the figure.
-        x_label (str): Label for the x-axis.
-        y_label (str): Label for the y-axis.
-        title (str): Title of the plot.
-        legend_labels (dict): Dictionary with legend labels for 'average', 'stdev', and 'highlight'.
-        id_column (str): Name of the column containing the IDs (e.g gene_symbols or proteins).
-        average_color (str): Color of the average intensity line.
-        stdev_color (str): Color of the standard deviation shaded area.
-        stdev_alpha (float): Alpha (transparency) for the standard deviation shaded area.
-        highlight_color (str): Color for highlighting the specific gene.
-        highlight_size (int): Size of the highlighted points.
-        highlight_zorder (int): Z-order for the highlighted points.
+        df (pd.DataFrame): Input DataFrame containing gene or protein data.
+        bio_ids (list of str, optional): List of specific genes or proteins to highlight. Defaults to None.
+        figsize (tuple, optional): Size of the figure. Defaults to (12, 6).
+        x_label (str, optional): Label for the x-axis. Defaults to 'Proteins'.
+        y_label (str, optional): Label for the y-axis. Defaults to 'Average Intensity'.
+        title (str, optional): Title of the plot. Defaults to 'Protein abundance Rank Plot'.
+        legend_labels (dict, optional): Dictionary with legend labels for 'average', 'stdev', and 'highlight'. Defaults to None.
+        id_column (str, optional): Name of the column containing the IDs (e.g., gene_symbols or proteins). Defaults to 'idx'.
+        average_color (str, optional): Color of the average intensity line. Defaults to 'blue'.
+        stdev_color (str, optional): Color of the standard deviation shaded area. Defaults to 'gray'.
+        stdev_alpha (float, optional): Alpha (transparency) for the standard deviation shaded area. Defaults to 0.2.
+        highlight_color (str, optional): Color for highlighting specific genes or proteins. Defaults to 'red'.
+        highlight_size (int, optional): Size of the highlighted points. Defaults to 5.
+        highlight_zorder (int, optional): Z-order for the highlighted points. Defaults to 5.
+        filepath (str, optional): Path to save the plot. If None, the plot will not be saved. Defaults to None.
+        render (bool, optional): Whether to display the plot. Defaults to False.
 
     Returns:
-        None
+        matplotlib.figure.Figure: The figure object for the plot.
     """
     df = df.copy()
-    # Compute average and standard error across columns, ignoring the non-numeric columns
+    # Compute average and standard deviation across columns, ignoring the non-numeric columns
     df['average'] = df.select_dtypes(include=[np.number]).mean(axis=1)
     df['stdev'] = df.select_dtypes(include=[np.number]).std(axis=1)
 
@@ -96,20 +101,22 @@ def plot_rank(df,
     # Plot the average intensity
     plt.plot(df['average'], label=legend_labels.get('average', 'Average Intensity'), color=average_color)
 
-    # Plot the shaded area for stderr
-    plt.fill_between(df.index, df['average'] - df['stdev'], df['average'] + df['stdev'], color=stdev_color, alpha=stdev_alpha, label=legend_labels.get('stdev', 'Standard Deviation'))
+    # Plot the shaded area for standard deviation
+    plt.fill_between(df.index, df['average'] - df['stdev'], df['average'] + df['stdev'], color=stdev_color,
+                     alpha=stdev_alpha, label=legend_labels.get('stdev', 'Standard Deviation'))
 
-    # Highlight the specific genes if bio_ids is provided
+    # Highlight the specific genes or proteins if bio_ids is provided
     if bio_ids:
         for bio_id in bio_ids:
             specific_gene = df[df[id_column].str.contains(bio_id, na=False)]
             if not specific_gene.empty:
                 for _, gene in specific_gene.iterrows():
-                    plt.scatter(gene.name, gene['average'], color=highlight_color, zorder=highlight_zorder, s=highlight_size)
+                    plt.scatter(gene.name, gene['average'], color=highlight_color,
+                                zorder=highlight_zorder, s=highlight_size)
                     plt.annotate(
                         bio_id,
                         xy=(gene.name, gene['average']),
-                        xytext=(gene.name - n_proteins*0.02, gene['average'] + gene['stdev']),
+                        xytext=(gene.name - n_proteins * 0.02, gene['average'] + gene['stdev']),
                         arrowprops=dict(facecolor='black', arrowstyle='->', shrinkA=0, shrinkB=0, lw=1),
                         fontsize=9,
                         color=highlight_color
@@ -120,7 +127,19 @@ def plot_rank(df,
     plt.ylabel(y_label)
     plt.legend()
     plt.tight_layout()
-    plt.show()
+
+    if filepath:
+        if os.path.dirname(filepath):
+            os.makedirs(os.path.dirname(filepath), exist_ok=True)
+        plt.savefig(filepath)
+
+    if render:
+        plt.show()
+
+    if not filepath and not render:
+        logging.warning("No output specified. Returning the plot object.")
+
+    return plt.gcf()
 
 
 def plot_scatter(df,
@@ -134,47 +153,61 @@ def plot_scatter(df,
                  xlabel='Difference in Activity scores',
                  ylabel='Coverage',
                  title='Coverage vs Difference in Activity scores',
-                 figsize=(10, 6)):
+                 figsize=(10, 6),
+                 filepath="scatter_plot.png",
+                 render=False):
     """
-    Plots a scatter plot with customizable column labels. It is prepared to be used
-    by default with a dataframe from get_phosphorylation_status, as shown in Vignette 4.
+    Plots a scatter plot with customizable column labels.
 
     Args:
         df (pd.DataFrame): Input DataFrame containing the data to plot.
-        summarise_df (bool): In case a random control has been performed, whether to summarise or not 
-        the random networks.
-        x_col (str): Column name for the x-axis.
-        y_col (str): Column name for the y-axis.
-        size_col (str): Column name for the size of the points.
-        hue_col (str): Column name for the hue (color) of the points.
-        style_col (str): Column name for the style of the points.
-        numeric_cols (list of str): List of numeric columns to summarise.
-        Defaults to all numeric columns in the DataFrame.
-        xlabel (str): Label for the x-axis.
-        ylabel (str): Label for the y-axis.
-        title (str): Title of the plot.
-        figsize (tuple): Figure size of the plot.
+        summarise_df (bool, optional): Whether to summarize the random networks if a random control has been performed. Defaults to True.
+        x_col (str, optional): Column name for the x-axis. Defaults to 'diff_dysregulation'.
+        y_col (str, optional): Column name for the y-axis. Defaults to 'coverage'.
+        size_col (str, optional): Column name for the size of the points. Defaults to 'nodes_with_phosphoinfo'.
+        hue_col (str, optional): Column name for the hue (color) of the points. Defaults to 'method'.
+        style_col (str, optional): Column name for the style of the points. Defaults to 'type'.
+        numeric_cols (list of str, optional): List of numeric columns to summarize. Defaults to all numeric columns in the DataFrame.
+        xlabel (str, optional): Label for the x-axis. Defaults to 'Difference in Activity scores'.
+        ylabel (str, optional): Label for the y-axis. Defaults to 'Coverage'.
+        title (str, optional): Title of the plot. Defaults to 'Coverage vs Difference in Activity scores'.
+        figsize (tuple, optional): Figure size of the plot. Defaults to (10, 6).
+        filepath (str, optional): Path to save the plot. If None, the plot will be saved as "scatter_plot.png". Defaults to "scatter_plot.png".
+        render (bool, optional): Whether to display the plot. Defaults to False.
 
     Returns:
-        None
+        matplotlib.figure.Figure: The figure object for the plot.
     """
     if numeric_cols is None:
         numeric_cols = df.select_dtypes(include=['number']).columns
 
-    if summarise_df:
+    if summarise_df and style_col is not None:
         summary_df = df.groupby([hue_col, style_col])[numeric_cols].mean().reset_index()
     else:
         summary_df = df
 
     # Plot
     plt.figure(figsize=figsize)
-    sns.scatterplot(data=summary_df, x=x_col, y=y_col, size=size_col, hue=hue_col, style=style_col, sizes=(50, 200))
-    
+    sns.scatterplot(data=summary_df, x=x_col, y=y_col, size=size_col,
+                    hue=hue_col, style=style_col, sizes=(50, 200))
+
     plt.xlabel(xlabel)
     plt.ylabel(ylabel)
     plt.title(title)
-    plt.legend()
-    plt.show()
+    plt.legend(loc='upper left', bbox_to_anchor=(1, 1))
+
+    if filepath:
+        if os.path.dirname(filepath):
+            os.makedirs(os.path.dirname(filepath), exist_ok=True)
+        plt.savefig(filepath)
+
+    if render:
+        plt.show()
+
+    if not filepath and not render:
+        logging.warning("No output specified. Returning the plot object.")
+
+    return plt.gcf()
 
 
 def lollipop_plot(
@@ -183,7 +216,8 @@ def lollipop_plot(
     value_col,
     orientation='vertical',
     color_palette='tab10',
-    size=10, linewidth=2,
+    size=10,
+    linewidth=2,
     marker='o',
     title='',
     filepath=None,
@@ -209,42 +243,59 @@ def lollipop_plot(
 
     fig, ax = plt.subplots(figsize=(12, 8))
 
-    labels = df[label_col]
-    values = df[value_col]
+    if "Category" not in df.columns:
+        # If no category column is present, create one with a single category
+        # from a column name
+        df['Category'] = df.columns[0]
 
-    color = colors[0 % len(colors)]
-    positions = labels
+    labels = df[label_col].unique()
+    categories = df['Category'].unique()
+    offset = 0.15  # Offset for separating categories side by side
+
+    for i, category in enumerate(categories):
+        subset = df[df['Category'] == category]
+        if orientation == 'vertical':
+            positions = np.arange(len(labels)) + (i - len(categories) / 2) * offset
+        else:
+            positions = np.arange(len(labels)) + (i - len(categories) / 2) * offset
+
+        values = subset[value_col]
+        color = colors[i % len(colors)]
+
+        if orientation == 'vertical':
+            ax.vlines(x=positions, ymin=0, ymax=values, color=color, linewidth=linewidth, label=category)
+            ax.scatter(positions, values, color=color, s=size ** 2, marker=marker, zorder=3)
+
+            for j, value in enumerate(values):
+                ax.text(positions[j], value + size * 0.2, str(value), ha='center', va='bottom', fontsize=size)
+        else:
+            ax.hlines(y=positions, xmin=0, xmax=values, color=color, linewidth=linewidth, label=category)
+            ax.scatter(values, positions, color=color, s=size ** 2, marker=marker, zorder=3)
+
+            for j, value in enumerate(values):
+                ax.text(value + size * 0.2, positions[j], str(value), va='center', ha='left', fontsize=size)
 
     if orientation == 'vertical':
-        ax.vlines(x=positions, ymin=0, ymax=values, color=color, linewidth=linewidth, label=label_col)
-        ax.scatter(positions, values, color=color, s=size ** 2, marker=marker, zorder=3)
-
-        for i, value in enumerate(values):
-            offset = size * 0.1 if value < 10 else size * 0.2
-            ax.text(positions[i], value + offset, str(value), ha='center', va='bottom', fontsize=size)
-    else:
-        ax.hlines(y=positions, xmin=0, xmax=values, color=color, linewidth=linewidth, label=label_col)
-        ax.scatter(values, positions, color=color, s=size ** 2, marker=marker, zorder=3)
-
-        for i, value in enumerate(values):
-            offset = size * 0.1 if value < 10 else size * 0.2
-            ax.text(value + offset, positions[i], str(value), va='center', ha='left', fontsize=size)
-
-    if orientation == 'vertical':
+        ax.set_xticks(np.arange(len(labels)))
+        ax.set_xticklabels(labels)
         ax.set_xlabel("Network")
         ax.set_ylabel(value_col)
     else:
+        ax.set_yticks(np.arange(len(labels)))
+        ax.set_yticklabels(labels)
         ax.set_ylabel("Network")
         ax.set_xlabel(value_col)
 
     ax.set_title(title)
-    ax.legend()
+    ax.legend(title=f"{df['Category'].name}", loc='upper left', bbox_to_anchor=(1, 1))
 
     if filepath:
-        plt.savefig(filepath)
+        fig.savefig(filepath)
 
     if render:
-        plt.show()
+        fig.show()
+
+    return fig
 
 
 def plot_n_nodes_edges(
@@ -275,28 +326,23 @@ def plot_n_nodes_edges(
         show_edges (bool): Whether to show edges count. Default is True.
     """
     if not show_nodes and not show_edges:
-        raise ValueError("At least one of 'show_nodes' or 'show_edges' must be True.")
+        logging.warning("Both 'show_nodes' and 'show_edges' are False. Using show nodes as default.")
+        show_nodes = True
 
     labels = []
-    values = []
     categories = []
+    values = []
 
     for network_name, network in networks.items():
-        n_nodes = len(network.nodes)
-        n_edges = len(network.edges)
-        value_set = []
-        category_set = []
-
         if show_nodes:
-            category_set.append('Nodes')
-            value_set.append(n_nodes)
-        if show_edges:
-            category_set.append('Edges')
-            value_set.append(n_edges)
+            labels.append(network_name)
+            categories.append('Nodes')
+            values.append(len(network.nodes))
 
-        labels.append(network_name)
-        values.append(value_set)
-        categories.append(category_set)
+        if show_edges:
+            labels.append(network_name)
+            categories.append('Edges')
+            values.append(len(network.edges))
 
     title = "Number of Nodes and Edges"
     if show_nodes and not show_edges:
@@ -304,8 +350,29 @@ def plot_n_nodes_edges(
     elif show_edges and not show_nodes:
         title = "Number of Edges"
 
-    lollipop_plot(labels, values, categories, orientation, color_palette, size, linewidth, marker, title, filepath,
-                  render)
+    # Construct the DataFrame
+    df = pd.DataFrame({
+        'Network': labels,
+        'Category': categories,
+        'Values': values
+    })
+
+    # Plot using the updated lollipop_plot function
+    lolli_plot = lollipop_plot(
+        df,
+        label_col="Network",
+        value_col="Values",
+        orientation=orientation,
+        color_palette=color_palette,
+        size=size,
+        linewidth=linewidth,
+        marker=marker,
+        title=title,
+        filepath=filepath,
+        render=render
+    )
+
+    return lolli_plot
 
 
 def plot_n_nodes_edges_from_df(
@@ -336,21 +403,24 @@ def plot_n_nodes_edges_from_df(
     if not metrics:
         raise ValueError("At least one metric must be specified.")
 
-    labels = []
-    values = []
-    categories = []
+    if not all(isinstance(metric, str) for metric in metrics):
+        raise TypeError("All elements in 'metrics' must be strings corresponding to column names in the DataFrame.")
 
+    missing_columns = [metric for metric in metrics if metric not in metrics_df.columns]
+    if missing_columns:
+        raise ValueError(f"The following metrics are not columns in the DataFrame: {', '.join(missing_columns)}")
+
+    if metrics_df.empty:
+        raise ValueError("The metrics DataFrame is empty.")
+
+    # Flatten the data: Each row represents one network and one metric
+    rows = []
     for network_name, row in metrics_df.iterrows():
-        value_set = []
-        category_set = []
-
         for metric in metrics:
-            category_set.append(metric)
-            value_set.append(row[metric])
+            rows.append({'Network': network_name, 'Category': metric, 'Values': row[metric]})
 
-        labels.append(network_name)
-        values.append(value_set)
-        categories.append(category_set)
+    # Create a DataFrame from the flattened data
+    df = pd.DataFrame(rows)
 
     title = "Metrics"
     if len(metrics) == 1:
@@ -358,73 +428,101 @@ def plot_n_nodes_edges_from_df(
     else:
         title = f"Number of {' and '.join(metrics)}"
 
-    lollipop_plot(labels, values, categories, orientation, color_palette, size, linewidth, marker, title, filepath,
-                  render)
+    # Plot using the updated lollipop_plot function
+    lolli_plot = lollipop_plot(
+        df,
+        label_col="Network",
+        value_col="Values",
+        orientation=orientation,
+        color_palette=color_palette,
+        size=size,
+        linewidth=linewidth,
+        marker=marker,
+        title=title,
+        filepath=filepath,
+        render=render
+    )
 
+    return lolli_plot
 
-def build_heatmap_with_tree(
-        jaccard_df: pd.DataFrame,
-        title: str = "Heatmap (Jaccard Distance)",
-        palette: str = "viridis",
-        save: bool = False,
-        output_dir: str = "."
-):
+def build_heatmap_with_tree(distance_df: pd.DataFrame,
+                            distance: str = 'jaccard',
+                            title: str = "Heatmap Distance Matrix",
+                            palette: str = "viridis",
+                            save: bool = False,
+                            output_dir: str = ".",
+                            render=False):
     """
     Build a heatmap with hierarchical clustering based on a Jaccard distance matrix.
 
     Args:
-        jaccard_df (pd.DataFrame): DataFrame containing Jaccard distance matrix.
-        title (str): Title of the plot.
-        palette (str): Color palette for the heatmap. Default is "viridis".
-        save (bool): Whether to save the plot. Default is False.
-        output_dir (str): Directory to save the plot. Default is ".".
+        distance_df (pd.DataFrame): DataFrame containing the distance matrix.
+        distance (str, optional): Type of distance metric used. Defaults to 'jaccard'.
+        title (str, optional): Title of the plot. Defaults to "Heatmap Distance Matrix".
+        palette (str, optional): Color palette for the heatmap. Defaults to "viridis".
+        save (bool, optional): Whether to save the plot. Defaults to False.
+        output_dir (str, optional): Directory to save the plot. Defaults to ".".
+        render (bool, optional): Whether to display the plot. Defaults to False.
+
+    Returns:
+        matplotlib.figure.Figure: The figure object for the plot.
     """
     # Convert the square distance matrix to a condensed distance matrix
-    condensed_dist_matrix = squareform(jaccard_df)
+    condensed_dist_matrix = squareform(distance_df)
 
     # Perform hierarchical clustering
     linked = linkage(condensed_dist_matrix, method='average')
 
     # Create the clustermap
     g = sns.clustermap(
-        jaccard_df,
+        distance_df,
         row_linkage=linked,
         col_linkage=linked,
         cmap=palette,
         figsize=(12, 10),
-        cbar_kws={'label': 'Jaccard Distance'}
+        cbar_kws={'label': f'{distance} Distance'}
     )
 
     # Adjust the position of the title to make sure it appears
-    # (depends on specific data/plot size)
     g.fig.suptitle(title, fontsize=14, x=0.5, y=1.00)
 
     if save:
-        plt.savefig(f"{output_dir}/heatmap_with_tree.png", bbox_inches='tight')
+        g.fig.savefig(f"{output_dir}/heatmap_with_tree.png", bbox_inches='tight')
 
-    plt.show()
+    if render:
+        g.fig.show()
+
+    if not save and not render:
+        logging.warning("No output specified. Returning the plot")
+
+    return g.fig
 
 
-def create_rank_heatmap(ora_results, ora_terms):
+def create_rank_heatmap(ora_results: pd.DataFrame,
+                        ora_terms: List[str],
+                        filepath="rank_heatmap.png",
+                        render=False):
     """
     Create a heatmap with rows as ora_terms and columns as networks,
     displaying the rank number in the cells.
 
     Args:
         ora_results (pd.DataFrame): DataFrame containing the ORA results with ranks.
-        ora_terms (list): List of ora_Term to include in the heatmap.
+        ora_terms (list): List of ORA terms to include in the heatmap.
+        filepath (str, optional): Path to save the plot. Defaults to "rank_heatmap.png".
+        render (bool, optional): Whether to display the plot. Defaults to False.
 
     Returns:
-        None
+        matplotlib.figure.Figure: The figure object for the plot.
     """
-    # Filter the ORA results to include only the specified ora_Term
+    # Filter the ORA results to include only the specified ORA terms
     filtered_data = ora_results[ora_results['ora_Term'].isin(ora_terms)]
 
-    # Pivot the dataframe to have ora_Term as rows and network as columns
+    # Pivot the DataFrame to have ora_Term as rows and network as columns
     heatmap_data = filtered_data.pivot(index='ora_Term', columns='network', values='ora_rank')
 
     xsize = len(heatmap_data.columns)
-    ysize = len(heatmap_data.index)*2
+    ysize = len(heatmap_data.index) * 2
 
     # Create the heatmap
     plt.figure(figsize=(xsize, ysize))
@@ -435,4 +533,16 @@ def create_rank_heatmap(ora_results, ora_terms):
     plt.xticks(rotation=90)
     plt.yticks(rotation=0)
     plt.tight_layout()
-    plt.show()
+
+    if filepath:
+        if os.path.dirname(filepath):
+            os.makedirs(os.path.dirname(filepath), exist_ok=True)
+        plt.savefig(filepath)
+
+    if render:
+        plt.show()
+
+    if not filepath and not render:
+        logging.warning("No output specified. Returning the plot object.")
+
+    return plt.gcf()
