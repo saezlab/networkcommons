@@ -134,7 +134,7 @@ def test_mixed_node_types():
 
     # Mixed types should raise an exception or be processed correctly
     node_ids = {('b',), ('a',), ('c',)}
-    assert all((n,) in result._nodes.keys() for n in node_ids)
+    assert all(n in result._nodes.keys() for n in node_ids)
     assert isinstance(result._edges, dict)
     assert len(result._edges) == 0
     assert 'name' in result._node_attrs.columns
