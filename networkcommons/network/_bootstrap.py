@@ -118,6 +118,8 @@ class Bootstrap(BootstrapBase):
             edge_attrs: list[str] | None = None,
         ):
 
+        self._set_node_key(node_key)
+
         proc_edges, proc_nodes = self._bootstrap_edges(
             edges = edges,
             source_key = source_key,
@@ -125,7 +127,7 @@ class Bootstrap(BootstrapBase):
             edge_attrs = edge_attrs,
         )
 
-        nodes = self._bootstrap_nodes(nodes, node_key)
+        nodes = self._bootstrap_nodes(nodes)
         self._node_attrs = pd.DataFrame(nodes.values())
         self._nodes = {
             key: (set(), set())
@@ -149,7 +151,7 @@ class Bootstrap(BootstrapBase):
 
             _node_edge_attrs.extend([
                 {
-                    **dict(zip(node_key, key)),
+                    **dict(zip(self.node_key, key)),
                     **node_attrs,
                     _nconstants.EDGE_ID: i,
                     _nconstants.SIDE: side,
@@ -221,9 +223,11 @@ class Bootstrap(BootstrapBase):
 
             node = {n: {} for n in node}
 
-        neattr_key = f'{key}_attrs'
-        edge[key] = frozenset(node.keys())
-        edge[neattr_key] = node
+
+    def _set_node_key(self, node_key: str | tuple | None = None):
+
+        node_key = node_key or _nconstants.DEFAULT_KEY
+        self.node_key = _misc.to_tuple(node_key)
 
 
     def _bootstrap_nodes(
@@ -244,16 +248,16 @@ class Bootstrap(BootstrapBase):
                 k = _misc.to_tuple(k)
                 nodes_proc[k] = {
                     _nconstants.NODE_KEY: k,
-                    **dict(zip(node_key, k)),
+                    **dict(zip(self.node_key, k)),
                     **v,
                 }
 
             nodes = nodes_proc
 
-        if isinstance(nodes, list):
+        elif isinstance(nodes, list):
 
             nodes = dict(
-                self._bootstrap_node(v, i, node_key)
+                self._bootstrap_node(v, i)
                 for i, v in enumerate(nodes)
             )
 
@@ -264,16 +268,15 @@ class Bootstrap(BootstrapBase):
             self,
             node: str | int | dict,
             idx: int,
-            node_key: tuple,
         ) -> tuple[tuple, dict]:
 
         if not isinstance(node, dict):
 
-            node = {node_key[0]: node}
+            node = {self.node_key[0]: node}
 
         key = tuple(
             node.get(k, idx if k == _nconstants.DEFAULT_KEY else None)
-            for k in node_key
+            for k in self.node_key
         )
 
         if all(k is None for k in key):
