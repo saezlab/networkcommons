@@ -119,8 +119,8 @@ class Bootstrap(BootstrapBase):
             edges: Iterable[dict | tuple] | None = None,
             nodes: list[str | dict] | dict[dict] | None = None,
             node_key: str | tuple[str] | None = None,
-            source_key: str = 'source',
-            target_key: str = 'target',
+            source_key: str = _nconstants.SOURCE_KEY,
+            target_key: str = _nconstants.TARGET_KEY,
             edge_attrs: list[str] | None = None,
         ):
 
