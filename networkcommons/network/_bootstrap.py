@@ -243,7 +243,11 @@ class Bootstrap(BootstrapBase):
             for k, v in nodes.items():
 
                 k = _misc.to_tuple(k)
-                nodes_proc[k] = {**dict(zip(node_key, k)), **v}
+                nodes_proc[k] = {
+                    _nconstants.NODE_KEY: k,
+                    **dict(zip(node_key, k)),
+                    **v,
+                }
 
             nodes = nodes_proc
 
@@ -276,6 +280,8 @@ class Bootstrap(BootstrapBase):
         if all(k is None for k in key):
 
             raise ValueError(f'Node with empty key: `{node}`.')
+
+        node[_nconstants.NODE_KEY] = key
 
         return key, node
 
