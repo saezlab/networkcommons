@@ -1,4 +1,5 @@
 import numpy as np
+import itertools
 
 from networkcommons.network import _bootstrap
 from networkcommons.network import _constants as _c
@@ -167,20 +168,20 @@ def test_node_dict_with_partial_attrs():
         {n['size'] for n in nodes if 'size' in n}
     )
 
+
 def test_edges_list_of_tuples():
+
     edges = [('a', 'b'), ('b', 'c'), ('a', 'c')]
-    result = _bootstrap.Bootstrap(edges=edges)
+    result = _bootstrap.Bootstrap(edges = edges)
 
     # Ensure the edges are stored correctly
     assert len(result._edges) == len(edges)
-    assert all(
-        (source, target) in result._edges.values()
-        for source, target in edges
-    )
+    assert set(result._edges.keys()) == set(range(len(edges)))
+    assert list(result._edges.values()) == [({s}, {t}) for s, t in edges]
 
     # Ensure the nodes are extracted from the edges
     nodes = set(itertools.chain(*edges))
-    assert all((n,) in result._nodes.keys() for n in nodes)
+    assert set(result._nodes.keys()) == nodes
 
 
 def test_edges_list_of_dicts():
