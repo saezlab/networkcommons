@@ -211,17 +211,21 @@ class Bootstrap(BootstrapBase):
         return proc_edges, proc_nodes
 
 
-    def _bootstrap_node_in_edge(self, edge: dict, key: str):
+    def _bootstrap_node_in_edge(self, edge: dict, side: str):
 
-        node = edge.get(key, {})
+        nodes = edge.get(side, {})
 
-        if isinstance(node, (_constants.SIMPLE_TYPES, tuple)):
+        if isinstance(nodes, (_constants.SIMPLE_TYPES, tuple)):
 
-            node = {node}
+            nodes = {nodes: {}}
 
-        if not isinstance(node, dict):
+        if not isinstance(nodes, dict):
 
-            node = {n: {} for n in node}
+            nodes = {n: {} for n in nodes}
+
+        neattr_key = f'{side}_attrs'
+        edge[side] = set(nodes.keys())
+        edge[neattr_key] = nodes
 
 
     def _set_node_key(self, node_key: str | tuple | None = None):
