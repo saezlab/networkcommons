@@ -13,6 +13,7 @@
 # https://www.gnu.org/licenses/gpl-3.0.txt
 #
 
-DEFAULT_KEY = 'id'
-EDGE_ID = 'edge_id'
-SIDE = 'side'
+DEFAULT_KEY = '_id'
+EDGE_ID = '_edge_id'
+SIDE = '_side'
+NODE_KEY = '_node_key'
