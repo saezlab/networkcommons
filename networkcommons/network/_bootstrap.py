@@ -124,6 +124,7 @@ class Bootstrap(BootstrapBase):
             edge_attrs: list[str] | None = None,
         ):
 
+        # preprocessing
         self._set_node_key(node_key)
 
         proc_edges, proc_nodes = self._bootstrap_edges(
@@ -134,12 +135,23 @@ class Bootstrap(BootstrapBase):
         )
 
         nodes = self._bootstrap_nodes(nodes)
-        self._node_attrs = pd.DataFrame(nodes.values())
-        self._nodes = {
-            key: (set(), set())
-            for key in itertools.chain(nodes.keys(), proc_nodes)
+
+        nodes = {
+            k: {
+                **nodes.get(k, {}),
+                **proc_nodes.get(k, {}),
+            }
+            for k in set(itertools.chain(
+                nodes.keys(),
+                proc_nodes.keys(),
+            ))
         }
 
+        # adding nodes & node attrs
+        self._nodes = {key: (set(), set()) for key in nodes}
+        self._node_attrs = pd.DataFrame(nodes.values())
+
+        # adding edges, edge attrs, edge-node attrs
         self._edges = {}
         _edge_attrs = []
         _node_edge_attrs = []
@@ -193,7 +205,7 @@ class Bootstrap(BootstrapBase):
         edge_vars = (source_key, target_key) + _misc.to_tuple(edge_attrs)
 
         proc_edges = []
-        proc_nodes = set()
+        proc_nodes = {}
         mandatory_keys = {source_key}
         if self.directed: mandatory_keys.add(target_key)
 
@@ -223,7 +235,12 @@ class Bootstrap(BootstrapBase):
 
             for side_key in (source_key, target_key):
 
-                proc_nodes.update(e[side_key])
+                for node in e[side_key]:
+
+                    proc_nodes[node] = {
+                        _nconstants.NODE_KEY: node,
+                        **dict(zip(self.node_key, _misc.to_tuple(node))),
+                    }
 
         return proc_edges, proc_nodes
 
