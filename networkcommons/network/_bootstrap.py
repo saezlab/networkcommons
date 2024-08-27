@@ -71,6 +71,12 @@ class BootstrapBase(abc.ABC):
         raise NotImplementedError
 
 
+    @staticmethod
+    def _sides():
+
+        return enumerate(('source', 'target'))
+
+
 class Bootstrap(BootstrapBase):
     """
     Bootstrap network data structures from a variety of Python objects.
@@ -146,7 +152,16 @@ class Bootstrap(BootstrapBase):
             target_attrs = edge.pop(f'{target_key}_attrs')
             edge[_nconstants.EDGE_ID] = i
 
+            # adjacency information
             self._edges[i] = (source, target)
+
+            for si, side in self._sides():
+
+                for node_id in locals()[side]:
+
+                    self._nodes[node_id][si].add(i)
+
+            # edge and node-edge attributes
             _edge_attrs.append(edge)
 
             _node_edge_attrs.extend([
