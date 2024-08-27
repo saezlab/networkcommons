@@ -142,8 +142,8 @@ class Bootstrap(BootstrapBase):
 
             source = edge.pop(source_key)
             target = edge.pop(target_key)
-            source_attrs = nodes.pop(f'{source_key}_attrs')
-            target_attrs = nodes.pop(f'{target_key}_attrs')
+            source_attrs = edge.pop(f'{source_key}_attrs')
+            target_attrs = edge.pop(f'{target_key}_attrs')
             edge[_nconstants.EDGE_ID] = i
 
             self._edges[i] = (source, target)
@@ -160,7 +160,7 @@ class Bootstrap(BootstrapBase):
                     (source, target),
                     (source_attrs, target_attrs)
                 )
-                for key, node_attrs in side_attrs
+                for key, node_attrs in side_attrs.items()
             ])
 
         self._edge_attrs = pd.DataFrame(_edge_attrs)
@@ -205,8 +205,10 @@ class Bootstrap(BootstrapBase):
             self._bootstrap_node_in_edge(e, source_key)
             self._bootstrap_node_in_edge(e, target_key)
             proc_edges.append(e)
-            proc_nodes.update(e[source_key])
-            proc_nodes.update(e[target_key])
+
+            for side_key in (source_key, target_key):
+
+                proc_nodes.update(e[side_key])
 
         return proc_edges, proc_nodes
 
@@ -240,8 +242,7 @@ class Bootstrap(BootstrapBase):
         ) -> dict[tuple, dict]:
 
 
-        node_key = node_key or _nconstants.DEFAULT_KEY
-        node_key = _misc.to_tuple(node_key)
+        nodes = nodes or {}
 
         if isinstance(nodes, dict):
 
