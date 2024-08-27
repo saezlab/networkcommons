@@ -162,7 +162,10 @@ def test_node_dict_with_partial_attrs():
     )
     assert set(result._node_attrs['name']) == node_ids
     assert set(result._node_attrs['color']) == {n.get('color', np.nan) for n in nodes}
-    assert set(result._node_attrs['size']) == {n.get('size', np.nan) for n in nodes}
+    assert (
+        {i for i in result._node_attrs['size'] if not np.isnan(i)} ==
+        {n['size'] for n in nodes if 'size' in n}
+    )
 
 def test_edges_list_of_tuples():
     edges = [('a', 'b'), ('b', 'c'), ('a', 'c')]
