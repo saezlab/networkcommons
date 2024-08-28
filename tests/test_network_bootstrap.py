@@ -194,23 +194,35 @@ def test_edges_list_of_tuples():
 
 
 def test_edges_list_of_dicts():
+
     edges = [
-        {'source': 'a', 'target': 'b', 'weight': 1.5},
-        {'source': 'b', 'target': 'c', 'weight': 2.3},
+        {'source': 'a', 'target': 'b', 'weight': 1.5, 'style': 'solid'},
+        {'source': 'b', 'target': 'c', 'weight': 2.3, 'style': 'dashed'},
         {'source': 'a', 'target': 'c', 'weight': 0.9}
     ]
-    result = _bootstrap.Bootstrap(edges=edges)
+    result = _bootstrap.Bootstrap(edges = edges)
 
     # Ensure the edges are stored correctly with attributes
     assert len(result._edges) == len(edges)
-    assert all(
-        (source['source'], source['target']) in result._edges.values()
-        for source in edges
+    assert result._nodes['b'] == ({1}, {0})
+    assert set(result._edge_attrs.columns) == {_c.EDGE_ID, 'weight', 'style'}
+    assert set(result._edge_attrs[_c.EDGE_ID]) == set(range(len(edges)))
+    assert set(result._edges.keys()) == set(range(len(edges)))
+    assert (
+        sorted(result._edges.values()) ==
+        sorted(({e['source']}, {e['target']}) for e in edges)
     )
 
     # Check the edge attributes
     assert 'weight' in result._edge_attrs.columns
     assert set(result._edge_attrs['weight']) == {e['weight'] for e in edges}
+
+    # Ensure the nodes are extracted from the edges
+    nodes = {e[side] for e in edges for side in ('source', 'target')}
+    assert set(result._nodes.keys()) == nodes
+    assert result._node_attrs.shape[0] == len(nodes)
+    assert result._node_attrs[_c.NODE_KEY].isin(nodes).all()
+    assert set(result._node_attrs.columns) == {_c.DEFAULT_KEY, _c.NODE_KEY}
 
 
 def test_edges_with_node_attributes():
