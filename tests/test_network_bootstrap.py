@@ -176,12 +176,21 @@ def test_edges_list_of_tuples():
 
     # Ensure the edges are stored correctly
     assert len(result._edges) == len(edges)
+    assert result._nodes['b'] == ({1}, {0})
+    assert set(result._edge_attrs.columns) == {_c.EDGE_ID}
+    assert set(result._edge_attrs[_c.EDGE_ID]) == set(range(len(edges)))
     assert set(result._edges.keys()) == set(range(len(edges)))
-    assert list(result._edges.values()) == [({s}, {t}) for s, t in edges]
+    assert (
+        sorted(result._edges.values()) ==
+        sorted(({s}, {t}) for s, t in edges)
+    )
 
     # Ensure the nodes are extracted from the edges
     nodes = set(itertools.chain(*edges))
     assert set(result._nodes.keys()) == nodes
+    assert result._node_attrs.shape[0] == len(nodes)
+    assert result._node_attrs[_c.NODE_KEY].isin(nodes).all()
+    assert set(result._node_attrs.columns) == {_c.DEFAULT_KEY, _c.NODE_KEY}
 
 
 def test_edges_list_of_dicts():
