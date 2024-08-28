@@ -227,39 +227,59 @@ def test_edges_list_of_dicts():
 
 def test_edgenode_attributes():
 
-    edges = [
-        {
-            'source': 'a',
-            'target': 'b',
-            'weight': 1.5,
-            'source_attrs': {'color': 'blue'},
-            'target_attrs': {'color': 'red'},
-        },
-        {
-            'source': 'b',
-            'target': 'c',
-            'weight': 2.3,
-            'source_attrs': {'color': 'green'},
-            'target_attrs': {'color': 'purple'},
-        },
-    ]
-
-    result = _bootstrap.Bootstrap(edges=edges)
-    neattrs = result._node_edge_attrs
-
-    # Ensure nodes and edges are stored
-    assert len(result._nodes) == 3
-    assert len(result._edges) == 2
-
-    # Check that node-edge attributes are stored correctly
-    assert set(neattrs.columns) == {_c.NODE_KEY, _c.EDGE_ID, _c.SIDE, 'color'}
-    assert len(neattrs) == len(edges) * 2  # source and target for each edge
-    assert (
-        neattrs[
-            (neattrs[_c.NODE_KEY] == 'b') &
-            (neattrs[_c.SIDE] == 'source')
-        ]['color'].iloc[0] == 'green'
+    _edges = (
+        [
+            {
+                'source': 'a',
+                'target': 'b',
+                'weight': 1.5,
+                'source_attrs': {'color': 'blue'},
+                'target_attrs': {'color': 'red'},
+            },
+            {
+                'source': 'b',
+                'target': 'c',
+                'weight': 2.3,
+                'source_attrs': {'color': 'green'},
+                'target_attrs': {'color': 'purple'},
+            },
+        ],
+        [
+            {
+                'source': 'a',
+                'target': 'b',
+                'weight': 1.5,
+                'source_attrs': {'a': {'color': 'blue'}},
+                'target_attrs': {'b': {'color': 'red'}},
+            },
+            {
+                'source': 'b',
+                'target': 'c',
+                'weight': 2.3,
+                'source_attrs': {'b': {'color': 'green'}},
+                'target_attrs': {'c': {'color': 'purple'}},
+            },
+        ],
     )
+
+    for edges in _edges:
+
+        result = _bootstrap.Bootstrap(edges=edges)
+        neattrs = result._node_edge_attrs
+
+        # Ensure nodes and edges are stored
+        assert len(result._nodes) == 3
+        assert len(result._edges) == 2
+
+        # Check that node-edge attributes are stored correctly
+        assert set(neattrs.columns) == {_c.NODE_KEY, _c.EDGE_ID, _c.SIDE, 'color'}
+        assert len(neattrs) == len(edges) * 2  # source and target for each edge
+        assert (
+            neattrs[
+                (neattrs[_c.NODE_KEY] == 'b') &
+                (neattrs[_c.SIDE] == 'source')
+            ]['color'].iloc[0] == 'green'
+        )
 
 
 def test_directed_edges():

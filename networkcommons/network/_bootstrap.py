@@ -252,7 +252,9 @@ class Bootstrap(BootstrapBase):
 
         if isinstance(nodes, (_constants.SIMPLE_TYPES, tuple)):
 
-            nodes = {nodes: edge.pop(neattr_key, {})}
+            attrs = edge.pop(neattr_key, {})
+            attrs = attrs.pop(nodes, None) or attrs
+            nodes = {nodes: attrs}
 
         if not isinstance(nodes, dict):
 
