@@ -178,13 +178,13 @@ class Bootstrap(BootstrapBase):
 
             _node_edge_attrs.extend([
                 {
-                    **dict(zip(self.node_key, key)),
-                    **node_attrs,
+                    _nconstants.NODE_KEY: key,
                     _nconstants.EDGE_ID: i,
                     _nconstants.SIDE: side,
+                    **node_attrs,
                 }
                 for side, side_attrs in zip(
-                    (source, target),
+                    ('source', 'target'),
                     (source_attrs, target_attrs)
                 )
                 for key, node_attrs in side_attrs.items()
@@ -247,17 +247,23 @@ class Bootstrap(BootstrapBase):
 
     def _bootstrap_node_in_edge(self, edge: dict, side: str):
 
+        neattr_key = f'{side}_attrs'
         nodes = edge.get(side, {})
 
         if isinstance(nodes, (_constants.SIMPLE_TYPES, tuple)):
 
-            nodes = {nodes: {}}
+            nodes = {nodes: edge.pop(neattr_key, {})}
 
         if not isinstance(nodes, dict):
 
-            nodes = {n: {} for n in nodes}
+            attrs = edge.pop(neattr_key, {})
 
-        neattr_key = f'{side}_attrs'
+            if len(nodes) == 1 and (n :=_misc.first(nodes)) not in attrs:
+
+                attrs = {n: attrs}
+
+            nodes = {n: attrs.get(n, {}) for n in nodes}
+
         edge[side] = set(nodes.keys())
         edge[neattr_key] = nodes
 
@@ -272,7 +278,6 @@ class Bootstrap(BootstrapBase):
             self,
             nodes: list[str | dict] | dict[dict] | None = None,
         ) -> dict[tuple, dict]:
-
 
         nodes = nodes or {}
 
