@@ -78,6 +78,12 @@ class BootstrapBase(abc.ABC):
         return enumerate(('source', 'target'))
 
 
+    def _set_node_key(self, node_key: str | tuple | None = None):
+
+        node_key = node_key or _nconstants.DEFAULT_KEY
+        self.node_key = _misc.to_tuple(node_key)
+
+
 class Bootstrap(BootstrapBase):
     """
     Bootstrap network data structures from a variety of Python objects.
@@ -371,6 +377,8 @@ class BootstrapDf(BootstrapBase):
             node_key: str | tuple[str] | None = None,
             source_col: str = 'source',
             target_col: str = 'target',
+            inner_sep: str | None = ';',
+            node_key_sep: str | None = ',',
             edge_node_attrs: pd.DataFrame | None = None,
             directed: bool = True,
             ignore: list[str] | None = None,
@@ -396,10 +404,21 @@ class BootstrapDf(BootstrapBase):
                 frame is provided, the contents of the source and target
                 columns will be used as node key, and `node_key` will be used
                 as column name(s) for this/these node attribute(s).
+            node_key_col:
+                In case the node key variables are provided in a single column,
+                the name of the column has to be provided here. The column will
+                be split by `node_key_sep` if the `node_key` consists of
+                more than one variable.
             source_col:
                 Name of the column containing the source node identifiers.
             target_col:
                 Name of the column containing the target node identifiers.
+            inner_sep:
+                If the values in source and target columns are strings, use
+                this separator to split them.
+            node_key_sep:
+                If the nodes are provided as strings, but the key consists of
+                multiple values, use this separator to split them into tuples.
             directed:
                 Is the network directed? If yes, nodes of each edge will
                 be separated to source and target, otherwise all nodes will be
@@ -417,24 +436,96 @@ class BootstrapDf(BootstrapBase):
             edges: pd.DataFrame,
             nodes: pd.DataFrame | None = None,
             node_key: str | tuple[str] | None = None,
+            node_key_col: str | None = None,
             source_col: str = 'source',
             target_col: str = 'target',
+            inner_sep: str | None = ';',
+            node_key_sep: str | None = ',',
             edge_node_attrs: pd.DataFrame | None = None,
             ignore: list[str] | None = None,
         ):
 
-        node_key = _misc.to_tuple(node_key or _nconstants.DEFAULT_KEY)
+        nodes = copy.deepcopy(nodes)
+        edges = copy.deepcopy(edges)
+
+        self._set_node_key(node_key)
+        self._bootstrap_nodes(
+            nodes = nodes,
+            node_key_col = node_key_col,
+            node_key_sep = node_key_sep,
+        )
+
+
+
+    def _bootstrap_nodes(
+            self,
+            nodes: pd.DataFrame | None = None,
+            node_key_col: str | None = None,
+            node_key_sep: str | None = ',',
+        ):
+
 
         if nodes is not None:
 
-            if missing := set(node_key) - set(nodes.columns):
+            if not node_key_col and _nconstants.NODE_KEY in nodes.columns:
+
+                node_key_col = _nconstants.NODE_KEY
+
+            if node_key_col:
+
+                if node_key_col not in nodes.columns:
+
+                    raise ValueError(
+                        f'`node_key_col` provided ({node_key_col}), but not '
+                        'found in the `nodes` data frame.'
+                    )
+
+                nodes[node_key_col] = nodes[node_key_col].apply(
+                    lambda x: (
+                        _misc.to_tuple(
+                            x.split(node_key_sep)
+                                if node_key_sep and isinstance(x, str) else
+                            x
+                        ) + (None,) * len(self.node_key)
+                    )[:len(self.node_key)]
+                )
+
+                nodes.rename(
+                    {node_key_col: _nconstants.NODE_KEY},
+                    axis = 1,
+                    inplace = True,
+                )
+
+                keys = pd.DataFrame(
+                    nodes[_nconstants.NODE_KEY].tolist(),
+                    index = nodes.index,
+                )
+                keys.columns = self.node_key
+                nodes = nodes.join(keys)
+
+            if missing := set(self.node_key) - set(nodes.columns):
 
                 raise ValueError(
                     'Columns in `node_key` not found '
                     f'in `nodes` data frame: `{", ".join(missing)}`.'
                 )
 
+            if _nconstants.NODE_KEY not in nodes.columns:
+
+                # bravo, pandas...
+                self.nodes[_nconstants.NODE_KEY] = pd.Series(zip(
+                    *self.nodes[self._node_key].T.values)
+                ))
+
+            for col in reversed((_nconstants.NODE_KEY,) + self.node_key):
+
+                col = nodes.pop(col)
+                nodes.insert(0, col.name, col)
+
+            self._node_attrs = nodes
             self._nodes = {
-                tuple(node_id): (set(), set())
-                for node_id in nodes[list(node_key)].itertuples()
+                k: (set(), set())
+                for k in nodes[_nconstants.NODE_KEY]
             }
+
+
