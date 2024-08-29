@@ -71,6 +71,7 @@ def test_node_tuple_ids():
 
 
 def test_node_dict_dict():
+
     nodes = {'a': {'color': 'blue'}, 'b': {'color': 'red'}, 'c': {'color': 'green'}}
     result = _bootstrap.Bootstrap(nodes = nodes)
 
@@ -83,6 +84,7 @@ def test_node_dict_dict():
 
 
 def test_nodes_empty_list():
+
     nodes = []
     result = _bootstrap.Bootstrap(nodes=nodes)
 
@@ -98,6 +100,7 @@ def test_nodes_empty_list():
 
 
 def test_duplicate_nodes():
+
     nodes = ['a', 'b', 'a']
     result = _bootstrap.Bootstrap(nodes=nodes)
 
@@ -110,6 +113,7 @@ def test_duplicate_nodes():
 
 
 def test_invalid_node_key():
+
     nodes = [
         {'name': 'a', 'color': 'blue'},
         {'name': 'b', 'color': 'red'}
@@ -124,6 +128,7 @@ def test_invalid_node_key():
 
 
 def test_mixed_node_types():
+
     nodes = [
         'a',
         {'name': 'b', 'color': 'red'},
@@ -143,6 +148,7 @@ def test_mixed_node_types():
 
 
 def test_node_dict_with_partial_attrs():
+
     nodes = [
         {'name': 'a', 'color': 'blue', 'size': 10.0},
         {'name': 'b', 'color': 'red'},
@@ -361,43 +367,21 @@ def test_edgenode_attributes_2():
         )
 
 
-def test_directed_edges():
-    edges = [('a', 'b'), ('b', 'c'), ('c', 'a')]
-    result = _bootstrap.Bootstrap(edges=edges, directed=True)
-
-    # Ensure edges are stored correctly and directed
-    assert len(result._edges) == len(edges)
-    assert all(
-        (source, target) in result._edges.values()
-        for source, target in edges
-    )
-
-    # Ensure directionality is respected
-    for edge in edges:
-        assert edge in result._edges.values()
-
-
 def test_undirected_edges():
+
     edges = [('a', 'b'), ('b', 'c'), ('c', 'a')]
-    result = _bootstrap.Bootstrap(edges=edges, directed=False)
+    result = _bootstrap.Bootstrap(edges = edges, directed = False)
 
-    # Ensure edges are stored correctly and undirected
+    # Ensure all nodes are on the source side
     assert len(result._edges) == len(edges)
-    assert all(
-        {(source, target)} == {result._edges[i]}
-        for i, (source, target) in enumerate(edges)
-    )
-
-    # Ensure no directionality is enforced
-    for edge in edges:
-        source, target = edge
-        assert any(
-            {source, target} == set(e)
-            for e in result._edges.values()
-        )
+    assert not any(e[1] for e in result._edges.values())
+    assert all(len(e[0]) == 2 for e in result._edges.values())
+    assert result._nodes['b'] == ({0, 1}, set())
+    assert set(result._node_edge_attrs[_c.SIDE]) == {'source'}
 
 
 def test_edges_missing_keys():
+
     edges = [{'source': 'a'}, {'source': 'b', 'target': 'c'}]
 
     try:

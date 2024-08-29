@@ -165,6 +165,11 @@ class Bootstrap(BootstrapBase):
             target_attrs = edge.pop(f'{target_key}_attrs')
             edge[_nconstants.EDGE_ID] = i
 
+            if not self.directed:
+
+                source.update(target)
+                target = set()
+
             # adjacency information
             self._edges[i] = (source, target)
 
@@ -181,7 +186,7 @@ class Bootstrap(BootstrapBase):
                 {
                     _nconstants.NODE_KEY: key,
                     _nconstants.EDGE_ID: i,
-                    _nconstants.SIDE: side,
+                    _nconstants.SIDE: side if self.directed else 'source',
                     **node_attrs,
                 }
                 for side, side_attrs in zip(
