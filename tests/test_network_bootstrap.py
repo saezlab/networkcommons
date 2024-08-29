@@ -225,7 +225,7 @@ def test_edges_list_of_dicts():
     assert set(result._node_attrs.columns) == {_c.DEFAULT_KEY, _c.NODE_KEY}
 
 
-def test_edgenode_attributes():
+def test_edgenode_attributes_1():
 
     _edges = (
         [
@@ -279,6 +279,85 @@ def test_edgenode_attributes():
                 (neattrs[_c.NODE_KEY] == 'b') &
                 (neattrs[_c.SIDE] == 'source')
             ]['color'].iloc[0] == 'green'
+        )
+
+
+def test_edgenode_attributes_2():
+
+    _edges = (
+        [
+            {
+                'source': {'a', 'x'},
+                'target': {'b', 'y'},
+                'weight': 1.5,
+                'source_attrs': {
+                    'a': {'color': 'blue'},
+                    'x': {'color': 'green'},
+                },
+                'target_attrs': {
+                    'b': {'color': 'red'},
+                    'y': {'color': 'purple'},
+                },
+            },
+            {
+                'source': {'b', 'y'},
+                'target': {'c', 'x'},
+                'weight': 2.3,
+                'source_attrs': {
+                    'b': {'color': 'blue'},
+                    'y': {'color': 'green'},
+                },
+                'target_attrs': {
+                    'c': {'color': 'red'},
+                    'x': {'color': 'purple'},
+                },
+            },
+        ],
+        [
+            {
+                'source': [
+                    {'name': 'a', 'color': 'blue'},
+                    {'name': 'x', 'color': 'green'},
+                ],
+                'target': [
+                    {'name': 'b', 'color': 'red'},
+                    {'name': 'y', 'color': 'purple'},
+                ],
+                'weight': 1.5,
+            },
+            {
+                'source': [
+                    {'name': 'b', 'color': 'blue'},
+                    {'name': 'y', 'color': 'green'},
+                ],
+                'target': [
+                    {'name': 'c', 'color': 'red'},
+                    {'name': 'x', 'color': 'purple'},
+                ],
+                'weight': 2.3,
+            },
+        ],
+    )
+
+    for edges in _edges:
+
+        result = _bootstrap.Bootstrap(edges = edges, node_key = 'name')
+        neattrs = result._node_edge_attrs
+
+        # Ensure nodes and edges are stored
+        assert len(result._nodes) == 5
+        assert len(result._edges) == 2
+        assert set(result._node_attrs.columns) == {_c.NODE_KEY, 'name'}
+        assert set(result._edge_attrs.columns) == {_c.EDGE_ID, 'weight'}
+
+        # Check that node-edge attributes are stored correctly
+        assert set(neattrs.columns) == {_c.NODE_KEY, _c.EDGE_ID, _c.SIDE, 'color'}
+        assert len(neattrs) == len(edges) * 2 * 2
+        assert (
+            neattrs[
+                (neattrs[_c.NODE_KEY] == 'b') &
+                (neattrs[_c.SIDE] == 'source')
+            ]['color'].iloc[0] == 'blue'
         )
 
 

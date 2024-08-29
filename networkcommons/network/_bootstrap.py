@@ -21,6 +21,7 @@ from typing import Iterable
 
 import abc
 import itertools
+import copy
 
 import pandas as pd
 from pypath_common import _misc
@@ -217,7 +218,7 @@ class Bootstrap(BootstrapBase):
 
                     raise ValueError(f'Edge `{e}` has no key(s) `{missing}`.')
 
-                e = e.copy()
+                e = copy.deepcopy(e)
 
             else:
 
@@ -264,7 +265,19 @@ class Bootstrap(BootstrapBase):
 
                 attrs = {n: attrs}
 
-            nodes = {n: attrs.get(n, {}) for n in nodes}
+            _nodes = []
+
+            for n in nodes:
+
+                if isinstance(n, dict):
+
+                    key = self._get_node_key(n, pop = True)
+                    attrs[key] = n
+                    n = key
+
+                _nodes.append(n)
+
+            nodes = {n: attrs.get(n, {}) for n in _nodes}
 
         edge[side] = set(nodes.keys())
         edge[neattr_key] = nodes
@@ -274,6 +287,15 @@ class Bootstrap(BootstrapBase):
 
         node_key = node_key or _nconstants.DEFAULT_KEY
         self.node_key = _misc.to_tuple(node_key)
+
+
+    def _get_node_key(self, node: dict, pop: bool = False) -> str | int | tuple:
+
+        method = dict.pop if pop else dict.get
+        key = tuple(method(node, k, None) for k in self.node_key)
+        key = key[0] if len(key) == 1 else key
+
+        return key
 
 
     def _bootstrap_nodes(
