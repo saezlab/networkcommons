@@ -483,6 +483,21 @@ class BootstrapDf(BootstrapBase):
 
         self._edge_attrs = edges
 
+        new_nodes = (
+            (
+                set.union(*edges[source_col]) |
+                set.union(*edges[target_col])
+            ) -
+            set(self._nodes.keys())
+        )
+
+        self._nodes = {
+            **self._nodes,
+            **{n: (set(), set()) for n in new_nodes}
+        }
+
+
+
 
 
 
