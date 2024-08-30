@@ -496,10 +496,10 @@ class BootstrapDf(BootstrapBase):
             **{n: (set(), set()) for n in new_nodes}
         }
 
-        self._node_attrs = pd.concat(
+        self._node_attrs = pd.concat([
             self._node_attrs,
             pd.DataFrame([dict(self.node_key, n) for n in new_nodes])
-        )
+        ])
 
         cols = [_nconstants.EDGE_ID, source_col, target_col]
         self._edges = {
@@ -588,7 +588,7 @@ class BootstrapDf(BootstrapBase):
 
                 # bravo, pandas...
                 nodes[_nconstants.NODE_KEY] = pd.Series(zip(
-                    *nodes[self.node_key].T.values
+                    *nodes[list(self.node_key)].T.values
                 ))
 
             for col in reversed((_nconstants.NODE_KEY,) + self.node_key):
