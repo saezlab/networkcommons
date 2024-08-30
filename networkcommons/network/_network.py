@@ -60,6 +60,12 @@ class NetworkBase:
         pass
 
 
+    @property
+    def hyper(self) -> bool:
+
+        return any(len(s | t) > 2 for s, t in self.edges.values())
+
+
 class Network:
     """
     A molecular interaction network.
