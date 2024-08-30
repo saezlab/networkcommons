@@ -496,10 +496,12 @@ class BootstrapDf(BootstrapBase):
             **{n: (set(), set()) for n in new_nodes}
         }
 
+
         self._node_attrs = pd.concat([
             self._node_attrs,
             pd.DataFrame([dict(zip(self.node_key, n)) for n in new_nodes])
         ])
+        self._update_node_key_col()
 
         cols = [_nconstants.EDGE_ID, source_col, target_col]
         self._edges = {
@@ -541,6 +543,7 @@ class BootstrapDf(BootstrapBase):
             node_key_sep: str | None = ',',
         ):
 
+
         if nodes is not None:
 
             if not node_key_col and _nconstants.NODE_KEY in nodes.columns:
@@ -580,20 +583,8 @@ class BootstrapDf(BootstrapBase):
                     f'in `nodes` data frame: `{", ".join(missing)}`.'
                 )
 
-            if _nconstants.NODE_KEY not in nodes.columns:
-
-                # bravo, pandas...
-                nodes[_nconstants.NODE_KEY] = pd.Series(zip(
-                    *nodes[list(self.node_key)].T.values
-                )).apply(lambda x: x[0] if len(x) == 1 else x)
-
-
-            for col in reversed((_nconstants.NODE_KEY,) + self.node_key):
-
-                col = nodes.pop(col)
-                nodes.insert(0, col.name, col)
-
             self._node_attrs = nodes
+            self._update_node_key_col()
             self._nodes = {
                 k: (set(), set())
                 for k in nodes[_nconstants.NODE_KEY]
@@ -612,4 +603,22 @@ class BootstrapDf(BootstrapBase):
             key = key[0]
 
         return key
+
+    def _update_node_key_col(self):
+
+        nattrs = self._node_attrs
+
+        # bravo, pandas...
+        nattrs[_nconstants.NODE_KEY] = pd.Series(zip(
+            *nattrs[list(self.node_key)].T.values
+        )).apply(lambda x: x[0] if len(x) == 1 else x)
+
+        for col in reversed((_nconstants.NODE_KEY,) + self.node_key):
+
+            col = nattrs.pop(col)
+            nattrs.insert(0, col.name, col)
+
+        self._node_attrs = nattrs
+
+
 
