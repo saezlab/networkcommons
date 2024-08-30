@@ -587,8 +587,8 @@ class BootstrapDf(BootstrapBase):
             if _nconstants.NODE_KEY not in nodes.columns:
 
                 # bravo, pandas...
-                self.nodes[_nconstants.NODE_KEY] = pd.Series(zip(
-                    *self.nodes[self._node_key].T.values
+                nodes[_nconstants.NODE_KEY] = pd.Series(zip(
+                    *nodes[self.node_key].T.values
                 ))
 
             for col in reversed((_nconstants.NODE_KEY,) + self.node_key):
@@ -606,7 +606,6 @@ class BootstrapDf(BootstrapBase):
     def _proc_node_key(self, key: str | tuple) -> str | tuple:
 
         sep = self.node_key_sep
-        _misc.to_tuple(
         key = key.split(sep) if sep and isinstance(key, str) else key
         key = _misc.to_tuple(key)
         key = (key + (None,) * len(self.node_key))[:len(self.node_key)]
