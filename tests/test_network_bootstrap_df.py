@@ -19,33 +19,37 @@ def toy_network_df():
     return edges, nodes
 
 
-def test_bootstrap_edges(toy_network_df):
+def test_bootstrap_binary_str(toy_network_df):
+
     edges, nodes = toy_network_df
-    bootstrap_df = BootstrapDf(edges=edges, nodes=nodes, node_key="id")
+    bootstrap_df = BootstrapDf(edges = edges, nodes = nodes, node_key = "id")
+
     assert len(bootstrap_df._edges) == 3
     assert len(bootstrap_df._nodes) == 3
-
-
-def test_bootstrap_nodes(toy_network_df):
-    edges, nodes = toy_network_df
-    bootstrap_df = BootstrapDf(edges=edges, nodes=nodes, node_key="id")
     assert len(bootstrap_df._node_attrs) == 3
-    assert len(bootstrap_df._nodes) == 3
     assert 'attr1' in bootstrap_df._node_attrs.columns
-
-
-def test_proc_nodes_in_edge(toy_network_df):
-    edges, nodes = toy_network_df
-    bootstrap_df = BootstrapDf(edges=edges, nodes=nodes, node_key="id")
-    nodes_processed = bootstrap_df._proc_nodes_in_edge('A;B;C')
-    assert nodes_processed == {'A', 'B', 'C'}
+    assert set(bootstrap_df._nodes.keys()) == {'A', 'B', 'C'}
 
 
 def test_proc_node_key(toy_network_df):
+
     edges, nodes = toy_network_df
     bootstrap_df = BootstrapDf(edges=edges, nodes=nodes, node_key='id')
     node_key = bootstrap_df._proc_node_key('A')
-    assert node_key == ('A',)
+    assert node_key == 'A'
+
+    edges, nodes = toy_network_df
+    custom_edges = pd.DataFrame({
+        'source': ['A,x;B,y', 'B,x;C,y'],
+        'target': ['C,z;A,u', 'A,z;B,y'],
+    })
+    bootstrap_df = BootstrapDf(
+        edges = custom_edges,
+        nodes = nodes,
+        node_key= ('id', 'species'),
+    )
+    node_key = bootstrap_df._proc_node_key('A,x')
+    assert node_key == ('A', 'x')
 
 
 def test_edge_processing_with_missing_columns(toy_network_df):

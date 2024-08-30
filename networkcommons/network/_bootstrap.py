@@ -534,9 +534,6 @@ class BootstrapDf(BootstrapBase):
         return nodes
 
 
-
-
-
     def _bootstrap_nodes(
             self,
             nodes: pd.DataFrame | None = None,
