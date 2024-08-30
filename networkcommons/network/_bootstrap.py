@@ -496,6 +496,14 @@ class BootstrapDf(BootstrapBase):
             **{n: (set(), set()) for n in new_nodes}
         }
 
+        self._edge = {
+            i: (s, t) if self.directed else (s | t, set())
+            for j, (i, s, t) in edges[[_nconstants.EDGE_ID, source_col, target_col]].iterrows()
+        }
+
+
+
+
 
 
 
