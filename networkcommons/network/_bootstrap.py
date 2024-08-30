@@ -496,17 +496,24 @@ class BootstrapDf(BootstrapBase):
             **{n: (set(), set()) for n in new_nodes}
         }
 
-        self._edge = {
+        self._node_attrs = pd.concat(
+            self._node_attrs,
+            pd.DataFrame([dict(self.node_key, n) for n in new_nodes])
+        )
+
+        cols = [_nconstants.EDGE_ID, source_col, target_col]
+        self._edges = {
             i: (s, t) if self.directed else (s | t, set())
-            for j, (i, s, t) in edges[[_nconstants.EDGE_ID, source_col, target_col]].iterrows()
+            for j, (i, s, t) in edges[cols].iterrows()
         }
 
+        for eid, nodes in self._edges.items():
 
+            for si, side in self._sides():
 
+                for node in nodes[si]:
 
-
-
-
+                    self._nodes[node][si].add(eid)
 
 
     def _proc_nodes_in_edge(
