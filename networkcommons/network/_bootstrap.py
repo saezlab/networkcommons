@@ -449,11 +449,61 @@ class BootstrapDf(BootstrapBase):
         edges = copy.deepcopy(edges)
 
         self._set_node_key(node_key)
+        self.node_key_sep = node_key_sep
+        self.inner_sep = inner_sep
         self._bootstrap_nodes(
             nodes = nodes,
             node_key_col = node_key_col,
             node_key_sep = node_key_sep,
         )
+        self._bootstrap_edges(
+            edges = edges,
+            source_col = source_col,
+            target_col = target_col,
+            ignore = ignore,
+        )
+
+
+    def _bootstrap_edges(
+            self,
+            edges: pd.DataFrame,
+            source_col: str = 'source',
+            target_col: str = 'target',
+            ignore: list[str] | None = None,
+        ):
+
+        edges.insert(0, _nconstants.EDGE_ID, range(len(edges)))
+
+        for col in (source_col, target_col):
+
+            edges[col] = edges[col].apply(self._proc_nodes_in_edge)
+
+        ignore = _misc.to_set(ignore) & set(edges.columns)
+        edges = edges.drop(columns = ignore)
+
+        self._edge_attrs = edges
+
+
+
+
+    def _proc_nodes_in_edge(
+            self,
+            nodes: str | int | tuple | list | set,
+        ):
+
+        if self.inner_sep and isinstance(nodes, str):
+
+            nodes = nodes.split(self.inner_sep)
+
+        if isinstance(nodes, (_constants.SIMPLE_TYPES, tuple)):
+
+            nodes = [nodes]
+
+        nodes = {self._proc_node_key(n) for n in nodes}
+
+        return nodes
+
+
 
 
 
@@ -481,13 +531,7 @@ class BootstrapDf(BootstrapBase):
                     )
 
                 nodes[node_key_col] = nodes[node_key_col].apply(
-                    lambda x: (
-                        _misc.to_tuple(
-                            x.split(node_key_sep)
-                                if node_key_sep and isinstance(x, str) else
-                            x
-                        ) + (None,) * len(self.node_key)
-                    )[:len(self.node_key)]
+                    self._proc_node_key,
                 )
 
                 nodes.rename(
@@ -514,7 +558,7 @@ class BootstrapDf(BootstrapBase):
 
                 # bravo, pandas...
                 self.nodes[_nconstants.NODE_KEY] = pd.Series(zip(
-                    *self.nodes[self._node_key].T.values)
+                    *self.nodes[self._node_key].T.values
                 ))
 
             for col in reversed((_nconstants.NODE_KEY,) + self.node_key):
@@ -528,4 +572,14 @@ class BootstrapDf(BootstrapBase):
                 for k in nodes[_nconstants.NODE_KEY]
             }
 
+
+    def _proc_node_key(self, key: str | tuple) -> str | tuple:
+
+        sep = self.node_key_sep
+        _misc.to_tuple(
+        key = key.split(sep) if sep and isinstance(key, str) else key
+        key = _misc.to_tuple(key)
+        key = (key + (None,) * len(self.node_key))[:len(self.node_key)]
+
+        return key
 
