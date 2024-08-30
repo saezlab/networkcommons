@@ -45,7 +45,6 @@ def test_proc_node_key(toy_network_df):
     })
     bootstrap_df = BootstrapDf(
         edges = custom_edges,
-        nodes = nodes,
         node_key= ('id', 'species'),
     )
     node_key = bootstrap_df._proc_node_key('A,x')

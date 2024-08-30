@@ -541,7 +541,6 @@ class BootstrapDf(BootstrapBase):
             node_key_sep: str | None = ',',
         ):
 
-
         if nodes is not None:
 
             if not node_key_col and _nconstants.NODE_KEY in nodes.columns:
