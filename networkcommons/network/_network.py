@@ -78,6 +78,7 @@ class NetworkBase:
         args = {
             k: locals()[k]
             for k in inspect.signature(bs.__init__).parameters.keys()
+            if k not in {'self'}
         }
 
         proc = bs(**args)

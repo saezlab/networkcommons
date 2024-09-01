@@ -75,7 +75,7 @@ def test_node_dict_dict():
     nodes = {'a': {'color': 'blue'}, 'b': {'color': 'red'}, 'c': {'color': 'green'}}
     result = _bootstrap.Bootstrap(nodes = nodes)
 
-    assert all((n,) in result._nodes.keys() for n in nodes.keys())
+    assert set(result._nodes.keys()) == set(nodes.keys())
     assert isinstance(result._edges, dict)
     assert len(result._edges) == 0
     assert set(result._node_attrs.columns) == {_c.DEFAULT_KEY, 'color', _c.NODE_KEY}
