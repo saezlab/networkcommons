@@ -26,7 +26,7 @@ from __future__ import annotations
 
 __all__ = ['Network']
 
-from typing import Iterable
+from collections.abc import Hashable, Iterable
 import inspect
 
 import lazy_import
@@ -94,8 +94,55 @@ class NetworkBase:
 
     @property
     def hyper(self) -> bool:
+        """
+        Whether the network is a hypergraph.
+        """
 
         return any(len(s | t) > 2 for s, t in self.edges.values())
+
+
+    def __len__(self) -> int:
+
+        return self.ecount
+
+
+    @property
+    def ecount(self) -> int:
+        """
+        Number of edges.
+        """
+
+        return len(self.edges)
+
+
+    @property
+    def ncount(self) -> int:
+        """
+        Number of nodes.
+        """
+
+        return len(self.nodes)
+
+
+    def __repr__(self) -> str:
+
+        return f'<{self.__class__.__name__} {self.ncount}N x {self.ecount}E>'
+
+
+    def __getitem__(self, key: Hashable) -> tuple[set, set]:
+
+        try:
+
+            return self.nodes.get(key, self.edges[key])
+
+        except KeyError:
+
+            raise KeyError(f'No such node or edge: `{key}`.')
+
+
+    def __contains__(self, key: Hashable) -> bool:
+
+        return key in self.nodes
 
 
 class Network:
