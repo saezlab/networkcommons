@@ -17,7 +17,8 @@
 Preprocess arguments of the Network object into its internal representation.
 """
 
-__all__ = ['Bootstrap', 'BootstrapDf']
+__all__ = ['Bootstrap', 'BootstrapDf', 'BootstrapCopy']
 
 from ._df import BootstrapDf
 from ._edgelist import Bootstrap
+from ._copy import BootstrapCopy
