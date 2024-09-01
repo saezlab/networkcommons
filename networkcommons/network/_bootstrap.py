@@ -481,8 +481,6 @@ class BootstrapDf(BootstrapBase):
         ignore = _misc.to_set(ignore) & set(edges.columns)
         edges = edges.drop(columns = ignore)
 
-        self._edge_attrs = edges
-
         new_nodes = (
             (
                 set.union(*edges[source_col]) |
@@ -508,6 +506,7 @@ class BootstrapDf(BootstrapBase):
             i: (s, t) if self.directed else (s | t, set())
             for j, (i, s, t) in edges[cols].iterrows()
         }
+        self._edge_attrs = edges.drop(columns = [source_col, target_col])
 
         for eid, nodes in self._edges.items():
 
@@ -619,6 +618,3 @@ class BootstrapDf(BootstrapBase):
             nattrs.insert(0, col.name, col)
 
         self._node_attrs = nattrs
-
-
-
