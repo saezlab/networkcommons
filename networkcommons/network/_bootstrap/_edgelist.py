@@ -271,10 +271,9 @@ class Bootstrap(_bsbase.BootstrapBase):
 
             for k, v in nodes.items():
 
-                k = _misc.to_tuple(k)
                 nodes_proc[k] = {
                     _nconstants.NODE_KEY: k,
-                    **dict(zip(self.node_key, k)),
+                    **dict(zip(self.node_key, _misc.to_tuple(k))),
                     **v,
                 }
 
