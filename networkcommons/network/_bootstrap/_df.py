@@ -39,8 +39,8 @@ class BootstrapDf(_bsbase.BootstrapBase):
             edges: pd.DataFrame,
             nodes: pd.DataFrame | None = None,
             node_key: str | tuple[str] | None = None,
-            source_col: str = 'source',
-            target_col: str = 'target',
+            source_key: str = 'source',
+            target_key: str = 'target',
             inner_sep: str | None = ';',
             node_key_sep: str | None = ',',
             edge_node_attrs: pd.DataFrame | None = None,
@@ -51,8 +51,8 @@ class BootstrapDf(_bsbase.BootstrapBase):
         Args:
             edges:
                 Adjacency information, edge attributes and node edge
-                attributes. The columns defined in `source_col` and
-                `target_col` contain the source and target nodes. These have to
+                attributes. The columns defined in `source_key` and
+                `target_key` contain the source and target nodes. These have to
                 be single node identifiers (for a binary graph) or sets of node
                 identifiers. Node identifiers are either atomic variables or
                 tuples, as defined by the `node_key` argument. The rest of the
@@ -73,9 +73,9 @@ class BootstrapDf(_bsbase.BootstrapBase):
                 the name of the column has to be provided here. The column will
                 be split by `node_key_sep` if the `node_key` consists of
                 more than one variable.
-            source_col:
+            source_key:
                 Name of the column containing the source node identifiers.
-            target_col:
+            target_key:
                 Name of the column containing the target node identifiers.
             inner_sep:
                 If the values in source and target columns are strings, use
@@ -101,8 +101,8 @@ class BootstrapDf(_bsbase.BootstrapBase):
             nodes: pd.DataFrame | None = None,
             node_key: str | tuple[str] | None = None,
             node_key_col: str | None = None,
-            source_col: str = 'source',
-            target_col: str = 'target',
+            source_key: str = 'source',
+            target_key: str = 'target',
             inner_sep: str | None = ';',
             node_key_sep: str | None = ',',
             edge_node_attrs: pd.DataFrame | None = None,
@@ -122,8 +122,8 @@ class BootstrapDf(_bsbase.BootstrapBase):
         )
         self._bootstrap_edges(
             edges = edges,
-            source_col = source_col,
-            target_col = target_col,
+            source_key = source_key,
+            target_key = target_key,
             ignore = ignore,
         )
 
@@ -131,14 +131,14 @@ class BootstrapDf(_bsbase.BootstrapBase):
     def _bootstrap_edges(
             self,
             edges: pd.DataFrame,
-            source_col: str = 'source',
-            target_col: str = 'target',
+            source_key: str = 'source',
+            target_key: str = 'target',
             ignore: list[str] | None = None,
         ):
 
         edges.insert(0, _nconstants.EDGE_ID, range(len(edges)))
 
-        for col in (source_col, target_col):
+        for col in (source_key, target_key):
 
             edges[col] = edges[col].apply(self._proc_nodes_in_edge)
 
@@ -147,8 +147,8 @@ class BootstrapDf(_bsbase.BootstrapBase):
 
         new_nodes = (
             (
-                set.union(*edges[source_col]) |
-                set.union(*edges[target_col])
+                set.union(*edges[source_key]) |
+                set.union(*edges[target_key])
             ) -
             set(self._nodes.keys())
         )
@@ -165,12 +165,12 @@ class BootstrapDf(_bsbase.BootstrapBase):
         ])
         self._update_node_key_col()
 
-        cols = [_nconstants.EDGE_ID, source_col, target_col]
+        cols = [_nconstants.EDGE_ID, source_key, target_key]
         self._edges = {
             i: (s, t) if self.directed else (s | t, set())
             for j, (i, s, t) in edges[cols].iterrows()
         }
-        self._edge_attrs = edges.drop(columns = [source_col, target_col])
+        self._edge_attrs = edges.drop(columns = [source_key, target_key])
 
         for eid, nodes in self._edges.items():
 
