@@ -27,6 +27,7 @@ from __future__ import annotations
 __all__ = ['Network']
 
 from typing import Iterable
+import inspect
 
 import lazy_import
 import pandas as pd
@@ -49,15 +50,45 @@ class NetworkBase:
 
     def __init__(
             self,
-            edges: Iterable[dict | tuple],
-            nodes: list[str | dict] | dict[dict],
-            node_key: str | tuple[str] | None,
+            edges: Iterable[dict | tuple] | pd.DataFrame | None = None,
+            nodes: list[str | dict] | dict[dict] | pd.DataFrame | None = None,
+            node_key: str | tuple[str] | None = None,
             source_key: str = 'source',
             target_key: str = 'target',
             edge_attrs: list[str] | None = None,
+            inner_sep: str | None = ';',
+            node_key_sep: str | None = ',',
+            edge_node_attrs: pd.DataFrame | None = None,
+            directed: bool = True,
+            ignore: list[str] | None = None,
         ):
 
-        pass
+        if isinstance(edges, self.__class__):
+
+            bs = _bootstrap.BootstrapCopy
+
+        elif any(isinstance(d, pd.DataFrame) for d in (edges, nodes)):
+
+            bs = _bootstrap.BootstrapDf
+
+        else:
+
+            bs = _bootstrap.Bootstrap
+
+        args = {
+            k: locals()[k]
+            for k in inspect.signature(bs.__init__).parameters.keys()
+        }
+
+        proc = bs(**args)
+
+        self.edges = proc._edges
+        self.nodes = proc._nodes
+        self.edge_attrs = proc._edge_attrs
+        self.node_attrs = proc._node_attrs
+        self.node_edge_attrs = proc._node_edge_attrs
+        self.node_key = proc.node_key
+        self.directed = proc.directed
 
 
     @property
