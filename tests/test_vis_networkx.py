@@ -24,7 +24,7 @@ class TestVisualizeGraphSimple(unittest.TestCase):
 
         # Call the function to visualize the graph
         nwb = NetworkVisualizerBase(network)
-        nwb.visualize_graph_simple(source_dict, target_dict, prog='dot', is_sign_consistent=True, max_nodes=75)
+        nwb.visualize_network_simple(source_dict, target_dict, prog='dot', is_sign_consistent=True, max_nodes=75)
 
         # Check that the network was converted to an AGraph object
         mock_to_agraph.assert_called_once_with(network)
@@ -86,7 +86,7 @@ class TestNetworkXVisualizer(unittest.TestCase):
             }
 
             # Call the method to visualize the network
-            self.visualizer.visualize_network_default(self.network, source_dict, target_dict, prog='dot')
+            self.visualizer.visualize_network_default(source_dict, target_dict, prog='dot')
 
             # Check that the network was converted to an AGraph object
             mock_to_agraph.assert_called_once_with(self.network)
@@ -100,8 +100,10 @@ class TestNetworkXVisualizer(unittest.TestCase):
             mock_get_styles.return_value = {
                 'default': {
                     'nodes': {
-                        'default': {
-                            'fillcolor': '#00ff00'  # Default fill color
+                        'other': {
+                            'default': {
+                                'fillcolor': '#00ff00'  # Default fill color
+                            }
                         },
                         'sources': {
                             'fillcolor': '#0000ff'  # Source fill color
@@ -143,21 +145,26 @@ class TestNetworkXVisualizer(unittest.TestCase):
             for edge in self.network.edges:
                 self.assertEqual(self.network.get_edge_data(*edge)['color'], '#000000')
 
-    @patch('networkcommons.visual._vis_networkx.plt.figure')
-    @patch('networkcommons.visual._vis_networkx.nx.spring_layout')
-    @patch('networkcommons.visual._vis_networkx.nx.draw')
+    @patch('networkcommons.visual._vis_networkx.tempfile.NamedTemporaryFile')
+    @patch('networkcommons.visual._vis_networkx.mpimg.imread')
+    @patch('networkcommons.visual._vis_networkx.plt.imshow')
+    @patch('networkcommons.visual._vis_networkx.plt.show')
     @patch('networkcommons.visual._vis_networkx.plt.savefig')
     @patch('networkcommons.visual._vis_networkx.plt.close')
     @patch('networkcommons.visual._styles.get_styles')
-    def test_visualize(self, mock_get_styles, mock_close, mock_savefig, mock_draw, mock_spring_layout, mock_figure):
-        mock_spring_layout.return_value = {n: (0, 0) for n in self.network.nodes}
+    def test_visualize(self, mock_get_styles, mock_close, mock_savefig, mock_show, mock_imshow, mock_imread,
+                       mock_tempfile):
+        mock_tempfile.return_value.__enter__.return_value.name = 'temp.png'
+        mock_imread.return_value = MagicMock()
 
         # Mocking the return value of _styles.get_styles
         mock_get_styles.return_value = {
             'default': {
                 'nodes': {
-                    'default': {
-                        'fillcolor': '#ffffff'
+                    'other': {
+                        'default': {
+                            'fillcolor': '#ffffff'
+                        }
                     },
                     'sources': {
                         'fillcolor': '#ff0000'
@@ -167,21 +174,35 @@ class TestNetworkXVisualizer(unittest.TestCase):
                     }
                 },
                 'edges': {
-                    'default': '#000000',
-                    1: '#ff0000'
+                    'default': {
+                        'color': '#000000'
+                    },
+                    'neutral': {
+                        'color': '#999999'
+                    }
                 }
             }
         }
 
-        # Call the visualize method
-        self.visualizer.visualize(output_file='network.png', render=False)
+        # Mock the AGraph object and its draw method
+        with patch('networkcommons.visual._vis_networkx.nx.nx_agraph.to_agraph') as mock_to_agraph:
+            mock_agraph = mock_to_agraph.return_value
 
-        mock_figure.assert_called_once_with(figsize=(12, 12))
-        mock_spring_layout.assert_called_once_with(self.network)
-        mock_draw.assert_called_once()
-        mock_savefig.assert_called_once_with('network.png')
-        mock_close.assert_called_once()
+            # Call the visualize method with render=True
+            self.visualizer.visualize(output_file='network.png', render=True)
 
+            mock_agraph.draw.assert_called_once_with('temp.png', format='png', prog='dot')
+            mock_imread.assert_called_once_with('temp.png')
+            mock_imshow.assert_called_once()
+            mock_show.assert_called_once()
+
+            # Reset the mock draw call count
+            mock_agraph.draw.reset_mock()
+
+            # Call the visualize method with render=False (saving)
+            self.visualizer.visualize(output_file='network.png', render=False)
+
+            mock_agraph.draw.assert_called_once_with('network.png', format='png', prog='dot')
 
 if __name__ == '__main__':
     unittest.main()
