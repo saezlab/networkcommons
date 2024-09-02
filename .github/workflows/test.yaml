@@ -2,9 +2,9 @@ name: Unit tests (fast suite)
 
 on:
     push:
-        branches: [main, dev-stable]
+        branches: [main, dev-stable, dev-exp]
     pull_request:
-        branches: [main, dev-stable]
+        branches: [main, dev-stable, dev-exp]
         types: [ opened, synchronize, reopened, ready_for_review ]
 
 jobs:
