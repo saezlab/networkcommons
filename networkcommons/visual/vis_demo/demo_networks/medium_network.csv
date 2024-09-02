@@ -1,0 +1,17 @@
+Node1,Effect,Node2,Type
+Node0,-1,Node1,none
+Node0,1,Node11,none
+Node1,1,Node9,none
+Node1,-1,Node18,target
+Node2,-1,Node10,source
+Node2,1,Node3,source
+Node3,-1,Node8,target
+Node3,1,Node15,target
+Node4,1,Node14,none
+Node7,1,Node18,target
+Node9,1,Node16,none
+Node12,1,Node18,target
+Node13,1,Node14,none
+Node14,-1,Node19,none
+Node15,1,Node17,source
+Node16,1,Node18,target
