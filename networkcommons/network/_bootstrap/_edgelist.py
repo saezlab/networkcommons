@@ -13,6 +13,8 @@
 # https://www.gnu.org/licenses/gpl-3.0.txt
 #
 
+from __future__ import annotations
+
 """
 Preprocess arguments of the Network object from nested lists and dicts.
 """

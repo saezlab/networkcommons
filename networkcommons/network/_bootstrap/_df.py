@@ -13,6 +13,8 @@
 # https://www.gnu.org/licenses/gpl-3.0.txt
 #
 
+from __future__ import annotations
+
 """
 Preprocess inputs for the Network object from data frames.
 """
