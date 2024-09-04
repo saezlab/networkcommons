@@ -75,8 +75,10 @@ class NetworkBase:
 
             bs = _bootstrap.Bootstrap
 
+        the_locals = locals()
+
         args = {
-            k: locals()[k]
+            k: the_locals[k]
             for k in inspect.signature(bs.__init__).parameters.keys()
             if k not in {'self'}
         }
@@ -112,7 +114,7 @@ class NetworkBase:
         Number of edges.
         """
 
-        return len(self.edges)
+        return len(getattr(self, 'edges', ()))
 
 
     @property
@@ -121,7 +123,7 @@ class NetworkBase:
         Number of nodes.
         """
 
-        return len(self.nodes)
+        return len(getattr(self, 'nodes', ()))
 
 
     def __repr__(self) -> str:
