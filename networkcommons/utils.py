@@ -222,7 +222,6 @@ def targetlayer_formatter(df, n_elements=25, act_col='stat'):
     df = df[act_col].head(n_elements)
 
     df = df.apply(lambda x: 1 if x > 0 else -1 if x < 0 else 0)
-    print(df)
 
     # Pivot wider
     dict_df = df.to_dict()
