@@ -157,7 +157,7 @@ def test_decoupler_formatter_string():
 
 def test_targetlayer_formatter():
     df = pd.DataFrame({'TF': ['A', 'B', 'C', 'D'], 'sign': [1.5, -2, 0, 3]}).set_index('TF')
-    result = utils.targetlayer_formatter(df, n_elements=2)
+    result = utils.targetlayer_formatter(df, n_elements=2, act_col='sign')
     expected = {'D': 1, 'B': -1}
     assert result == expected
 

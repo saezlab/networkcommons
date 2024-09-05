@@ -202,30 +202,29 @@ def decoupler_formatter(df,
     return df_f
 
 
-def targetlayer_formatter(df, n_elements=25):
+def targetlayer_formatter(df, n_elements=25, act_col='stat'):
     """
     Format dataframe to be used by the network methods.
     It converts the df values to 1, -1 and 0, and outputs a dictionary.
 
     Parameters:
         df (DataFrame): A pandas DataFrame.
-        source (str): The source node of the perturbation.
-
+        n_elements (int): The number of elements to be selected.
+        act_col (str): The column containing the activity scores
     Returns:
-        A dictionary of dictionaries {source: {target: sign}}
+        A dictionary {target: sign}
     """
-    df.columns = ['sign']
 
     # Sort the DataFrame by the absolute value of the
     # 'sign' column and get top n elements
-    df = df.sort_values(by='sign', key=lambda x: abs(x), ascending=False)
+    df = df.sort_values(by=act_col, key=lambda x: abs(x), ascending=False)
 
-    df = df.head(n_elements)
+    df = df[act_col].head(n_elements)
 
-    df['sign'] = df['sign'].apply(lambda x: 1 if x > 0 else -1 if x < 0 else 0)
+    df = df.apply(lambda x: 1 if x > 0 else -1 if x < 0 else 0)
 
     # Pivot wider
-    dict_df = df['sign'].to_dict()
+    dict_df = df.to_dict()
 
     return dict_df
 
