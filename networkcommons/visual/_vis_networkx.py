@@ -20,7 +20,8 @@ This module provides functionality to visualize networks using various styles.
 
 Classes:
 - `NetworkVisualizerBase`: A basic visualizer for networks with minimal functionality.
-- `NetworkXVisualizer`: An advanced visualizer that extends `NetworkVisualizerBase` with additional features for network visualization.
+- `NetworkXVisualizer`: An advanced visualizer that extends `NetworkVisualizerBase`
+    with additional features for network visualization.
 
 Functions:
 - `get_styles()`: Returns the default styles used for visualizing nodes and edges.
@@ -38,6 +39,8 @@ __all__ = ['NetworkVisualizerBase', 'NetworkXVisualizer']
 import lazy_import
 import networkx as nx
 import matplotlib.pyplot as plt
+import matplotlib.image as mpimg
+import tempfile
 
 from . import _aux
 from . import _styles
@@ -55,7 +58,8 @@ class NetworkVisualizerBase:
     Methods:
         __init__(network): Initializes the visualizer with a network and default style.
         set_custom_style(custom_style): Sets a custom style for visualization.
-        visualize_graph_simple(source_dict, target_dict, prog, is_sign_consistent, max_nodes): Visualizes the network with basic settings and styling.
+        visualize_graph_simple(source_dict, target_dict, prog, is_sign_consistent, max_nodes):
+            Visualizes the network with basic settings and styling.
     """
 
     def __init__(self, network):
@@ -78,7 +82,12 @@ class NetworkVisualizerBase:
         if custom_style:
             self.style = _styles.merge_styles(self.style, custom_style)
 
-    def visualize_graph_simple(self, source_dict, target_dict, prog='dot', is_sign_consistent=True, max_nodes=75):
+    def visualize_network_simple(self,
+                                 source_dict,
+                                 target_dict,
+                                 prog='dot',
+                                 is_sign_consistent=True,
+                                 max_nodes=75):
         """
         Visualizes the graph using basic settings and styling.
 
@@ -93,7 +102,7 @@ class NetworkVisualizerBase:
             A (pygraphviz.AGraph): The visualized network graph.
         """
         if len(self.network.nodes) > max_nodes:
-            _log.error("The network is too large to visualize.")
+            _log("The network is too large to visualize.", level=40)
             return
 
         A = nx.nx_agraph.to_agraph(self.network)
@@ -109,7 +118,7 @@ class NetworkVisualizerBase:
             elif n in targets:
                 base_style = self.style['nodes']['targets']
             else:
-                base_style = self.style['nodes']['default']
+                base_style = self.style['nodes']['other']['default']
 
             _styles.set_style_attributes(node, base_style)
 
@@ -145,9 +154,12 @@ class NetworkXVisualizer(NetworkVisualizerBase):
         set_custom_edge_colors(custom_edge_colors): Sets custom colors for edges.
         color_nodes(): Colors nodes based on their type.
         color_edges(): Colors edges based on a specified attribute.
-        visualize_network_default(network, source_dict, target_dict, prog, custom_style): Visualizes the network using default styles.
-        visualize_network_sign_consistent(network, source_dict, target_dict, prog, custom_style): Visualizes the network with sign consistency.
-        visualize_network(network, source_dict, target_dict, prog, network_type, custom_style): Main function for network visualization based on network type.
+        visualize_network_default(network, source_dict, target_dict, prog, custom_style):
+            Visualizes the network using default styles.
+        visualize_network_sign_consistent(network, source_dict, target_dict, prog, custom_style):
+            Visualizes the network with sign consistency.
+        visualize_network(network, source_dict, target_dict, prog, network_type, custom_style):
+            Main function for network visualization based on network type.
         visualize(output_file, render, highlight_nodes, style): Visualizes the network and saves or shows the plot.
     """
 
@@ -180,7 +192,7 @@ class NetworkXVisualizer(NetworkVisualizerBase):
         default_node_styles = styles['default']['nodes']
         source_node_color = default_node_styles['sources']['fillcolor']
         target_node_color = default_node_styles['targets']['fillcolor']
-        default_color = default_node_styles['default']['fillcolor']
+        default_color = default_node_styles['other']['default']['fillcolor']
 
         for node in self.network.nodes:
             node_data = self.network.nodes[node]
@@ -200,13 +212,15 @@ class NetworkXVisualizer(NetworkVisualizerBase):
             u, v = edge
             edge_data = self.network.get_edge_data(u, v)
             if self.color_by in edge_data:
-                color = edge_colors.get(edge_data[self.color_by], edge_colors['default'])
+                edge_style = edge_colors.get(edge_data[self.color_by], edge_colors['default'])
+                color = edge_style['color'] if isinstance(edge_style, dict) else edge_style
             else:
-                color = edge_colors['default']
+                color = edge_colors['default']['color'] if isinstance(edge_colors['default'], dict) \
+                    else edge_colors['default']
+
             edge_data['color'] = color
 
     def visualize_network_default(self,
-                                  network,
                                   source_dict,
                                   target_dict,
                                   prog='dot',
@@ -227,11 +241,17 @@ class NetworkXVisualizer(NetworkVisualizerBase):
         default_style = _styles.get_styles()['default']
         style = _styles.merge_styles(default_style, custom_style)
 
-        A = nx.nx_agraph.to_agraph(network)
+        A = nx.nx_agraph.to_agraph(self.network)
         A.graph_attr['ratio'] = '1.2'
 
-        sources = set(source_dict.keys())
-        targets = set(target_dict.keys())
+        if source_dict:
+            sources = set(source_dict.keys())
+        else:
+            sources = set()
+        if target_dict:
+            targets = set(target_dict.keys())
+        else:
+            targets = set()
 
         for node in A.nodes():
             n = node.get_name()
@@ -240,7 +260,7 @@ class NetworkXVisualizer(NetworkVisualizerBase):
             elif n in targets:
                 base_style = style['nodes']['targets']
             else:
-                base_style = style['nodes']['other']
+                base_style = style['nodes']['other']['default']
 
             _styles.set_style_attributes(node, base_style)
 
@@ -252,7 +272,6 @@ class NetworkXVisualizer(NetworkVisualizerBase):
         return A
 
     def visualize_network_sign_consistent(self,
-                                          network,
                                           source_dict,
                                           target_dict,
                                           prog='dot',
@@ -273,12 +292,18 @@ class NetworkXVisualizer(NetworkVisualizerBase):
         default_style = _styles.get_styles()['sign_consistent']
         style = _styles.merge_styles(default_style, custom_style)
 
-        A = self.visualize_network_default(network, source_dict, target_dict, prog, style)
+        A = self.visualize_network_default(source_dict, target_dict, prog, style)
 
-        sources = set(source_dict.keys())
-        target_dict_flat = {sub_key: sub_value for key, value in target_dict.items()
-                            for sub_key, sub_value in value.items()}
-        targets = set(target_dict_flat.keys())
+        if source_dict:
+            sources = set(source_dict.keys())
+        else:
+            sources = set()
+        if target_dict:
+            target_dict_flat = {sub_key: sub_value for key, value in target_dict.items()
+                                    for sub_key, sub_value in value.items()}
+            targets = set(target_dict_flat.keys())
+        else:
+            targets = set()
 
         for node in A.nodes():
             n = node.get_name()
@@ -300,7 +325,7 @@ class NetworkXVisualizer(NetworkVisualizerBase):
 
         for edge in A.edges():
             u, v = edge
-            edge_data = network.get_edge_data(u, v)
+            edge_data = self.network.get_edge_data(u, v)
             if 'interaction' in edge_data:
                 edge_data['sign'] = edge_data.pop('interaction')
 
@@ -316,7 +341,6 @@ class NetworkXVisualizer(NetworkVisualizerBase):
         return A
 
     def visualize_network(self,
-                          network,
                           source_dict,
                           target_dict,
                           prog='dot',
@@ -337,12 +361,18 @@ class NetworkXVisualizer(NetworkVisualizerBase):
             A (pygraphviz.AGraph): The visualized network graph.
         """
         if network_type == 'sign_consistent':
-            return self.visualize_network_sign_consistent(network, source_dict, target_dict, prog, custom_style)
+            return self.visualize_network_sign_consistent(source_dict, target_dict, prog, custom_style)
         else:
             default_style = _styles.get_styles().get(network_type, 'default')
-            return self.visualize_network_default(network, source_dict, target_dict, prog, custom_style)
+            return self.visualize_network_default(source_dict, target_dict, prog, custom_style)
 
-    def visualize(self, output_file='network.png', render=False, highlight_nodes=None, style=None):
+    def visualize(self,
+                  source_dict=None,
+                  target_dict=None,
+                  output_file='network.png',
+                  render=False,
+                  highlight_nodes=None,
+                  style=None):
         """
         Visualizes the network and saves or shows the plot.
 
@@ -351,32 +381,31 @@ class NetworkXVisualizer(NetworkVisualizerBase):
             render (bool, optional): If True, displays the plot. If False, saves it to a file. Defaults to False.
             highlight_nodes (list, optional): List of nodes to highlight. Defaults to None.
             style (dict, optional): Style dictionary for visualization. Defaults to None.
-
         """
-        plt.figure(figsize=(12, 12))
-        network = self.network
-        pos = nx.spring_layout(network)
+        # Visualize the network using the appropriate method based on style
 
-        if not all('color' in network.nodes[node] for node in network.nodes):
-            self.color_nodes()
-        if not all('color' in network.edges[edge] for edge in network.edges):
-            self.color_edges()
+        if style:
+            self.set_custom_style(style)
+        A = self.visualize_network(source_dict, target_dict, custom_style=style)
 
-        node_colors = [network.nodes[node]['color'] for node in network.nodes]
-        edge_colors = [network.edges[edge]['color'] for edge in network.edges]
-
-        nx.draw(network, pos, node_color=node_colors, edge_color=edge_colors, with_labels=True)
-
+        # Highlight specific nodes if provided
         if highlight_nodes:
-            if style and style.get('highlight_color'):
-                highlight_color = style['highlight_color']
-            else:
-                highlight_color = self.style['nodes']['default']['fillcolor']
-            highlight_nodes = [_aux.wrap_node_name(node) for node in highlight_nodes]
-            nx.draw_networkx_nodes(self.network, pos, nodelist=highlight_nodes, node_color=highlight_color)
+            for node in A.nodes():
+                if node in highlight_nodes:
+                    highlight_color = style['highlight_color'] if style and 'highlight_color' in style else \
+                        self.style['nodes']['other']['default']['fillcolor']
+                    A.get_node(node).attr['fillcolor'] = highlight_color
+                    A.get_node(node).attr['style'] = 'filled'
 
+        # Save or render the plot
         if render:
-            plt.show()
+            # Create a temporary file to store the image
+            with tempfile.NamedTemporaryFile(suffix='.png') as temp_file:
+                A.draw(temp_file.name, format='png', prog='dot')
+                img = mpimg.imread(temp_file.name)
+                plt.imshow(img)
+                plt.axis('off')
+                plt.show()
         else:
-            plt.savefig(output_file)
-            plt.close()
+            A.draw(output_file, format='png', prog='dot')
+            _log(f"Network visualization saved to {output_file}.", level=20)
