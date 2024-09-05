@@ -9,6 +9,7 @@ If you want to contribute with your own, please check our :doc:`Contribution gui
 Topological methods
 -------------------
 
+.. _details-sp:
 
 Shortest path
 -------------
