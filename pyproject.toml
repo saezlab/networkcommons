@@ -55,7 +55,7 @@ pypath-omnipath = "^0.16.16"
 numpydoc = "^1.7.0"
 sphinx-rtd-theme = "^2.0.0"
 lazy-import = { git = "https://github.com/mnmelo/lazy_import.git", branch = "master" }
-anndata = "^0.10.8"
+anndata = "<=0.10.8"
 pytest = "^8.2.2"
 yfiles-jupyter-graphs = "^1.7.2"
 gurobipy = "^11.0.2"
