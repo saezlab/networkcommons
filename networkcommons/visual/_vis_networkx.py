@@ -299,16 +299,14 @@ class NetworkXVisualizer(NetworkVisualizerBase):
         else:
             sources = set()
         if target_dict:
-            target_dict_flat = {sub_key: sub_value for key, value in target_dict.items()
-                                    for sub_key, sub_value in value.items()}
-            targets = set(target_dict_flat.keys())
+            targets = set(target_dict.keys())
         else:
             targets = set()
 
         for node in A.nodes():
             n = node.get_name()
             condition_style = None
-            sign_value = target_dict_flat.get(n, 1)
+            sign_value = target_dict.get(n, 1)
 
             if n in sources:
                 nodes_type = "sources"
