@@ -11,7 +11,7 @@ def test_nodes_list_str():
 
     result = _bootstrap.Bootstrap(nodes = nodes)
 
-    assert all((n,) in result._nodes.keys() for n in nodes)
+    assert set(result._nodes.keys()) == set(nodes)
     assert isinstance(result._edges, dict)
     assert len(result._edges) == 0
     assert set(result._node_attrs.columns) == {_c.DEFAULT_KEY, _c.NODE_KEY}
@@ -31,7 +31,7 @@ def test_node_list_dict():
 
     node_ids = {n['name'] for n in nodes}
 
-    assert all((n,) in result._nodes.keys() for n in node_ids)
+    assert set(result._nodes.keys()) == node_ids
     assert isinstance(result._edges, dict)
     assert len(result._edges) == 0
     assert (
@@ -106,7 +106,7 @@ def test_duplicate_nodes():
 
     # Ensure duplicates are handled and only unique nodes are stored
     assert len(result._nodes) == len(set(nodes))
-    assert all((n,) in result._nodes.keys() for n in set(nodes))
+    assert set(result._nodes.keys()) == set(nodes)
 
     # Ensure the node attributes DataFrame has only unique nodes
     assert len(result._node_attrs) == len(set(nodes))
@@ -139,8 +139,8 @@ def test_mixed_node_types():
     result = _bootstrap.Bootstrap(nodes=nodes, node_key=node_key)
 
     # Mixed types should raise an exception or be processed correctly
-    node_ids = {('b',), ('a',), ('c',)}
-    assert all(n in result._nodes.keys() for n in node_ids)
+    node_ids = {'b', 'a', 'c'}
+    assert set(result._nodes.keys()) == node_ids
     assert isinstance(result._edges, dict)
     assert len(result._edges) == 0
     assert 'name' in result._node_attrs.columns
@@ -160,7 +160,7 @@ def test_node_dict_with_partial_attrs():
     result = _bootstrap.Bootstrap(nodes=nodes, node_key=node_key)
 
     node_ids = {n['name'] for n in nodes}
-    assert all((n,) in result._nodes.keys() for n in node_ids)
+    assert set(result._nodes.keys()) == node_ids
     assert isinstance(result._edges, dict)
     assert len(result._edges) == 0
     assert (
