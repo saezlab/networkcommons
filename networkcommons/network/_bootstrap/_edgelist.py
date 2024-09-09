@@ -299,7 +299,7 @@ class Bootstrap(_bsbase.BootstrapBase):
 
         if not isinstance(node, dict):
 
-            node = {self.node_key[0]: node}
+            node = dict(zip(self.node_key, _misc.to_tuple(node)))
 
         key = tuple(
             node.get(k, idx if k == _nconstants.DEFAULT_KEY else None)
