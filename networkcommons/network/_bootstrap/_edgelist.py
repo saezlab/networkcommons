@@ -251,10 +251,18 @@ class Bootstrap(_bsbase.BootstrapBase):
         self.node_key = _misc.to_tuple(node_key)
 
 
-    def _get_node_key(self, node: dict, pop: bool = False) -> str | int | tuple:
+    def _get_node_key(
+            self,
+            node: dict,
+            pop: bool = False,
+            idx: int | None = None,
+        ) -> str | int | tuple:
 
         method = dict.pop if pop else dict.get
-        key = tuple(method(node, k, None) for k in self.node_key)
+        key = tuple(
+            method(node, k, idx if k == _nconstants.DEFAULT_KEY else None)
+            for k in self.node_key
+        )
         key = key[0] if len(key) == 1 else key
 
         return key
@@ -301,12 +309,9 @@ class Bootstrap(_bsbase.BootstrapBase):
 
             node = dict(zip(self.node_key, _misc.to_tuple(node)))
 
-        key = tuple(
-            node.get(k, idx if k == _nconstants.DEFAULT_KEY else None)
-            for k in self.node_key
-        )
+        key = self._get_node_key(node, idx = idx)
 
-        if all(k is None for k in key):
+        if key is None or all(k is None for k in key):
 
             raise ValueError(f'Node with empty key: `{node}`.')
 
