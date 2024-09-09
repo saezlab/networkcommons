@@ -38,6 +38,11 @@ def test_edgelist():
     assert result.node_attrs[_c.NODE_KEY].isin(nodes).all()
     assert set(result.node_attrs.columns) == {_c.NODE_KEY, _c.DEFAULT_KEY, 'color'}
 
+    assert result.node_attrs.index.is_monotonic_increasing
+    assert (result.node_attrs.index == result.node_attrs[_c.NODE_KEY]).all()
+    assert result.edge_attrs.index.is_monotonic_increasing
+    assert (result.edge_attrs.index == result.edge_attrs[_c.EDGE_ID]).all()
+
 
 def test_df():
 
@@ -73,6 +78,11 @@ def test_df():
     assert result.node_attrs[_c.NODE_KEY].isin(nodes).all()
     assert set(result.node_attrs.columns) == {_c.NODE_KEY, _c.DEFAULT_KEY, 'color'}
 
+    assert result.node_attrs.index.is_monotonic_increasing
+    assert (result.node_attrs.index == result.node_attrs[_c.NODE_KEY]).all()
+    assert result.edge_attrs.index.is_monotonic_increasing
+    assert (result.edge_attrs.index == result.edge_attrs[_c.EDGE_ID]).all()
+
 
 def test_copy():
 
@@ -102,3 +112,8 @@ def test_copy():
     assert result.node_attrs.shape[0] == len(nodes)
     assert result.node_attrs[_c.NODE_KEY].isin(nodes).all()
     assert set(result.node_attrs.columns) == {_c.NODE_KEY, _c.DEFAULT_KEY, 'color'}
+
+    assert result.node_attrs.index.is_monotonic_increasing
+    assert (result.node_attrs.index == result.node_attrs[_c.NODE_KEY]).all()
+    assert result.edge_attrs.index.is_monotonic_increasing
+    assert (result.edge_attrs.index == result.edge_attrs[_c.EDGE_ID]).all()
