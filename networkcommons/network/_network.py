@@ -93,6 +93,8 @@ class NetworkBase:
         self.node_key = proc.node_key
         self.directed = proc.directed
 
+        self._sort()
+
 
     @property
     def hyper(self) -> bool:
@@ -145,6 +147,15 @@ class NetworkBase:
     def __contains__(self, key: Hashable) -> bool:
 
         return key in self.nodes
+
+
+    def _sort(self):
+
+        self.edge_attrs.index = self.edge_attrs[_nconstants.EDGE_ID]
+        self.node_attrs.index = self.node_attrs[_nconstants.NODE_KEY]
+
+        self.edge_attrs.sort_index(inplace = True)
+        self.node_attrs.sort_index(inplace = True)
 
 
 class Network:
