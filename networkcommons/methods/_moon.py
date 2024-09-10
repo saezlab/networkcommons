@@ -98,14 +98,14 @@ def prepare_metab_inputs(metab_input, compartment_codes):
 
     ignored = [code for code in compartment_codes if code not in comps]
     if ignored:
-        _log("The following compartment codes are not found in the PKN and "
+        _log("MOON: The following compartment codes are not found in the PKN and "
               "will be ignored:")
         _log(ignored)
 
     compartment_codes = [code for code in compartment_codes if code in comps]
 
     if not compartment_codes:
-        _log("There are no valid compartments left. No compartment codes "
+        _log("MOON: There are no valid compartments left. No compartment codes "
               "will be added.")
         metab_input = {
             f"Metab__{name}": value for name, value in metab_input.items()
@@ -114,7 +114,7 @@ def prepare_metab_inputs(metab_input, compartment_codes):
         return metab_input
 
     else:
-        _log("Adding compartment codes.")
+        _log("MOON: Adding compartment codes.")
 
         metab_input_list = []
 
@@ -219,7 +219,7 @@ def filter_input_nodes_not_in_pkn(data, pkn):
             node for node in data.keys() if node not in new_data.keys()
         ]
 
-        _log(f"COSMOS: {len(removed_nodes)} input/measured nodes are not in "
+        _log(f"MOON: {len(removed_nodes)} input/measured nodes are not in "
               f"PKN anymore: {removed_nodes}")
 
     return new_data
@@ -237,6 +237,7 @@ def keep_controllable_neighbours(source_dict, graph):
     Returns:
     - A dictionary of source nodes that are observable from the graph.
     """
+    _log("MOON: filtering out nodes that are not controllable from sources...")
 
     return _graph.run_reachability_filter(graph, source_dict)
 
@@ -253,6 +254,7 @@ def keep_observable_neighbours(target_dict, graph):
     Returns:
     - A dictionary of target nodes that are observable from the graph.
     """
+    _log("MOON: filtering out nodes that are not observable from targets...")
 
     subnetwork = _graph.run_reachability_filter(graph.reverse(), target_dict)
 
@@ -274,10 +276,12 @@ def compress_same_children(uncompressed_graph, sig_input, metab_input):
     - tuple: A tuple containing the compressed subnetwork, node signatures,
     and duplicated parents.
     """
+    _log("MOON: starting network compression...")
     graph = uncompressed_graph.copy()
 
     parents = [node for node in graph.nodes if graph.out_degree(node) > 0]
     parents.sort()
+    _log(f"MOON: {len(parents)} parents found")
 
     df_signature = nx.to_pandas_edgelist(graph)
     df_signature = df_signature.sort_values(by=['source', 'target'])
@@ -310,6 +314,8 @@ def compress_same_children(uncompressed_graph, sig_input, metab_input):
         if signature_counts[signature] > 1
     }
 
+    _log(f"MOON: {len(duplicated_parents)} duplicated parents found")
+
     # Check for edges with different signs and exclude them from compression
     records = []
     for original_node, signature in duplicated_parents.items():
@@ -322,6 +328,8 @@ def compress_same_children(uncompressed_graph, sig_input, metab_input):
                                        'original_node',
                                        'parent',
                                        'sign'])
+
+    _log(f"MOON: {len(df_records)} potential compression cases found")
 
     # Identify rows with the same signature but different signs
     signature_parent_signs = (
@@ -344,6 +352,8 @@ def compress_same_children(uncompressed_graph, sig_input, metab_input):
               (df_records['parent'] == parent))
         ]
 
+    _log(f"MOON: {len(excluded_nodes)} nodes excluded from compression after edge check")
+
     df_records = df_records[~df_records['original_node'].isin(excluded_nodes)]
 
     # Build new duplicated_signatures_dict
@@ -356,6 +366,8 @@ def compress_same_children(uncompressed_graph, sig_input, metab_input):
     subnetwork = nx.relabel_nodes(
         graph, new_duplicated_parents, copy=False
     ).copy()
+
+    _log(f"MOON: network reduced from {len(graph.nodes)} to {len(subnetwork.nodes)} nodes after compression") # noqa E501
 
     return subnetwork, node_signatures, new_duplicated_parents
 
@@ -426,7 +438,7 @@ def run_moon_core(
     while len(regulons) > 1 and \
             regulons["target"].isin(res_list[i - 1].index.values).sum() > 1 \
             and i < n_layers:
-        print(f"Iteration count: {i}")
+        _log(f"MOON: scoring layer {i} from downstream nodes...")
         regulons = regulons[~regulons["source"].isin(res_list[i - 1].index.values)] # noqa E501
         previous_n_plus_one = res_list[i - 1].drop(columns="level").T
 
@@ -453,7 +465,6 @@ def run_moon_core(
         n_plus_one["level"] = i + 1
         res_list.append(n_plus_one)
         i += 1
-        _log(f"Iteration count: {i-1}")
 
     recursive_moon_res = pd.concat(res_list)
 
@@ -517,7 +528,9 @@ def run_moon(network,
 
     Returns:
         tuple: A tuple containing the MOON scores and the modified network.
-    """
+    """    
+    _log("MOON: starting MOON scoring...")
+    
     moon_network = network.copy()
 
     before = 1
@@ -539,13 +552,13 @@ def run_moon(network,
 
         after = len(moon_network.edges)
         i += 1
-        print(f'Optimisation iteration {i} - Before: {before}, After: {after}')
+        _log(f'Optimisation iteration {i} - Before: {before}, After: {after}')
 
     if i == max_iter:
         _log("MOON: Maximum number of iterations reached."
               "Solution might not have converged")
     else:
-        print("MOON: Solution converged after", i, "iterations")
+        _log(f"MOON: Solution converged after {i} iterations")
 
     return moon_res, moon_network
 
@@ -611,6 +624,8 @@ def decompress_moon_result(
         pandas.DataFrame: The decompressed moon_res dataframe with the source
         column mapped to its corresponding original source.
     """
+    _log("MOON: decompressing nodes...")
+
     compressed_meta_network = nx.to_pandas_edgelist(meta_network_graph)
 
     # Create a dataframe for duplicated parents
@@ -648,6 +663,8 @@ def decompress_moon_result(
     # Merge the moon_res dataframe with the mapping table
     moon_res_dec = pd.merge(moon_res, mapping_table, on='source', how='inner')
 
+    _log(f"MOON: decompressed {len(moon_res_dec) - len(moon_res)} nodes")
+
     # Return the merged dataframe
     return moon_res_dec
 
@@ -672,11 +689,17 @@ def reduce_solution_network(
         att (pandas.DataFrame): The attribute table containing the relevant
         attributes of the nodes in the reduced network.
     """
+    _log("MOON: reducing solution network...")
+
     recursive_moon_res = moon_res.copy()
+
+    _log(f"MOON: applying cutoff value on MOON scores: {cutoff}")
 
     recursive_moon_res = recursive_moon_res[
         abs(recursive_moon_res['score']) > cutoff
     ]
+
+    _log(f"MOON: {len(moon_res) - len(recursive_moon_res)} nodes removed")
 
     consistency_vec = recursive_moon_res.set_index(
         'source_original')['score'].to_dict()
@@ -690,9 +713,13 @@ def reduce_solution_network(
 
     res_network_edges = res_network.edges(data=True)
     res_network = nx.DiGraph(res_network)
+
+    _log(f"MOON: checking sign consistency of {len(res_network_edges)} edges")
     for source, target, data in res_network_edges:
         if data['sign'] != np.sign(consistency_vec[source] * consistency_vec[target]): # noqa E501
             res_network.remove_edge(source, target)
+    
+    _log(f"MOON: {len(res_network.edges)} edges kept")
 
     recursive_moon_res.rename(columns={'source_original': 'nodes'},
                               inplace=True)
@@ -705,16 +732,21 @@ def reduce_solution_network(
         sig_input_df, recursive_moon_res, how='inner',
         left_index=True, right_on='nodes'
     )
+    _log(f"MOON: comparing real scores with MOON scores in upstream layer")
     merged_df['filterout'] = np.sign(
         merged_df['real_score']) != np.sign(
             merged_df['score'])
+    _log(f"MOON: {merged_df['filterout'].sum()} nodes filtered out")
     merged_df = merged_df[~ merged_df['filterout']]
     upstream_nodes = merged_df.nodes.values
     upstream_nodes = {
         node: 1 for node in upstream_nodes if node in res_network.nodes
     }
 
+    _log(f"MOON: getting ego graph of {len(upstream_nodes)} upstream nodes, maximum depth set to 7") # noqa E501
+    nodes_pre = len(res_network.nodes)
     res_network = get_ego_graph(res_network, upstream_nodes, 7)
+    _log(f"MOON: network reduced from {nodes_pre} to {len(res_network.nodes)} nodes") # noqa E501
 
     moon_scores = recursive_moon_res.set_index(
         'nodes')['score'].to_dict()
@@ -779,6 +811,7 @@ def translate_res(untranslated_network, att, mapping_dict):
         network (networkx.DiGraph): The translated network.
         att (pandas.DataFrame): The translated attribute table.
     """
+    _log("MOON: translating network and attribute table...")
     network = untranslated_network.copy()
     att = att.copy()
     to_rename = att.nodes.values
@@ -808,5 +841,7 @@ def translate_res(untranslated_network, att, mapping_dict):
     renamed = {k: v + suffixes[k] for k, v in renamed.items()}
 
     att['nodes'] = att['nodes'].map(renamed)
+    
+    _log("MOON: nodes translated")
 
     return network, att
