@@ -25,6 +25,8 @@ __all__ = ['get_lianaplus']
 
 import liana
 
+from networkcommons._session import _log
+
 
 def get_lianaplus(resource='Consensus'):
     """
@@ -39,8 +41,12 @@ def get_lianaplus(resource='Consensus'):
         pandas.DataFrame: Liana+ network with source, target, and sign columns.
     """
 
+    _log('LIANA+: Retrieving ligand-receptor network...')
+
     network = liana.resource.select_resource(resource).drop_duplicates()
     network.columns = ['source', 'target']
     network['sign'] = 1
+
+    _log(f'LIANA+: Done. Network has {len(network)} interactions.')
 
     return network

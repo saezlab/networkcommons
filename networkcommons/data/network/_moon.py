@@ -34,7 +34,7 @@ from networkcommons.data.omics import _common
 
 # dc = lazy_import.lazy_module('decoupler')
 import decoupler as dc
-
+from networkcommons._session import _log
 
 def get_cosmos_pkn(update: bool = False):
     """
@@ -45,8 +45,11 @@ def get_cosmos_pkn(update: bool = False):
         source, target, and sign columns.
     """
     path = os.path.join(_conf.get('pickle_dir'), 'metapkn.pickle')
+    
+    _log('COSMOS: Retrieving prior knowledge network...')
 
     if update or not os.path.exists(path):
+        _log('COSMOS: Network not found in cache. Downloading...')
 
         baseurl = urllib.parse.urljoin(_common._baseurl(), 'prior_knowledge')
 
@@ -55,7 +58,10 @@ def get_cosmos_pkn(update: bool = False):
         file_legend.to_pickle(path)
 
     else:
+        _log('COSMOS: Network found in cache. Loading...')
 
         file_legend = pd.read_pickle(path)
+
+    _log(f'COSMOS: Done. Network has {len(file_legend)} interactions.')
 
     return file_legend
