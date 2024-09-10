@@ -29,6 +29,7 @@ import urllib.parse
 from . import _common
 
 from networkcommons import _conf
+from networkcommons._session import _log
 
 
 def panacea_experiments(update=True) -> pd.DataFrame:
@@ -94,10 +95,12 @@ def panacea_tables(cell_line=None, drug=None, type='raw'):
     Returns:
         tuple[pd.DataFrame]: Two data frames: counts and meta data.
     """
+    _log(f"DATA: Retrieving Panacea {type} table for cell line {cell_line} and drug {drug}...")
     if (cell_line is None or drug is None) and type != 'raw':
         raise ValueError('Please specify cell line and drug.')
 
     if type == 'raw':
+        _
 
         df_meta = _common._open(
             _common._commons_url('panacea', table='metadata'),
@@ -148,9 +151,11 @@ def panacea_gold_standard(update: bool = False) -> pd.DataFrame:
         network (pandas.DataFrame): gold standard network with
         cmpd, cmpd_id, target and rank
     """
+    _log('DATA: Retrieving Panacea offtarget gold standard...')
     path = os.path.join(_conf.get('pickle_dir'), 'panacea_gold_standard.pickle')
 
     if update or not os.path.exists(path):
+        _log('DATA: not found in cache, downloading from server...')
 
         baseurl = urllib.parse.urljoin(_common._baseurl(), 'panacea')
 
@@ -159,6 +164,7 @@ def panacea_gold_standard(update: bool = False) -> pd.DataFrame:
         file_legend.to_pickle(path)
 
     else:
+        _log('DATA: found in cache, loading...')
 
         file_legend = pd.read_pickle(path)
 

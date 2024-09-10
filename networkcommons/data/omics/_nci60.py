@@ -28,6 +28,8 @@ import urllib.parse
 from . import _common
 from networkcommons import _conf
 
+from networkcommons._session import _log
+
 
 def nci60_datasets(update: bool = False) -> pd.DataFrame:
     """
@@ -97,6 +99,7 @@ def nci60_table(cell_line: str, data_type: str) -> pd.DataFrame:
     Returns:
         The table as a pandas DataFrame.
     """
+    _log(f"DATA: Retrieving NCI60 data for {cell_line} ({data_type})...")
 
     return _common._open(
         _common._commons_url('NCI60', **locals()),

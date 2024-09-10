@@ -67,16 +67,20 @@ def deseq2(
         pd.DataFrame: The results of the DESeq2 analysis as a data frame.
     """
 
-    _log('Running differential expression analysis using DESeq2.')
+    _log('DESeq2: Running differential expression analysis...')
 
     counts = counts.set_index(feature_col)
     metadata = metadata.set_index(sample_col)
     design_factors = ['group'] + _ppcommon.to_list(covariates)
+    _log(f'DESeq2: Design factors: {design_factors}')
 
     if '_' in test_group:
         test_group = test_group.replace('_', '-')
     if '_' in ref_group:
         ref_group = ref_group.replace('_', '-')
+
+    _log(f'DESeq2: Test group: {test_group}')
+    _log(f'DESeq2: Reference group: {ref_group}')
 
     n_cpus = _conf.get('cpu_count', multiprocessing.cpu_count())
     inference = _deseq2_default_inference.DefaultInference(n_cpus = n_cpus)
