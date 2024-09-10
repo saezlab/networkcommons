@@ -96,6 +96,7 @@ class NetworkBase:
         self.node_key = proc.node_key
         self.directed = proc.directed
 
+        self._set_index()
         self._sort()
 
 
@@ -164,13 +165,26 @@ class NetworkBase:
         return key in self.nodes
 
 
-    def _sort(self) -> None:
+    def _set_index(self) -> None:
 
-        self.edge_attrs.index = self.edge_attrs[_nconstants.EDGE_ID]
-        self.node_attrs.index = self.node_attrs[_nconstants.NODE_KEY]
+        INDEX_COLS = {
+            'edge': _nconstants.EDGE_ID,
+            'node': _nconstants.NODE_KEY,
+            'edge_node': [_nconstants.EDGE_ID, _nconstants.NODE_KEY],
+        }
+
+        for entity, cols in INDEX_COLS.items():
+
+            if not (df := getattr(self, f'{entity}_attrs')).empty:
+
+                df.index = df[cols]
+
+
+    def _sort(self) -> None:
 
         self.edge_attrs.sort_index(inplace = True)
         self.node_attrs.sort_index(inplace = True)
+        self.edge_node_attrs.sort_index(inplace = True)
 
 
     def iteredges(self, *attrs: str) -> Iterator[tuple]:
