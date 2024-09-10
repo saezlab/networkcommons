@@ -46,7 +46,7 @@ class BootstrapBase(abc.ABC):
                 Data frame of node attributes.
             _edge_attrs:
                 Data frame of edge attributes.
-            _node_edge_attrs:
+            _edge_node_attrs:
                 Data frame of node edge attributes.
             directed:
                 Whether the network is directed.
@@ -56,7 +56,7 @@ class BootstrapBase(abc.ABC):
         self._nodes = {}
         self._node_attrs = pd.DataFrame()
         self._edge_attrs = pd.DataFrame()
-        self._node_edge_attrs = pd.DataFrame()
+        self._edge_node_attrs = pd.DataFrame()
 
         args.pop('self')
         args.pop('__class__', None)

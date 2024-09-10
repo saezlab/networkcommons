@@ -115,7 +115,7 @@ class Bootstrap(_bsbase.BootstrapBase):
         # adding edges, edge attrs, edge-node attrs
         self._edges = {}
         _edge_attrs = []
-        _node_edge_attrs = []
+        _edge_node_attrs = []
 
         for i, edge in enumerate(proc_edges):
 
@@ -142,7 +142,7 @@ class Bootstrap(_bsbase.BootstrapBase):
             # edge and node-edge attributes
             _edge_attrs.append(edge)
 
-            _node_edge_attrs.extend([
+            _edge_node_attrs.extend([
                 {
                     _nconstants.NODE_KEY: key,
                     _nconstants.EDGE_ID: i,
@@ -157,7 +157,7 @@ class Bootstrap(_bsbase.BootstrapBase):
             ])
 
         self._edge_attrs = pd.DataFrame(_edge_attrs)
-        self._node_edge_attrs = pd.DataFrame(_node_edge_attrs)
+        self._edge_node_attrs = pd.DataFrame(_edge_node_attrs)
 
 
     def _bootstrap_edges(

@@ -39,5 +39,5 @@ class BootstrapCopy(_bsbase.BootstrapBase):
         self._nodes = copy.deepcopy(edges.nodes)
         self._node_attrs = copy.deepcopy(edges.node_attrs)
         self._edge_attrs = copy.deepcopy(edges.edge_attrs)
-        self._node_edge_attrs = copy.deepcopy(edges.node_edge_attrs)
+        self._edge_node_attrs = copy.deepcopy(edges.edge_node_attrs)
         self.node_key = edges.node_key
