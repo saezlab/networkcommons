@@ -27,7 +27,7 @@ __all__ = [
     'build_volcano_plot',
     'build_ma_plot',
     'plot_pca',
-    'build_heatmap_with_tree',
+    'plot_heatmap_with_tree',
     'plot_density'
 ]
 
@@ -51,7 +51,8 @@ def plot_density(df,
                  xlabel='Intensity',
                  ylabel='Density'):
     """
-    Plots density of intensity values for specified genes, including mean and quantile lines, and separates distributions by groups if metadata is provided.
+    Plots density of intensity values for specified genes, including mean and quantile lines,
+    and separates distributions by groups if metadata is provided.
     Each gene is displayed in a separate subplot.
 
     Args:
@@ -319,42 +320,52 @@ def plot_pca(dataframe, metadata, feature_col='idx', **kwargs):
     return pca_df
 
 
-def build_heatmap_with_tree(
+def plot_heatmap_with_tree(
         data: pd.DataFrame,
-        top_n: int = 50,
-        value_column: str = 'log2FoldChange_condition_1',
-        conditions: list[str] = None,
-        title: str = "Heatmap of Top Differentially Expressed Genes",
+        clustering_method: str = 'ward',
+        metric: str = 'euclidean',
+        title: str = 'Heatmap with Hierarchical Clustering',
+        xlabel: str = 'Samples',
+        ylabel: str = 'Genes',
+        cmap: str = 'viridis',
         save: bool = False,
-        output_dir: str = "."
+        output_dir: str = ".",
+        render: bool = False
 ):
     """
-    Build a heatmap with hierarchical clustering for the top differentially expressed genes across multiple conditions.
+    Creates a heatmap with hierarchical clustering for rows and columns.
 
     Args:
-        data (pd.DataFrame): DataFrame containing RNA-seq results.
-        top_n (int): Number of top differentially expressed genes to include in the heatmap.
-        value_column (str): Column name for the values to rank and select the top genes.
-        conditions (list[str]): List of condition columns to include in the heatmap.
-        title (str): Title of the plot.
-        save (bool): Whether to save the plot. Default is False.
-        output_dir (str): Directory to save the plot. Default is ".".
+        data (pd.DataFrame): DataFrame containing the data for the heatmap.
+        clustering_method (str, optional): Method for hierarchical clustering. Defaults to 'ward'.
+        metric (str, optional): Metric for distance calculation. Defaults to 'euclidean'.
+        title (str, optional): Title of the plot. Defaults to 'Heatmap with Hierarchical Clustering'.
+        xlabel (str, optional): Label for the x-axis. Defaults to 'Samples'.
+        ylabel (str, optional): Label for the y-axis. Defaults to 'Genes'.
+        cmap (str, optional): Colormap for the heatmap. Defaults to 'viridis'.
+        save (bool, optional): Whether to save the plot. Defaults to False.
+        output_dir (str, optional): Directory to save the plot if `save` is True. Defaults to ".".
+        render (bool, optional): Whether to show the plot. Defaults to False.
+
+    Returns:
+        matplotlib.figure.Figure: The created figure object.
     """
-    if conditions is None:
-        raise ValueError("Conditions must be provided as a list of column names.")
+    # Compute the distance matrices
+    row_linkage = sns.clustermap(data, method=clustering_method, metric=metric, cmap=cmap)
+    col_linkage = sns.clustermap(data.T, method=clustering_method, metric=metric, cmap=cmap)
 
-    # Select top differentially expressed genes
-    top_genes = data.nlargest(top_n, value_column).index
-    top_data = data.loc[top_genes, conditions]
+    fig = plt.figure(figsize=(10, 10))
 
-    # Create the clustermap
-    g = sns.clustermap(top_data, cmap="viridis", cbar=True, fmt=".2f", linewidths=.5)
+    sns.heatmap(data, cmap=cmap, ax=fig.gca(), cbar=True, annot=False, fmt=".2f")
 
     plt.title(title)
-    plt.ylabel("Gene")
-    plt.xlabel("Condition")
+    plt.xlabel(xlabel)
+    plt.ylabel(ylabel)
 
     if save:
-        plt.savefig(f"{output_dir}/heatmap_with_tree.png")
+        plt.savefig(f"{output_dir}/heatmap_with_tree.png", bbox_inches='tight')
 
-    plt.show()
+    if render:
+        plt.show()
+
+    return fig
