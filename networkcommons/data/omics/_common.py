@@ -104,7 +104,7 @@ def _download(url: str, path: str) -> None:
 
                 f.write(chunk)
 
-    _log(f'Finished downloading `{url}` to `{path}`.')
+    _log(f'Utils: Finished downloading `{url}` to `{path}`.')
 
 
 def _maybe_download(url: str, **kwargs) -> str:

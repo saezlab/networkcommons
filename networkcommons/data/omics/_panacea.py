@@ -100,8 +100,6 @@ def panacea_tables(cell_line=None, drug=None, type='raw'):
         raise ValueError('Please specify cell line and drug.')
 
     if type == 'raw':
-        _
-
         df_meta = _common._open(
             _common._commons_url('panacea', table='metadata'),
             df = {'sep': '\t'},
