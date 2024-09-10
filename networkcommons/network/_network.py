@@ -26,9 +26,11 @@ from __future__ import annotations
 
 __all__ = ['Network']
 
-from collections.abc import Hashable, Iterable
+from collections.abc import Hashable, Iterable, Iterator
+from typing import Any, NamedTuple
 import inspect
 import importlib as imp
+import warnings
 
 import lazy_import
 import pandas as pd
@@ -162,13 +164,65 @@ class NetworkBase:
         return key in self.nodes
 
 
-    def _sort(self):
+    def _sort(self) -> None:
 
         self.edge_attrs.index = self.edge_attrs[_nconstants.EDGE_ID]
         self.node_attrs.index = self.node_attrs[_nconstants.NODE_KEY]
 
         self.edge_attrs.sort_index(inplace = True)
         self.node_attrs.sort_index(inplace = True)
+
+
+    def iteredges(self, *attrs: str) -> Iterator[tuple]:
+        """
+        Iterate edges as named tuples.
+
+        Args:
+            attrs:
+                Attributes to include.
+        """
+
+        if (noattr := set(attrs) - set(self.edge_attrs.columns)):
+
+            msg = f'No such edge attribute(s): {", ".join(noattr)}.'
+            warnings.warn(msg)
+
+        Edge = NamedTuple(
+            'Edge',
+            [
+                ('source', str | int | tuple | set),
+                ('target', str | int | tuple | set),
+            ] + [
+                (a, _misc.df_dtype_to_builtin(self.edge_attrs, a))
+                for a in attrs
+            ]
+        )
+        hyper = self.hyper
+
+        for i in self.edge_attrs.iterrows():
+
+            source, target = self.edges[i[0]]
+
+            if not hyper:
+
+                if self.directed:
+
+                    source = _misc.first(source)
+                    target = _misc.first(target)
+
+                else:
+
+                    source, *target = sorted(source | target)
+                    target = _misc.first(target) or source  # loop edge
+
+            yield Edge(
+                source,
+                target,
+                *(getattr(i[1], a, None) for a in attrs)
+            )
+
+
+    __iter__ = iteredges
 
 
 class Network:
