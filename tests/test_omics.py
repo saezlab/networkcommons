@@ -127,7 +127,7 @@ def test_maybe_download_exists(mock_md5, mock_exists, mock_conf_get, mock_log, m
     mock_md5.assert_called_once_with(url.encode())
     mock_conf_get.assert_called_once_with('cachedir')
     mock_exists.assert_called_once_with('/mock/cache/dir/dummyhash-file.txt')
-    mock_log.assert_called_once_with('Looking up in cache: `http://example.com/file.txt` -> `/mock/cache/dir/dummyhash-file.txt`.')
+    mock_log.assert_called_once_with('Utils: Looking up in cache: `http://example.com/file.txt` -> `/mock/cache/dir/dummyhash-file.txt`.')
     mock_download.assert_not_called()
     assert path == '/mock/cache/dir/dummyhash-file.txt'
 
@@ -153,8 +153,8 @@ def test_maybe_download_not_exists(mock_md5, mock_exists, mock_conf_get, mock_lo
     mock_md5.assert_called_once_with(url.encode())
     mock_conf_get.assert_called_once_with('cachedir')
     mock_exists.assert_called_once_with('/mock/cache/dir/dummyhash-file.txt')
-    mock_log.assert_any_call('Looking up in cache: `http://example.com/file.txt` -> `/mock/cache/dir/dummyhash-file.txt`.')
-    mock_log.assert_any_call('Not found in cache, initiating download: `http://example.com/file.txt`.')
+    mock_log.assert_any_call('Utils: Looking up in cache: `http://example.com/file.txt` -> `/mock/cache/dir/dummyhash-file.txt`.')
+    mock_log.assert_any_call('Utils: Not found in cache, initiating download: `http://example.com/file.txt`.')
     mock_download.assert_called_once_with(url, '/mock/cache/dir/dummyhash-file.txt')
     assert path == '/mock/cache/dir/dummyhash-file.txt'
 
@@ -180,8 +180,8 @@ def test_download(mock_conf_get, mock_log, mock_requests_session, tmp_path):
     # Assertions
     mock_conf_get.assert_any_call('http_read_timout')
     mock_conf_get.assert_any_call('http_connect_timout')
-    mock_log.assert_any_call(f'Downloading `{url}` to `{path}`.')
-    mock_log.assert_any_call(f'Finished downloading `{url}` to `{path}`.')
+    mock_log.assert_any_call(f'Utils: Downloading `{url}` to `{path}`.')
+    mock_log.assert_any_call(f'Utils: Finished downloading `{url}` to `{path}`.')
     mock_requests_session.assert_called_once()
     mock_session.get.assert_called_once_with(url, timeout=(5, 5), stream=True)
     mock_response.raise_for_status.assert_called_once()
@@ -909,8 +909,8 @@ def test_convert_ensembl_to_gene_symbol_median():
     })
     pd.testing.assert_frame_equal(result_df, expected_df)
 
-
-def test_convert_ensembl_to_gene_symbol_no_match():
+@patch('networkcommons.data.omics._common._log')
+def test_convert_ensembl_to_gene_symbol_no_match(mock_log):
     dataframe = pd.DataFrame({
         'idx': ['ENSG000001.1', 'ENSG000003', 'ENSG000001.02'],
         'value': [10, 20, 15]
@@ -921,13 +921,12 @@ def test_convert_ensembl_to_gene_symbol_no_match():
     })
     with patch('builtins.print') as mocked_print:
         result_df = omics.convert_ensembl_to_gene_symbol(dataframe, equivalence_df, summarisation='mean')
-        print(mocked_print.mock_calls)
         expected_df = pd.DataFrame({
             'gene_symbol': ['GeneA'],
             'value': [12.5]
         })
         pd.testing.assert_frame_equal(result_df, expected_df)
-        mocked_print.assert_any_call("Number of non-matched Ensembl IDs: 1 (33.33%)")
+        mock_log.assert_any_call("Utils: Number of non-matched Ensembl IDs: 1 (33.33%)")
 
 
 @patch('biomart.BiomartServer')
