@@ -50,6 +50,11 @@ Bridging the gap between data, methods and knowledge in network inference
 
 Mission statement
 =================
+
+#TODO: Update mission statement and graphical abstract:
+
+New: NetworkCommons is a community-driven platform designed to simplify access to tools and resources for inferring context-specific protein interaction networks by integrating context-agnostic prior knowledge with omics data. These networks have a wide range of applications, from omics data interpretation to identifying drug targets and key driver mutations. Addressing the complexity and fragmentation of data, methods, and tools across multiple repositories, NetworkCommons offers an API that provides access to raw and preprocessed omics data, directed and/or signed template graphs, and various network inference methods. By streamlining accessibility, we aim to support systematic benchmarking, enhance critical assessment, and foster collaborative advancements in network biology.
+
 Thirty years ago, microarrays revolutionized the study of biological processes, making the computational analysis of vast molecular data essential for understanding phenotypes systematically. This shift gave rise to **network biology**, a field that has developed numerous approaches based on diverse networks, algorithmic assumptions, and omics data types.
 At SaezLab, our focus is on large-scale studies of signaling processes, typically represented as directed, and sometimes signed, networks. These networks encode the transmission of molecular activation states among proteins, enabling us to map cellular functions based on data and prior knowledge.
 
