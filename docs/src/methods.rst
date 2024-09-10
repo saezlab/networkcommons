@@ -112,6 +112,7 @@ MOON
 
 MOON (meta-footprint method) performs iterative footprint activity scoring and network diffusion from a set of target nodes to generate a sign consistent network (https://doi.org/10.1101/2024.07.15.603538). Starting from a set of weighted target nodes it calculates a weight for the next layer of upstream nodes using a univariate linear model. This process is repeated until a set of source nodes or a certain number of steps is reached. Hereby, any source node with an incoherent sign between MOON and the input sign is pruned out along with all incoming and outgoing edges. Additionally, edges between two inconsistent nodes are removed.
 
+
 **Input:** Set of weighted target nodes (and optionally weighted source nodes), network graph
 
 **Node weights:** w(v) ∈ ℝ
@@ -119,6 +120,40 @@ MOON (meta-footprint method) performs iterative footprint activity scoring and n
 **Edge weights:** w(e) ∈ ℝ
 
 **Functions:** See API documentation for :ref:`MOON <api-moon>`.
+
+Preprocessing
+~~~~~~~~~~~~~
+
+The MOON scoring system starts by removing self-interactions and interactions with non-defined signs (neither +1 nor -1). Then, we must add compartimental information to the metabolic measurements that will be used as downstream measurements. 
+Then, we filter out those inputs that cannot be mapped to the prior knowledge network.
+
+Network compression
+~~~~~~~~~~~~~~~~~~~
+
+This is one of the most important parts of this vignette. Here, we aim to remove redundant information from the network, in order to reduce its size without compromising the information contained in it. A common example would be the following:
+
+.. image:: ./_static/nc_moon_comp_normal.png
+   :alt: MOON
+   :width: 1000px
+
+However, in other cases, we would lose information:
+
+.. image:: ./_static/nc_moon_comp_edgecases.png
+   :alt: MOON
+   :width: 1000px
+
+MOON scoring
+~~~~~~~~~~~~
+
+.. image:: ./_static/nc_moon_core.png
+   :alt: MOON
+   :width: 1000px
+
+Network decompression and solution network obtention
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+To finish, the compressed nodes are restored to their original state, and the solution network is obtained by establishing a threshold for the MOON scores of the nodes.
+In addition, users can rename the nodes to human-readable names.
 
 -----------------
 ILP-based methods

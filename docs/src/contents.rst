@@ -34,6 +34,7 @@ NetworkCommons: Table of Contents
 
    vignettes/1_quickstart
    vignettes/2_multiple_methods
-   vignettes/2_moon
-   vignettes/3_evaluation_decryptm
-   vignettes/4_cptac_phosphoactivity
+   vignettes/3_evaluation_offt_path
+   vignettes/4_moon
+   vignettes/5_evaluation_decryptm
+   vignettes/6_cptac_phosphoactivity
