@@ -46,6 +46,7 @@ from networkcommons import utils
 
 from . import _bootstrap
 from . import _constants as _nconstants
+from networkcommons import _log
 
 
 class NetworkBase:
@@ -92,7 +93,7 @@ class NetworkBase:
         self.nodes = proc._nodes
         self.edge_attrs = proc._edge_attrs
         self.node_attrs = proc._node_attrs
-        self.node_edge_attrs = proc._node_edge_attrs
+        self.edge_node_attrs = proc._edge_node_attrs
         self.node_key = proc.node_key
         self.directed = proc.directed
 
@@ -237,6 +238,32 @@ class NetworkBase:
 
 
     __iter__ = iteredges
+
+
+    def iternodes(self, *attrs: str) -> Iterator[tuple]:
+        """
+        Iterate node data.
+
+        Args:
+            attrs:
+                Node attributes (variables) to include. By default, only the
+                "key" is included, which is a variable or combination of
+                variables that uniquely define each node.
+        """
+
+        Node = NamedTuple(
+            'Node',
+            [
+                ('key', str | int | tuple)
+            ] + [
+                (a, _misc.df_dtype_to_builtin(self.node_attrs, a))
+                for a in attrs
+            ]
+        )
+
+        for key, vars in self.node_attrs.iterrows():
+
+            yield Node(key, *(getattr(vars, a, None) for a in attrs))
 
 
 class Network:
