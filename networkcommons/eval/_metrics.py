@@ -42,6 +42,7 @@ import decoupler as dc
 import numpy as np
 
 import networkcommons.utils as utils
+from networkcommons._session import _log
 
 import random
 
@@ -179,8 +180,9 @@ def get_graph_metrics(network, target_dict):
     Returns:
         DataFrame: The graph metrics of the network.
     """
-
     if isinstance(network, dict):
+        _log(f"EVAL: Calculating graph metrics for {len(network)} networks.")
+
         metrics = pd.DataFrame()
         for network_name, graph in network.items():
             network_df = get_graph_metrics(graph, target_dict)
@@ -190,6 +192,7 @@ def get_graph_metrics(network, target_dict):
         metrics.reset_index(inplace=True, drop=True)
 
     elif isinstance(network, nx.DiGraph):
+        _log("EVAL: Calculating graph metrics for a single network.")
         metrics = pd.DataFrame({
             'Number of nodes': get_number_nodes(network),
             'Number of edges': get_number_edges(network),
@@ -200,6 +203,8 @@ def get_graph_metrics(network, target_dict):
         }, index=[0])
     else:
         raise TypeError("The network must be a networkx graph or a dictionary of networkx graphs.")
+    
+    _log("EVAL: Graph metrics calculated: number of nodes, number of edges, mean degree, mean betweenness, mean closeness, connected targets.")
 
     return metrics
 
@@ -225,6 +230,8 @@ def get_metric_from_networks(networks, function, **kwargs):
     except (KeyError, AttributeError, NameError):
         raise NameError(f"Function {function} not found in available functions.")
 
+    _log(f"EVAL: Calculating {function.__name__} for {len(networks)} networks.")
+
     for network_name, graph in networks.items():
         network_df = function(graph, **kwargs)
         network_df['network'] = network_name
@@ -236,6 +243,8 @@ def get_metric_from_networks(networks, function, **kwargs):
         metrics = pd.concat([metrics, network_df])
 
     metrics.reset_index(inplace=True, drop=True)
+
+    _log(f"EVAL: {function.__name__} calculated for {len(networks)} networks.")
 
     return metrics
 
@@ -260,7 +269,6 @@ def get_ec50_evaluation(network, ec50_dict):
     Returns:
         DataFrame: The EC50 evaluation of the network.
     """
-
     ec50_values_in = [ec50_dict[node] for node in ec50_dict.keys() if node in network.nodes()]
     ec50_values_out = [ec50_dict[node] for node in ec50_dict.keys() if node not in network.nodes()]
 
@@ -330,11 +338,16 @@ def perform_random_controls(graph,
     Returns:
     dict: A dictionary containing the inferred networks.
     """
+    _log(f"EVAL: Performing {n_iterations} random controls")
     # Initialize the dictionary to store the networks
     inferred_networks = {}
 
     # Get the list of nodes
     nodes = list(graph.nodes)
+
+    _log(f"EVAL: Shuffling node labels")
+    if randomise_measurements and item_list:
+        _log("EVAL: Shuffling measurements")
 
     for i in range(n_iterations):
         # Shuffle the node labels
@@ -359,6 +372,8 @@ def perform_random_controls(graph,
         # Add the inferred network to the dictionary with a unique name
         network_label = f"{network_name}__random{i+1:03d}"
         inferred_networks[network_label] = inferred_network
+    
+    _log(f"EVAL: Random controls performed")
 
     return inferred_networks
 
