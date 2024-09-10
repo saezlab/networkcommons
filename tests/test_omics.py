@@ -543,6 +543,46 @@ def test_panacea_tables_unknown_type(mock_baseurl, mock_open):
         omics.panacea_tables(cell_line='CellLine1', drug='Drug1', type='unknown')
 
 
+@patch('networkcommons.data.omics._panacea._log')
+@patch('networkcommons.data.omics._panacea._common._open')
+@patch('networkcommons.data.omics._panacea._common._baseurl', return_value='http://example.com')
+@patch('pandas.read_pickle')
+@patch('os.path.exists')
+@patch('os.makedirs')
+@patch('pandas.DataFrame.to_pickle')
+@patch('urllib.request.urlopen')
+def test_panacea_gold_standard_update(mock_urllib, mock_pandas_topickle, mock_makedirs, mock_os, mock_pickle, mock_baseurl, mock_open, mock_log):
+    
+    # Mocking the HTTP response to return CSV-like content
+    mock_response = MagicMock()
+    mock_response.read.return_value = b"cmpd,cmpd_id,target,rank\nGene1,GeneA,Target1,1\nGene2,GeneB,Target2,t2"
+    mock_response.__enter__.return_value = mock_response
+    mock_urllib.return_value = mock_response
+    mock_os.return_value = False
+
+    # Run the function with `update=True`
+    assert omics.panacea_gold_standard(update=True).shape == (2, 4)
+    
+    # Check if logs are being called correctly
+    mock_log.assert_any_call('DATA: Retrieving Panacea offtarget gold standard...')
+    mock_log.assert_any_call('DATA: not found in cache, downloading from server...')
+
+    # Run the function with `update=False` to load from the cache
+    mock_pickle.return_value = pd.DataFrame({
+        'cmpd': ['Gene1', 'Gene2'],
+        'cmpd_id': ['GeneA', 'GeneB'],
+        'target': ['Target1', 'Target2'],
+        'rank': [1, 2]
+    })
+
+    mock_os.return_value = True
+
+    assert omics.panacea_gold_standard(update=False).shape == (2, 4)
+    
+    mock_log.assert_any_call('DATA: Retrieving Panacea offtarget gold standard...')
+    mock_log.assert_any_call('DATA: found in cache, loading...')
+
+
 # FILE: omics/_scperturb.py
 import pytest
 from unittest.mock import patch, MagicMock
