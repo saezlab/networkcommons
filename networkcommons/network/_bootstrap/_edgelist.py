@@ -314,7 +314,13 @@ class Bootstrap(_bsbase.BootstrapBase):
 
         key = self._get_node_key(node, idx = idx)
 
-        if key is None or all(k is None for k in key):
+        if (
+            key is None or
+            (
+                isinstance(key, Iterable) and
+                all(k is None for k in key)
+            )
+        ):
 
             raise ValueError(f'Node with empty key: `{node}`.')
 
