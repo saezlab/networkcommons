@@ -1,5 +1,7 @@
-import numpy as np
 import itertools
+import copy
+
+import numpy as np
 
 from networkcommons.network import _bootstrap
 from networkcommons.network import _constants as _c
@@ -25,6 +27,7 @@ def test_node_list_dict():
         {'name': 'b', 'color': 'red', 'size': 17},
         {'name': 'c', 'color': 'green', 'size': 9},
     ]
+    nodes_original = copy.deepcopy(nodes)
     node_key = 'name'
 
     result = _bootstrap.Bootstrap(nodes = nodes, node_key = node_key)
@@ -40,6 +43,7 @@ def test_node_list_dict():
     )
     assert set(result._node_attrs['name']) == node_ids
     assert set(result._node_attrs['color']) == {n['color'] for n in nodes}
+    assert nodes == nodes_original
 
 
 def test_node_tuple_ids():
@@ -50,6 +54,7 @@ def test_node_tuple_ids():
         {'name': 'c', 'color': 'green', 'size': 9},
         {'name': 'c', 'color': 'red'},
     ]
+    nodes_original = copy.deepcopy(nodes)
     node_key = ('name', 'color')
 
     result = _bootstrap.Bootstrap(nodes = nodes, node_key = node_key)
@@ -68,11 +73,13 @@ def test_node_tuple_ids():
     )
     assert set(result._node_attrs[_c.NODE_KEY]) == node_ids
     assert set(result._node_attrs['color']) == {n['color'] for n in nodes}
+    assert nodes == nodes_original
 
 
 def test_node_dict_dict():
 
     nodes = {'a': {'color': 'blue'}, 'b': {'color': 'red'}, 'c': {'color': 'green'}}
+    nodes_original = copy.deepcopy(nodes)
     result = _bootstrap.Bootstrap(nodes = nodes)
 
     assert set(result._nodes.keys()) == set(nodes.keys())
@@ -81,6 +88,7 @@ def test_node_dict_dict():
     assert set(result._node_attrs.columns) == {_c.DEFAULT_KEY, 'color', _c.NODE_KEY}
     assert set(result._node_attrs[_c.DEFAULT_KEY]) == set(nodes.keys())
     assert set(result._node_attrs['color']) == set(nodes[n]['color'] for n in nodes.keys())
+    assert nodes == nodes_original
 
 
 def test_nodes_empty_list():
@@ -155,6 +163,7 @@ def test_node_dict_with_partial_attrs():
         {'name': 'c'},
         {'name': 'd', 'size': 5.0}
     ]
+    nodes_original = copy.deepcopy(nodes)
     node_key = 'name'
 
     result = _bootstrap.Bootstrap(nodes=nodes, node_key=node_key)
@@ -173,6 +182,7 @@ def test_node_dict_with_partial_attrs():
         {i for i in result._node_attrs['size'] if not np.isnan(i)} ==
         {n['size'] for n in nodes if 'size' in n}
     )
+    assert nodes == nodes_original
 
 
 def test_edges_list_of_tuples():
@@ -206,6 +216,7 @@ def test_edges_list_of_dicts():
         {'source': 'b', 'target': 'c', 'weight': 2.3, 'style': 'dashed'},
         {'source': 'a', 'target': 'c', 'weight': 0.9}
     ]
+    edges_original = copy.deepcopy(edges)
     result = _bootstrap.Bootstrap(edges = edges)
 
     # Ensure the edges are stored correctly with attributes
@@ -229,6 +240,7 @@ def test_edges_list_of_dicts():
     assert result._node_attrs.shape[0] == len(nodes)
     assert result._node_attrs[_c.NODE_KEY].isin(nodes).all()
     assert set(result._node_attrs.columns) == {_c.DEFAULT_KEY, _c.NODE_KEY}
+    assert edges == edges_original
 
 
 def test_edgenode_attributes_1():
@@ -270,6 +282,7 @@ def test_edgenode_attributes_1():
 
     for edges in _edges:
 
+        edges_original = copy.deepcopy(edges)
         result = _bootstrap.Bootstrap(edges=edges)
         neattrs = result._node_edge_attrs
 
@@ -286,6 +299,7 @@ def test_edgenode_attributes_1():
                 (neattrs[_c.SIDE] == 'source')
             ]['color'].iloc[0] == 'green'
         )
+        assert edges == edges_original
 
 
 def test_edgenode_attributes_2():
@@ -347,6 +361,7 @@ def test_edgenode_attributes_2():
 
     for edges in _edges:
 
+        edges_original = copy.deepcopy(edges)
         result = _bootstrap.Bootstrap(edges = edges, node_key = 'name')
         neattrs = result._node_edge_attrs
 
@@ -365,6 +380,7 @@ def test_edgenode_attributes_2():
                 (neattrs[_c.SIDE] == 'source')
             ]['color'].iloc[0] == 'blue'
         )
+        assert edges == edges_original
 
 
 def test_undirected_edges():

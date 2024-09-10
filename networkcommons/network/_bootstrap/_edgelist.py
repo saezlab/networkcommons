@@ -85,6 +85,9 @@ class Bootstrap(_bsbase.BootstrapBase):
         # preprocessing
         self._set_node_key(node_key)
 
+        nodes = copy.deepcopy(nodes)
+        edges = copy.deepcopy(edges)
+
         proc_edges, proc_nodes = self._bootstrap_edges(
             edges = edges,
             source_key = source_key,
