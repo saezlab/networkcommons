@@ -3,6 +3,7 @@ import networkx as nx
 import numpy as np
 import corneto as cn
 import corneto.contrib.networkx as cn_nx
+from networkcommons._session import _log
 
 
 def node_attrs_from_corneto(graph: cn.Graph) -> pd.DataFrame:
@@ -277,11 +278,11 @@ def handle_missing_values(df, threshold=0.1, fill=np.mean):
     if callable(fill):
         # If fill is a function (like np.mean, np.median), apply it row-wise
         df.loc[to_fill] = df.loc[to_fill].apply(lambda row: row.fillna(fill(row)), axis=1)
-        print(f"Number of genes filled using function {fill.__name__}: {filled_count}")
+        _log(f"Number of genes filled using function {fill.__name__}: {filled_count}")
     elif isinstance(fill, (int, float)):
         # If fill is a constant (like 0), use it directly
         df.loc[to_fill] = df.loc[to_fill].fillna(fill)
-        print(f"Number of genes filled with value {fill}: {filled_count}")
+        _log(f"Number of genes filled with value {fill}: {filled_count}")
     elif fill is not None:
         raise ValueError("fill parameter must be a callable, a numeric value, or None")
 
