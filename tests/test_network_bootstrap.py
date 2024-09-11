@@ -20,13 +20,9 @@ def test_nodes_list_str():
     assert set(result._node_attrs[_c.DEFAULT_KEY]) == set(nodes)
 
 
-def test_node_list_dict():
+def test_node_list_dict(nodes_list_dict):
 
-    nodes = [
-        {'name': 'a', 'color': 'blue', 'size': 10},
-        {'name': 'b', 'color': 'red', 'size': 17},
-        {'name': 'c', 'color': 'green', 'size': 9},
-    ]
+    nodes = nodes_list_dict
     nodes_original = copy.deepcopy(nodes)
     node_key = 'name'
 
@@ -46,14 +42,9 @@ def test_node_list_dict():
     assert nodes == nodes_original
 
 
-def test_node_tuple_ids():
+def test_node_tuple_ids(nodes_list_dict_2):
 
-    nodes = [
-        {'name': 'a', 'color': 'blue', 'size': 10},
-        {'name': 'b', 'color': 'red', 'size': 17},
-        {'name': 'c', 'color': 'green', 'size': 9},
-        {'name': 'c', 'color': 'red'},
-    ]
+    nodes = nodes_list_dict_2
     nodes_original = copy.deepcopy(nodes)
     node_key = ('name', 'color')
 
@@ -209,13 +200,9 @@ def test_edges_list_of_tuples():
     assert set(result._node_attrs.columns) == {_c.DEFAULT_KEY, _c.NODE_KEY}
 
 
-def test_edges_list_of_dicts():
+def test_edges_list_of_dicts(edges_list_dict):
 
-    edges = [
-        {'source': 'a', 'target': 'b', 'weight': 1.5, 'style': 'solid'},
-        {'source': 'b', 'target': 'c', 'weight': 2.3, 'style': 'dashed'},
-        {'source': 'a', 'target': 'c', 'weight': 0.9}
-    ]
+    edges = edges_list_dict
     edges_original = copy.deepcopy(edges)
     result = _bootstrap.Bootstrap(edges = edges)
 
@@ -284,7 +271,7 @@ def test_edgenode_attributes_1():
 
         edges_original = copy.deepcopy(edges)
         result = _bootstrap.Bootstrap(edges=edges)
-        neattrs = result._node_edge_attrs
+        neattrs = result._edge_node_attrs
 
         # Ensure nodes and edges are stored
         assert len(result._nodes) == 3
@@ -363,7 +350,7 @@ def test_edgenode_attributes_2():
 
         edges_original = copy.deepcopy(edges)
         result = _bootstrap.Bootstrap(edges = edges, node_key = 'name')
-        neattrs = result._node_edge_attrs
+        neattrs = result._edge_node_attrs
 
         # Ensure nodes and edges are stored
         assert len(result._nodes) == 5
@@ -393,7 +380,7 @@ def test_undirected_edges():
     assert not any(e[1] for e in result._edges.values())
     assert all(len(e[0]) == 2 for e in result._edges.values())
     assert result._nodes['b'] == ({0, 1}, set())
-    assert set(result._node_edge_attrs[_c.SIDE]) == {'source'}
+    assert set(result._edge_node_attrs[_c.SIDE]) == {'source'}
 
 
 def test_edges_missing_keys():
