@@ -220,3 +220,37 @@ def test_handle_missing_values_with_inf():
     result = utils.handle_missing_values(df, 0.5)
     expected = pd.DataFrame({'index': [0, 1], 'A': [1.0, 2.0], 'B': [3.0, 2.0], 'C': [2.0, 7.0]}).astype({'index': 'int64'})
     pd.testing.assert_frame_equal(result, expected)
+
+
+@patch('networkcommons.utils._log')
+def test_handle_missing_values_fill_with_number_and_log(mock_log):
+    df = pd.DataFrame({'A': [1, np.nan, np.nan], 'B': [3, 2, np.nan], 'C': [np.nan, 7, 8]})
+    
+    result = utils.handle_missing_values(df, 0.5, fill=0)
+
+    mock_log.assert_called_once_with("Number of genes filled with value 0: 2")
+        
+    expected = pd.DataFrame({'index': [0, 1], 'A': [1.0, 0.0], 'B': [3.0, 2.0], 'C': [0.0, 7.0]}).astype({'index': 'int64'})
+    pd.testing.assert_frame_equal(result, expected)
+
+
+@patch('networkcommons.utils._log')
+def test_handle_missing_values_fill_with_mean_and_log(mock_log):
+    df = pd.DataFrame({'A': [1, np.nan, np.nan], 'B': [3, 2, np.nan], 'C': [np.nan, 7, 8]})
+    
+    result = utils.handle_missing_values(df, 0.5, fill=np.mean)
+
+    mock_log.assert_called_once_with("Number of genes filled using function mean: 2")
+        
+    expected = pd.DataFrame({'index': [0, 1], 'A': [1.0, 4.5], 'B': [3.0, 2.0], 'C': [2.0, 7.0]}).astype({'index': 'int64'})
+    pd.testing.assert_frame_equal(result, expected)
+
+
+@patch('networkcommons.utils._log')
+def test_handle_missing_values_fill_with_invalid_and_log(mock_log):
+    df = pd.DataFrame({'A': [1, np.nan, np.nan], 'B': [3, 2, np.nan], 'C': [np.nan, 7, 8]})
+   
+    with pytest.raises(ValueError) as exc_info:
+        utils.handle_missing_values(df, 0.5, fill='saezlabisthebest')
+
+    assert str(exc_info.value) == "fill parameter must be a callable, a numeric value, or None"
