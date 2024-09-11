@@ -90,7 +90,7 @@ def _download(url: str, path: str) -> None:
 
     timeouts = tuple(_conf.get(f'http_{k}_timout') for k in ('read', 'connect'))
 
-    _log(f'Downloading `{url}` to `{path}`.')
+    _log(f'Utils: Downloading `{url}` to `{path}`.')
 
     ses = _requests_session()
 
@@ -104,7 +104,7 @@ def _download(url: str, path: str) -> None:
 
                 f.write(chunk)
 
-    _log(f'Finished downloading `{url}` to `{path}`.')
+    _log(f'Utils: Finished downloading `{url}` to `{path}`.')
 
 
 def _maybe_download(url: str, **kwargs) -> str:
@@ -114,11 +114,11 @@ def _maybe_download(url: str, **kwargs) -> str:
     md5 = hashlib.md5(url.encode()).hexdigest()
     fname = os.path.basename(urllib.parse.urlparse(url).path)
     path = os.path.join(cachedir, f'{md5}-{fname}')
-    _log(f'Looking up in cache: `{url}` -> `{path}`.')
+    _log(f'Utils: Looking up in cache: `{url}` -> `{path}`.')
 
     if not os.path.exists(path):
 
-        _log(f'Not found in cache, initiating download: `{url}`.')
+        _log(f'Utils: Not found in cache, initiating download: `{url}`.')
         _download(url, path)
 
     return path
@@ -234,7 +234,11 @@ def get_ensembl_mappings(update: bool = False) -> pd.DataFrame:
 
     path = os.path.join(_conf.get('pickle_dir'), 'ensembl_map.pickle')
 
+    _log('Utils: Retrieving Ensembl mappings...')
+
     if update or not os.path.exists(path):
+
+        _log('Utils: Ensembl mappings not found in cache. Downloading...')
 
         # Set up connection to server
         server = biomart.BiomartServer('http://ensembl.org/biomart')
@@ -268,7 +272,10 @@ def get_ensembl_mappings(update: bool = False) -> pd.DataFrame:
         melted_df.to_pickle(path)
 
     else:
+        _log('Utils: Ensembl mappings found in cache. Loading...')
         melted_df = pd.read_pickle(path)
+    
+    _log(f'Utils: Ensembl mappings retrieved. Dataframe has {len(melted_df)} entries.')
 
     return melted_df
 
@@ -290,6 +297,8 @@ def convert_ensembl_to_gene_symbol(dataframe, equivalence_df, column_name='idx',
     dataframe = dataframe.copy()
     equivalence_df = equivalence_df.copy()
 
+    _log('Utils: Converting Ensembl IDs to gene symbols...')
+
     if column_name not in dataframe.columns:
         dataframe.reset_index(inplace=True)
 
@@ -304,7 +313,7 @@ def convert_ensembl_to_gene_symbol(dataframe, equivalence_df, column_name='idx',
     total_count = len(merged_df)
     non_matched_count = merged_df['gene_symbol'].isna().sum()
     non_matched_percentage = (non_matched_count / total_count) * 100
-    print(f"Number of non-matched Ensembl IDs: {non_matched_count} ({non_matched_percentage:.2f}%)")
+    _log(f"Utils: Number of non-matched Ensembl IDs: {non_matched_count} ({non_matched_percentage:.2f}%)")
 
     # Drop temporary and original index columns
     merged_df.drop(columns=['partial_id', 'ensembl_id', column_name], inplace=True)
@@ -316,6 +325,6 @@ def convert_ensembl_to_gene_symbol(dataframe, equivalence_df, column_name='idx',
     # Calculate and print the number and percentage of summarized duplicated entries
     summarized_count = len(merged_df) - len(summarized_df)
     summarized_percentage = (summarized_count / total_count) * 100
-    print(f"Number of summarized duplicated entries: {summarized_count} ({summarized_percentage:.2f}%)")
+    _log(f"Utils: Number of summarized duplicated entries: {summarized_count} ({summarized_percentage:.2f}%)")
 
     return summarized_df

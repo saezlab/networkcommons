@@ -27,6 +27,7 @@ import json
 import anndata as ad
 
 from . import _common
+from networkcommons._session import _log
 
 _URL = 'https://zenodo.org/record/10044268'
 
@@ -75,6 +76,7 @@ def scperturb(dataset: str) -> ad.AnnData:
     scPerturb repository. For a complete list of available datasets, see
     `scperturb_datasets()`.
     """
+    _log(f"DATA: Retrieving scPerturb dataset {dataset}...")
 
     urls = scperturb_datasets()
     path = _common._maybe_download(urls[dataset])

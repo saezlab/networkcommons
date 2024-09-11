@@ -3,6 +3,7 @@ import networkx as nx
 import numpy as np
 import corneto as cn
 import corneto.contrib.networkx as cn_nx
+from networkcommons._session import _log
 
 
 def node_attrs_from_corneto(graph: cn.Graph) -> pd.DataFrame:
@@ -229,14 +230,17 @@ def targetlayer_formatter(df, n_elements=25, act_col='stat'):
     return dict_df
 
 
-def handle_missing_values(df, threshold=0.1, fill=True):
+def handle_missing_values(df, threshold=0.1, fill=np.mean):
     """
-    Handles missing values in a DataFrame by filling them with the mean of the row or dropping the rows.
+    Handles missing values in a DataFrame by filling them with a specified function or value, or dropping the rows.
 
     Parameters:
     - df (pandas.DataFrame): The DataFrame containing the data.
     - threshold (float): The threshold for the share (0<n<1) of missing values in a row. Rows with a share
                          of missing values greater than or equal to the threshold will be dropped.
+    - fill (callable, int, float, or None): If callable, the function is applied to each row to fill missing values.
+                                            If an integer or float, it is used to fill missing values.
+                                            If None, no filling is done.
 
     Returns:
     - df (pandas.DataFrame): The DataFrame with missing values handled.
@@ -246,7 +250,7 @@ def handle_missing_values(df, threshold=0.1, fill=True):
 
     Example:
     >>> df = pd.DataFrame({'A': [1, 2, np.nan], 'B': [3, 2, np.nan], 'C': [np.nan, 7, 8]})
-    >>> handle_missing_values(df, 0.5)
+    >>> handle_missing_values(df, 0.5, fill=np.mean)
     Number of genes filled: 1
     Number of genes removed: 1
     """
@@ -270,10 +274,17 @@ def handle_missing_values(df, threshold=0.1, fill=True):
 
     filled_count = (df[to_fill].isna().sum(axis=1) > 0).sum()
 
-    # Replace NAs with the mean of the row for rows to fill
-    if fill:
-        df.loc[to_fill] = df.loc[to_fill].apply(lambda row: row.fillna(row.mean()), axis=1)
-        print(f"Number of genes filled: {filled_count}")
+    # Replace NAs based on the fill argument
+    if callable(fill):
+        # If fill is a function (like np.mean, np.median), apply it row-wise
+        df.loc[to_fill] = df.loc[to_fill].apply(lambda row: row.fillna(fill(row)), axis=1)
+        _log(f"Number of genes filled using function {fill.__name__}: {filled_count}")
+    elif isinstance(fill, (int, float)):
+        # If fill is a constant (like 0), use it directly
+        df.loc[to_fill] = df.loc[to_fill].fillna(fill)
+        _log(f"Number of genes filled with value {fill}: {filled_count}")
+    elif fill is not None:
+        raise ValueError("fill parameter must be a callable, a numeric value, or None")
 
     # Drop rows with NA percentage greater than or equal to threshold
     df = df[~to_drop]

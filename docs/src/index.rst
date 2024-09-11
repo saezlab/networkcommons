@@ -1,4 +1,4 @@
-.. image:: nc_banner.png
+.. image:: _static/nc_banner.png
 
 ##############
 Bridging the gap between data, methods and knowledge in network inference
@@ -22,38 +22,28 @@ Bridging the gap between data, methods and knowledge in network inference
 .. |Codecov| image:: https://codecov.io/github/saezlab/networkcommons/graph/badge.svg?token=RH438ALJC2
    :target: https://codecov.io/gh/saezlab/networkcommons
 
-.. .. |Conda| image:: https://img.shields.io/conda/vn/conda-forge/decoupler-py.svg
-..    :target: https://anaconda.org/conda-forge/decoupler-py
+NetworkCommons is a community-driven platform designed to simplify access to tools and resources for 
+inferring context-specific protein interaction networks by integrating context-agnostic prior knowledge with omics data. 
+These networks have a wide range of applications, from omics data interpretation to identifying drug targets and key driver 
+mutations.
 
-.. .. |CondaDownloads| image:: https://img.shields.io/conda/dn/conda-forge/decoupler-py.svg
-..    :target: https://anaconda.org/conda-forge/decoupler-py
+.. image:: _static/nc_graphabs.png
+   :width: 1000px
+   :alt: Networkcommons API
+   :align: center
+   :class: no-scaled-link
 
-``NetworkCommons`` is a package which allows users to download data and prior knowledge to perform static network inference using different methodologies. The package also provides different visualization and evaluation strategies.
-
-.. .. figure:: graphical_abstract.png
-..    :height: 500px
-..    :alt: decoupler’s workflow
-..    :align: center
-..    :class: no-scaled-link
-
-..    decoupler contains a collection of computational methods that coupled with 
-..    prior knowledge resources estimate biological activities from omics data.
-
-.. Check out the `Usage <https://decoupler-py.readthedocs.io/en/latest/notebooks/usage.html>`_ or any other tutorial for further information.
-
-.. If you have any question or problem do not hesitate to open an `issue <https://github.com/saezlab/decoupler-py/issues>`_.
-
-.. scverse
-.. -------
-.. ``decoupler`` is part of the `scverse <https://scverse.org>`_ ecosystem, a collection of tools for single-cell omics data analysis in python.
-.. For more information check the link.
+Addressing the complexity and fragmentation of data, methods, and tools across multiple repositories, NetworkCommons 
+offers an API that provides access to raw and preprocessed omics data, directed and/or signed template graphs, and various network 
+inference methods. By streamlining accessibility, we aim to support systematic benchmarking, enhance critical assessment, and foster 
+collaborative advancements in network biology.
 
 Mission statement
 =================
 Thirty years ago, microarrays revolutionized the study of biological processes, making the computational analysis of vast molecular data essential for understanding phenotypes systematically. This shift gave rise to **network biology**, a field that has developed numerous approaches based on diverse networks, algorithmic assumptions, and omics data types.
 At SaezLab, our focus is on large-scale studies of signaling processes, typically represented as directed, and sometimes signed, networks. These networks encode the transmission of molecular activation states among proteins, enabling us to map cellular functions based on data and prior knowledge.
 
-In a **recent review**, we identified several challenges in large-scale modeling of signaling networks, including the **lack of benchmarks** and the need for a **unified technical implementation** comprising data, methods, and evaluation strategies.
+In a  `recent review <https://www.embopress.org/doi/full/10.15252/msb.202211036>`_, we identified several challenges in large-scale modeling of signaling networks, including the **lack of benchmarks** and the need for a **unified technical implementation** comprising data, methods, and evaluation strategies.
 
 The **NetworkCommons** initiative seeks to fill this gap, and aims to bring together the field around a common technical framework, aimed at standardising and advancing network biology methods. Our prototype focuses on directed and/or signed signaling networks, which we integrate with transcriptomics or phosphoproteomics data using various algorithms to create context-specific networks for evaluation and visualization.
 We envision this initiative as a critical technical advancement that will facilitate the **comparison**, **development**, and **reuse of novel and existing methods**. Our vignettes demonstrate how to utilize the implemented elements in this prototype for analyzing different types of omics data. 

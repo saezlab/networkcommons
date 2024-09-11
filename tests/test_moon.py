@@ -122,7 +122,7 @@ def test_filter_input_nodes_not_in_pkn(mock_log):
     assert len(filtered_data) == 2
 
     # Check that _log was called with the correct message
-    mock_log.assert_called_with("COSMOS: 1 input/measured nodes are not in PKN anymore: ['Gene3']")
+    mock_log.assert_called_with("MOON: 1 input/measured nodes are not in PKN anymore: ['Gene3']")
 
 
 @patch('networkcommons.methods._moon._log')
@@ -336,7 +336,7 @@ def test_run_moon_core_while_loop(mock_log):
     assert len(result.index) > 0, "Unexpected number of rows in result"
     assert not result.empty, "Empty result"
 
-    mock_log.assert_any_call("Iteration count: 1")
+    mock_log.assert_any_call("MOON: scoring layer 1 from downstream nodes...")
 
     result_wmean = _moon.run_moon_core(
         upstream_input=upstream_input,
@@ -352,7 +352,7 @@ def test_run_moon_core_while_loop(mock_log):
     assert not result_wmean.empty, "Empty result"
 
     # Check that the while loop executed by checking log calls
-    mock_log.assert_any_call("Iteration count: 1")
+    mock_log.assert_any_call("MOON: scoring layer 1 from downstream nodes...")
 
     result_norm_wmean = _moon.run_moon_core(
         upstream_input=upstream_input,
@@ -368,7 +368,7 @@ def test_run_moon_core_while_loop(mock_log):
     assert not result_norm_wmean.empty, "Empty result"
 
     # Check that the while loop executed by checking log calls
-    mock_log.assert_any_call("Iteration count: 1")
+    mock_log.assert_any_call("MOON: scoring layer 1 from downstream nodes...")
 
 
 def test_filter_incoherent_TF_target():

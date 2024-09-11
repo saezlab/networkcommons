@@ -33,6 +33,7 @@ import pandas as pd
 
 from . import _common
 from networkcommons import _conf
+from networkcommons._session import _log
 
 
 def cptac_fileinfo(update: bool = False) -> pd.DataFrame:
@@ -51,6 +52,7 @@ def cptac_fileinfo(update: bool = False) -> pd.DataFrame:
     path = os.path.join(_conf.get('pickle_dir'), 'cptac_info.pickle')
 
     if update or not os.path.exists(path):
+
 
         baseurl = urllib.parse.urljoin(_common._baseurl(), 'CPTAC')
 
@@ -130,6 +132,8 @@ def cptac_table(data_type: str, cancer_type: str, fname: str) -> pd.DataFrame:
     Returns:
         The table as a pandas DataFrame.
     """
+    
+    _log(f"DATA: Retrieving CPTAC data for {cancer_type} ({data_type})...")
 
     return _common._open(
         _common._commons_url('CPTAC', **locals()),
@@ -148,6 +152,7 @@ def cptac_extend_dataframe(df):
     Returns:
     pd.DataFrame: Extended DataFrame with modified sample names.
     """
+    _log('DATA: Extending CPTAC DataFrame...')
     tumor_rows = df[df['Tumor'] == 'Yes'].copy()
     normal_rows = df[df['Normal'] == 'Yes'].copy()
     
