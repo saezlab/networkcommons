@@ -175,10 +175,30 @@ ignore_directives = [
 ignore_roles = ["ref"]
 ignore_messages = '(Unknown target name:.*|No (directive|role) entry for "(auto)?(class|method|property|function|func|mod|attr)" in module "docutils\.parsers\.rst\.languages\.en"\.)'
 
+[tool.coverage.paths]
+source = [
+    "networkcommons",
+    "**/site-packages/networkcommons"
+]
+
 [tool.coverage.run]
+branch = true
+parallel = true
 source = ["networkcommons"]
 omit = [
 	"**/test_*.py",
+    "**/noi/*",
+]
+
+[tool.coverage.report]
+show_missing = true
+precision = 2
+exclude_also = [
+    ".*pragma:\\s*no.?cover",
+    "if __name__ == .?__main__.?",
+    "\\s*raise NotImplementedError",
+    "\\s*raise AssertionError",
+    "\\s*return NotImplemented",
 ]
 
 [tool.pytest.ini_options]
