@@ -173,21 +173,21 @@ def test_subset_df_with_nodes():
 
 def test_handle_missing_values_fill():
     df = pd.DataFrame({'A': [1, 2, np.nan], 'B': [3, 2, np.nan], 'C': [np.nan, 7, 8]})
-    result = utils.handle_missing_values(df, 0.5, fill=True)
+    result = utils.handle_missing_values(df, 0.5, fill=np.mean)
     expected = pd.DataFrame({'index': [0, 1], 'A': [1.0, 2.0], 'B': [3.0, 2.0], 'C': [2.0, 7.0]}).astype({'index': 'int64'})
     pd.testing.assert_frame_equal(result, expected)
 
 
 def test_handle_missing_values_fill_and_drop():
     df = pd.DataFrame({'A': [1, np.nan, np.nan], 'B': [np.nan, 2, np.nan], 'C': [np.nan, 7, np.nan]})
-    result = utils.handle_missing_values(df, 0.5, fill=True)
+    result = utils.handle_missing_values(df, 0.5, fill=np.mean)
     expected = pd.DataFrame({'index': [1], 'A': [4.5], 'B': [2.0], 'C': [7.0]}).astype({'index': 'int64'})
     pd.testing.assert_frame_equal(result, expected)
 
 
 def test_handle_missing_values_drop():
     df = pd.DataFrame({'A': [1, np.nan, np.nan], 'B': [np.nan, np.nan, np.nan], 'C': [np.nan, np.nan, 8]})
-    result = utils.handle_missing_values(df, 0.1, fill=False)
+    result = utils.handle_missing_values(df, 0.1, fill=None)
     expected = pd.DataFrame({'index': [], 'A': [], 'B': [], 'C': []}).astype({'index': 'int64'})
     pd.testing.assert_frame_equal(result, expected)
 
