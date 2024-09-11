@@ -38,6 +38,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 from sklearn import decomposition as sklearn_decomp
 from networkcommons.utils import handle_missing_values
+from networkcommons._session import _log
 
 
 def plot_density(df,
@@ -276,7 +277,7 @@ def plot_pca(dataframe, metadata, feature_col='idx', **kwargs):
     df = dataframe.copy()
 
     if df.isna().sum().sum() > 0:
-        print(
+        _log(
             "Warning: Missing values were found in the input data and will be filled with the handle_missing_values function.")
         df = handle_missing_values(df, **kwargs)
 
@@ -293,7 +294,8 @@ def plot_pca(dataframe, metadata, feature_col='idx', **kwargs):
     std_devs = numeric_df.std()
     zero_std_cols = std_devs[std_devs == 0].index
     if not zero_std_cols.empty:
-        print(f"Warning: The following columns have zero standard deviation and will be dropped: {list(zero_std_cols)}")
+        _log("Warning: The following columns have zero standard deviation and will be dropped:}")
+        _log(list(zero_std_cols))
         numeric_df.drop(columns=zero_std_cols, inplace=True)
 
     # Standardizing the Data
