@@ -35,10 +35,14 @@ from networkcommons._session import _log
 def panacea_experiments(update=True) -> pd.DataFrame:
     """
     Table describing the experiments (drug-cell combinations) contained
-    in the Panacea dataset.
+    in the Panacea dataset and merging it with the presence of TF_scores.
+
+    Args:
+        update (bool): Whether to update the dataframe by fetching new metadata.
+        tf_scores_dir (str): Directory where TF_scores files are located.
 
     Returns:
-        Data frame with all drug-cell line combinations
+        Data frame with all drug-cell line combinations and TF_scores availability.
     """
 
     path = os.path.join(_conf.get('pickle_dir'), 'panacea_exps.pickle')
@@ -49,15 +53,30 @@ def panacea_experiments(update=True) -> pd.DataFrame:
 
         file_legend = pd.read_csv(baseurl + '/panacea__metadata.tsv', sep='\t')
 
+        processed_dir = baseurl + '/processed'
+
         file_legend[['cell', 'drug']] = file_legend['group'].str.split('_', expand=True)
         file_legend.drop(columns='sample_ID', inplace=True)
         file_legend.drop_duplicates(inplace=True)
         file_legend.reset_index(drop=True, inplace=True)
 
+        response = urllib.request.urlopen(processed_dir)
+        tf_scores_html = response.read().decode('utf-8')
+
+        tf_scores_files = []
+        for line in tf_scores_html.splitlines():
+            if '__TF_scores.tsv' in line:
+                filename = line.split('"')[1]
+                tf_scores_files.append(filename)
+
+        tf_scores_groups = [f.split('__TF_scores.tsv')[0] for f in tf_scores_files]
+
+        file_legend['tf_scores'] = file_legend['group'].apply(lambda x: x in tf_scores_groups)
+
         file_legend.to_pickle(path)
 
-    else:
 
+    else:
         file_legend = pd.read_pickle(path)
 
     return file_legend
