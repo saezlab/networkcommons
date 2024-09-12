@@ -16,7 +16,7 @@ from networkcommons.visual._network_stats import (
     plot_n_nodes_edges,
     plot_n_nodes_edges_from_df,
     build_heatmap_with_tree,
-    create_rank_heatmap
+    create_heatmap
 )
 
 @pytest.fixture
@@ -218,5 +218,5 @@ def test_build_heatmap_with_tree_render(mock_clustermap, setup_data):
 def test_create_rank_heatmap_saves_figure(mock_savefig, setup_data):
     _, _, _, _, ora_results, ora_terms = setup_data
     filepath = 'test_rank_heatmap.png'
-    create_rank_heatmap(ora_results, ora_terms, filepath=filepath)
+    create_heatmap(ora_results, ora_terms, filepath=filepath)
     mock_savefig.assert_called_once_with(filepath)
