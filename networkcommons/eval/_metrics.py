@@ -27,6 +27,7 @@ __all__ = [
     'get_mean_closeness',
     'get_connected_targets',
     'get_recovered_offtargets',
+    'get_offtarget_panacea_evaluation',
     'get_graph_metrics',
     'get_metric_from_networks',
     'get_ec50_evaluation',
@@ -43,6 +44,10 @@ import numpy as np
 
 import networkcommons.utils as utils
 from networkcommons._session import _log
+
+from networkcommons.data import omics as omics
+from networkcommons.data import network as network
+import networkcommons.methods as methods
 
 import random
 
@@ -166,6 +171,112 @@ def get_recovered_offtargets(network, offtargets):
         'n_offtargets': recovered_offtargets,
         'perc_offtargets': recovered_offtargets / len(offtargets) * 100
     }, index=[0])
+
+
+def get_offtarget_panacea_evaluation(cell=None, drug=None):
+    """
+    This is a wrapper function around get_recovered_offtargets, which uses all the drug-cell line
+    combinations that are available in the PANACEA data to evaluate the recovery of off-targets
+    in different biological settings using the methods currently implemented in NetworkCommons.
+
+    Args:
+        cell (str, optional): The cell line to evaluate. If None, all cell lines are evaluated.
+        drug (str, optional): The drug to evaluate. If None, all drugs are evaluated.
+
+    Returns:
+        pd.DataFrame: A DataFrame containing the results of the off-target evaluation.
+    """
+
+    _log('EVAL: initialising offtarget recovery evaluation using PANACEA TF activity scores...')
+
+    offtarget_res = pd.DataFrame()
+
+    cell_drug_combs = omics.panacea_experiments()
+    cell_drug_combs_mask = cell_drug_combs.tf_scores
+    cell_drug_combs = cell_drug_combs[cell_drug_combs_mask].group.tolist()
+
+    if cell is not None:
+        cell_drug_combs = [cell_drug for cell_drug in cell_drug_combs if cell in cell_drug]
+
+    if drug is not None:
+        cell_drug_combs = [cell_drug for cell_drug in cell_drug_combs if drug in cell_drug]
+
+    if len(cell_drug_combs) == 0:
+        _log(f"EVAL: no cell-drug combinations found with TF activity scores. Exiting...")
+        return offtarget_res
+
+    _log(f"EVAL: found {len(cell_drug_combs)} cell-drug combinations with TF activity scores...")
+
+    panacea_gold_standard = omics.panacea_gold_standard()
+
+    network_df = network.get_omnipath()
+    graph = utils.network_from_df(network_df)
+
+    for cell_drug in cell_drug_combs:
+        _log(f"EVAL: processing cell-drug combination {cell_drug_combs.index(cell_drug) + 1} of {len(cell_drug_combs)}: {cell_drug}...")
+
+        cell, drug = cell_drug.split('_')
+        
+        # get first rank of offtargets gold standard + inhibition
+        source_dict = {panacea_gold_standard[
+            (panacea_gold_standard['cmpd'] == drug) &
+            (panacea_gold_standard['rank'] == 1)
+            ].target.item(): -1}
+        
+        if source_dict == {}:
+            _log(f"EVAL: no primary target found for {drug}. Skipping...")
+            continue
+        elif next(iter(source_dict.keys())) not in graph.nodes():
+            _log(f"EVAL: primary target {list(source_dict.keys())} not found in the network. Skipping...")
+            continue
+        
+        # get measurements from downstream layer
+        dc_estimates = omics.panacea_tables(cell_line=cell, drug=drug, type='TF_scores')
+        dc_estimates.set_index('items', inplace=True)
+        measurements = utils.targetlayer_formatter(dc_estimates, act_col='act')
+
+        # NETWORK INFERENCE
+        # topological methods
+        shortest_path_network, shortest_paths_list = methods.run_shortest_paths(graph, source_dict, measurements)
+        shortest_sc_network, shortest_sc_list = methods.run_sign_consistency(shortest_path_network, shortest_paths_list, source_dict, measurements)
+        all_paths_network, all_paths_list = methods.run_all_paths(graph, source_dict, measurements, depth_cutoff=3)
+        allpaths_sc_network, allpaths_sc_list = methods.run_sign_consistency(all_paths_network, all_paths_list, source_dict, measurements)
+
+
+        # diffusion-like methods
+        ppr_network = methods.add_pagerank_scores(graph, source_dict, measurements, personalize_for='source')
+        ppr_network = methods.add_pagerank_scores(ppr_network, source_dict, measurements, personalize_for='target')
+        ppr_network = methods.compute_ppr_overlap(ppr_network, percentage=1)
+        shortest_ppr_network, shortest_ppr_list = methods.run_shortest_paths(ppr_network, source_dict, measurements)
+        shortest_sc_ppr_network, shortest_sc_ppr_list = methods.run_sign_consistency(shortest_ppr_network, shortest_ppr_list, source_dict, measurements)
+
+        # ILP-based
+        corneto_network = methods.run_corneto_carnival(graph, source_dict, measurements, betaWeight=0.01, solver='GUROBI')
+
+        networks = {
+            'shortest_path': shortest_path_network,
+            'shortest_path_sc': shortest_sc_network,
+            'all_paths': all_paths_network,
+            'all_paths_sc': allpaths_sc_network,
+            'shortest_ppr_network': shortest_ppr_network,
+            'shortest_ppr_sc_network': shortest_sc_ppr_network,
+            'corneto': corneto_network
+        }
+
+        offtargets = panacea_gold_standard[(panacea_gold_standard['cmpd'] == drug) & (~panacea_gold_standard['target'].isin(source_dict.keys()))].target.tolist()
+        
+        if len(offtargets) == 0:
+            _log(f"EVAL: no off-targets found for {drug}. Skipping...")
+            continue
+
+        offtarget_res_partial = get_metric_from_networks(networks, get_recovered_offtargets, offtargets=offtargets)
+        offtarget_res_partial['cell_drug'] = cell_drug
+
+        offtarget_res = pd.concat([offtarget_res, offtarget_res_partial])
+    
+    _log('EVAL: finished offtarget recovery evaluation using PANACEA TF activity scores.')
+
+    return offtarget_res
 
 
 def get_graph_metrics(network, target_dict):
