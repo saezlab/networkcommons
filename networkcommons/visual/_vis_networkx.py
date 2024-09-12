@@ -102,8 +102,9 @@ class NetworkVisualizerBase:
             A (pygraphviz.AGraph): The visualized network graph.
         """
         if len(self.network.nodes) > max_nodes:
-            _log("The network is too large to visualize.", level=40)
-            return
+            _log("The network is too large to visualize, you can increase the max_nodes parameter if needed.", level=40)
+            print("The network is too large to visualize, you can increase the max_nodes parameter if needed.")
+            return None
 
         A = nx.nx_agraph.to_agraph(self.network)
         A.graph_attr['ratio'] = '1.2'
@@ -224,7 +225,8 @@ class NetworkXVisualizer(NetworkVisualizerBase):
                                   source_dict,
                                   target_dict,
                                   prog='dot',
-                                  custom_style=None):
+                                  custom_style=None,
+                                  max_nodes=75):
         """
         Visualizes the network using default styles.
 
@@ -234,10 +236,16 @@ class NetworkXVisualizer(NetworkVisualizerBase):
             target_dict (dict): Targets and measurement signs.
             prog (str, optional): Layout program to use. Defaults to 'dot'.
             custom_style (dict, optional): Custom style dictionary to apply.
+            max_nodes (int, optional): Maximum number of nodes to visualize. Defaults to 75.
 
         Returns:
             A (pygraphviz.AGraph): The visualized network graph.
         """
+        if len(self.network.nodes) > max_nodes:
+            _log("The network is too large to visualize, you can increase the max_nodes parameter if needed.", level=40)
+            print("The network is too large to visualize, you can increase the max_nodes parameter if needed.")
+            return None
+
         default_style = _styles.get_styles()['default']
         style = _styles.merge_styles(default_style, custom_style)
 
@@ -275,7 +283,8 @@ class NetworkXVisualizer(NetworkVisualizerBase):
                                           source_dict,
                                           target_dict,
                                           prog='dot',
-                                          custom_style=None):
+                                          custom_style=None,
+                                          max_nodes=75):
         """
         Visualizes the network considering sign consistency.
 
@@ -285,10 +294,15 @@ class NetworkXVisualizer(NetworkVisualizerBase):
             target_dict (dict): Targets and measurement signs.
             prog (str, optional): Layout program to use. Defaults to 'dot'.
             custom_style (dict, optional): Custom style dictionary to apply.
-
+            max_nodes (int, optional): Maximum number of nodes to visualize. Defaults to 75.
         Returns:
             A (pygraphviz.AGraph): The visualized network graph.
         """
+        if len(self.network.nodes) > max_nodes:
+            _log("The network is too large to visualize, you can increase the max_nodes parameter if needed.", level=40)
+            print("The network is too large to visualize, you can increase the max_nodes parameter if needed.")
+            return None
+
         default_style = _styles.get_styles()['sign_consistent']
         style = _styles.merge_styles(default_style, custom_style)
 
