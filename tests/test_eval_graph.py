@@ -60,6 +60,107 @@ def test_get_recovered_offtargets(network):
     assert result['perc_offtargets'][0] == 2 / 3 * 100
 
 
+
+@patch('networkcommons.data.omics.panacea_experiments')
+@patch('networkcommons.data.omics.panacea_gold_standard')
+@patch('networkcommons.data.network.get_omnipath')
+@patch('networkcommons.utils.network_from_df')
+@patch('networkcommons.data.omics.panacea_tables')
+@patch('networkcommons.methods.run_shortest_paths')
+@patch('networkcommons.methods.run_sign_consistency')
+@patch('networkcommons.methods.run_all_paths')
+@patch('networkcommons.methods.add_pagerank_scores')
+@patch('networkcommons.methods.run_corneto_carnival')
+@patch('networkcommons.eval._metrics.get_metric_from_networks')
+@patch('networkcommons.eval._metrics._log')
+def test_get_offtarget_panacea_evaluation(
+    mock_log,
+    mock_get_metric_from_networks,
+    mock_run_corneto_carnival,
+    mock_add_pagerank_scores,
+    mock_run_all_paths,
+    mock_run_sign_consistency,
+    mock_run_shortest_paths,
+    mock_panacea_tables,
+    mock_network_from_df,
+    mock_get_omnipath,
+    mock_panacea_gold_standard,
+    mock_panacea_experiments
+):
+    # Mocks
+    mock_panacea_experiments.return_value = pd.DataFrame({
+        'group': ['CellA_DrugA', 'CellA_DrugB'],
+        'tf_scores': [True, True]
+    })
+
+    mock_panacea_gold_standard.return_value = pd.DataFrame({
+        'cmpd': ['DrugA', 'DrugA', 'DrugA'],
+        'target': ['TargetA', 'TargetB', 'TargetC'],
+        'rank': [1, 2, 3]
+    })
+
+    mock_network_df = pd.DataFrame({
+        'source': ['TargetA', 'Node1', 'TargetC', 'TargetD'],
+        'target': ['Node1', 'TargetC', 'TargetC', 'Node2'],
+        'interaction': [1, 1, 1, 1]
+    })
+    mock_network_df = mock_network_df.astype({'source': str, 'target': str})
+    mock_graph = nx.from_pandas_edgelist(mock_network_df, source='source', target='target', create_using=nx.DiGraph)
+    mock_network_from_df.return_value = mock_graph
+
+    mock_panacea_tables.side_effect = lambda **kwargs: pd.DataFrame({
+        'items': ['Node1', 'Node2'],
+        'act': [0.5, -0.3]
+    })
+
+    mock_run_shortest_paths.return_value = (MagicMock(), [])
+    mock_run_sign_consistency.return_value = (MagicMock(), [])
+    mock_run_all_paths.return_value = (MagicMock(), [])
+    mock_add_pagerank_scores.return_value = MagicMock()
+    mock_run_corneto_carnival.return_value = MagicMock()
+
+    mock_get_metric_from_networks.return_value = pd.DataFrame({
+        'perc_offtargets': [10, 25],
+        'network': ['shortest_path', 'all_paths']
+    })
+
+    # Test
+    _metrics.get_offtarget_panacea_evaluation(cell='CellY') # No info
+    mock_log.assert_called_with("EVAL: no cell-drug combinations found with TF activity scores. Exiting...")
+
+    result_df = _metrics.get_offtarget_panacea_evaluation(cell='CellA') # Only cell
+
+    # Assertins
+    assert isinstance(result_df, pd.DataFrame)
+    assert 'perc_offtargets' in result_df.columns
+    assert len(result_df) > 0
+
+    result_df = _metrics.get_offtarget_panacea_evaluation(cell='CellA', drug='DrugA') # both
+
+    assert isinstance(result_df, pd.DataFrame)
+    assert 'perc_offtargets' in result_df.columns
+    assert len(result_df) > 0
+
+    result_df = _metrics.get_offtarget_panacea_evaluation() # None
+
+    assert isinstance(result_df, pd.DataFrame)
+    assert 'perc_offtargets' in result_df.columns
+    assert len(result_df) > 0
+
+    mock_panacea_experiments.assert_called()
+    mock_panacea_gold_standard.assert_called()
+    mock_get_omnipath.assert_called()
+    mock_network_from_df.assert_called()
+    mock_panacea_tables.assert_called()
+    mock_run_shortest_paths.assert_called()
+    mock_run_sign_consistency.assert_called()
+    mock_run_all_paths.assert_called()
+    mock_add_pagerank_scores.assert_called()
+    mock_run_corneto_carnival.assert_called()
+    mock_get_metric_from_networks.assert_called()
+    mock_log.assert_called_with("EVAL: finished offtarget recovery evaluation using PANACEA TF activity scores.")
+
+
 def test_all_nodes_in_ec50_dict():
     network = nx.Graph([(1, 2), (2, 3)])
     ec50_dict = {1: 5.0, 2: 10.0, 3: 15.0}

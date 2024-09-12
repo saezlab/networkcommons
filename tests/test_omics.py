@@ -334,25 +334,52 @@ def test_decryptm_experiment_no_dataset(mock_decryptm_datasets):
 
 # FILE: omics/_panacea.py
 
-@patch('networkcommons.data.omics._panacea._common._baseurl', return_value='http://example.com')
-@patch('pandas.read_pickle')
-@patch('os.path.exists', return_value=False)
-@patch('os.makedirs')
-@patch('pandas.DataFrame.to_pickle')
 @patch('urllib.request.urlopen')
-def test_panacea_experiments(mock_urlopen, mock_to_pickle, mock_makedirs, mock_path_exists, mock_read_pickle, mock_baseurl):
-    # Mock the HTTP response for the metadata file
+@patch('pandas.read_csv')
+@patch('os.path.exists', return_value=False)
+@patch('pandas.DataFrame.to_pickle')
+def test_panacea_experiments(mock_to_pickle, mock_path_exists, mock_read_csv, mock_urlopen):
+    # Mock the metadata file (panacea__metadata.tsv)
+    mock_metadata = pd.DataFrame({
+        'group': ['ASPC_AEE788', 'ASPC_AFATINIB', 'DU145_CRIZOTINIB', 'ASPC_CEDIRANIB'],
+        'sample_ID': ['ID1', 'ID2', 'ID3', 'ID4']
+    })
+    mock_read_csv.return_value = mock_metadata
+
+    # Mock the HTML content returned by the remote server, 
+    # with some lines containing the "__TF_scores.tsv" pattern
+    mock_html_content = """
+        <html>
+        <body>
+            <a href="ASPC_AEE788__TF_scores.tsv">ASPC_AEE788__TF_scores.tsv</a><br>
+            <a href="ASPC_AFATINIB__TF_scores.tsv">ASPC_AFATINIB__TF_scores.tsv</a><br>
+            <a href="DU145_CRIZOTINIB__TF_scores.tsv">DU145_CRIZOTINIB__TF_scores.tsv</a><br>
+        </body>
+        </html>
+    """
+    
+    # Mock the HTTP response for the TF scores directory
     mock_response = MagicMock()
-    mock_response.read.return_value = b"group\tsample_ID\nA_B\tID1\nC_D\tID2"
-    mock_response.__enter__.return_value = mock_response
+    mock_response.read.return_value = mock_html_content.encode('utf-8')
     mock_urlopen.return_value = mock_response
 
+    # Call the function under test
     result_df = omics.panacea_experiments(update=True)
 
+    # Check that the result is a DataFrame
     assert isinstance(result_df, pd.DataFrame)
+
+    # Check that the expected columns are in the DataFrame
+    assert 'group' in result_df.columns
     assert 'cell' in result_df.columns
     assert 'drug' in result_df.columns
+    assert 'tf_scores' in result_df.columns
 
+    # Check that the 'tf_scores' column has the correct True/False values
+    expected_tf_scores = [True, True, True, False]  # CEDIRANIB should not have TF scores
+    assert result_df['tf_scores'].tolist() == expected_tf_scores
+
+    # Verify that the function attempts to save the result as a pickle file
     mock_to_pickle.assert_called_once()
 
 
@@ -581,6 +608,7 @@ def test_panacea_gold_standard_update(mock_urllib, mock_pandas_topickle, mock_ma
     
     mock_log.assert_any_call('DATA: Retrieving Panacea offtarget gold standard...')
     mock_log.assert_any_call('DATA: found in cache, loading...')
+
 
 
 # FILE: omics/_scperturb.py

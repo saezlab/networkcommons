@@ -4,6 +4,7 @@ from networkcommons.methods import _causal
 from unittest.mock import patch, MagicMock
 import io
 import sys
+import pytest
 
 @patch('networkcommons.methods._causal._log')  # Mock the _log function
 def test_run_corneto_carnival(mock_log):
@@ -93,3 +94,14 @@ def test_run_corneto_carnival(mock_log):
     assert any("Solver terminated with message: Optimization terminated successfully. (HiGHS Status 7: Optimal)" in line for line in lines_in_output)
     # Check that stdout has printed lines when verbose=True
     assert len(captured_verbose_output) > 0
+
+    # TODO: why does corneto raise a TypeError? Thought it was the empty network, but it's not
+    # with pytest.raises(TypeError):
+    #     _causal.run_corneto_carnival(
+    #         nx.DiGraph(),  # Empty network
+    #         source_dict,
+    #         target_dict,
+    #         betaWeight=0.1,
+    #         solver='scipy',
+    #         verbose=True
+    #     )

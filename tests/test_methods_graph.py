@@ -273,9 +273,18 @@ def test_run_all_paths_exceptions():
     assert list(subnetwork.edges) == []
 
 
-def test_add_pagerank_scores(net2):
+@patch('networkcommons.methods._graph._log')
+def test_add_pagerank_scores(mock_log, net2):
 
     network, source_dict, target_dict = net2
+
+    network_with_pagerank = _graph.add_pagerank_scores(
+        nx.DiGraph(),  # empty
+        source_dict,
+        target_dict,
+        personalize_for='source',
+    )
+    mock_log.assert_any_call('PPR: WARNING: Empty network, no scores added.')
 
     network_with_pagerank = _graph.add_pagerank_scores(
         network,
