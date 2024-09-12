@@ -218,15 +218,18 @@ def get_offtarget_panacea_evaluation(cell=None, drug=None):
         cell, drug = cell_drug.split('_')
         
         # get first rank of offtargets gold standard + inhibition
-        source_dict = {panacea_gold_standard[
+        source_df = panacea_gold_standard[
             (panacea_gold_standard['cmpd'] == drug) &
             (panacea_gold_standard['rank'] == 1)
-            ].target.item(): -1}
+            ]
         
-        if source_dict == {}:
+        if source_df.empty:
             _log(f"EVAL: no primary target found for {drug}. Skipping...")
             continue
-        elif next(iter(source_dict.keys())) not in graph.nodes():
+        
+        source_dict = {source_df.target.item(): -1}
+
+        if next(iter(source_dict.keys())) not in graph.nodes():
             _log(f"EVAL: primary target {list(source_dict.keys())} not found in the network. Skipping...")
             continue
         
