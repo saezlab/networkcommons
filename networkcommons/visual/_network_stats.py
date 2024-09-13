@@ -108,7 +108,7 @@ def plot_rank(df: pd.DataFrame,
         The figure object for the plot.
     """
     if id_column not in df.columns:
-        _log(f"Column '{id_column}' not found in the DataFrame. Using the index as the ID column.", level=30)
+        _log(f"Column '{id_column}' not found in the DataFrame. Using the index as the ID column.")
         df = df.reset_index()  # Reset the index, moving it to a new column
         id_column = 'index'  # Set id_column to 'index' as it's now a column
         df[id_column] = df[id_column].astype(str)
@@ -169,7 +169,7 @@ def plot_rank(df: pd.DataFrame,
         plt.show()
 
     if not filepath and not render:
-        _log("No output specified. Returning the plot object.", level=30)
+        _log("No output specified. Returning the plot object.")
 
     return plt.gcf()
 
@@ -253,7 +253,7 @@ def plot_scatter(df: pd.DataFrame,
         plt.show()
 
     if not filepath and not render:
-        _log("No output specified. Returning the plot object.", level=30)
+        _log("No output specified. Returning the plot object.")
 
     return plt.gcf()
 
@@ -386,7 +386,7 @@ def plot_n_nodes_edges(networks: Dict[str, nx.DiGraph],
         The figure object for the plot.
     """
     if not show_nodes and not show_edges:
-        _log("Both 'show_nodes' and 'show_edges' are False. Using show nodes as default.", level=30)
+        _log("Both 'show_nodes' and 'show_edges' are False. Using show nodes as default.")
         show_nodes = True
 
     labels = []
@@ -573,7 +573,7 @@ def build_heatmap_with_tree(distance_df: pd.DataFrame,
         g.fig.show()
 
     if not save and not render:
-        _log("No output specified. Returning the plot", level=30)
+        _log("No output specified. Returning the plot")
 
     return g.fig
 
@@ -623,6 +623,6 @@ def create_rank_heatmap(ora_results: pd.DataFrame,
         plt.show()
 
     if not filepath and not render:
-        _log("No output specified. Returning the plot object.", level=30)
+        _log("No output specified. Returning the plot object.")
 
     return plt.gcf()

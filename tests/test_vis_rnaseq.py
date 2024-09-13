@@ -36,8 +36,6 @@ def metadata_dataframe():
     return pd.DataFrame(metadata)
 
 
-### TESTING PLOT_DENSITY ###
-
 def test_plot_density_valid_data():
     """Test plot_density with valid data."""
     example_dataframe = pd.DataFrame({

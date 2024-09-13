@@ -1,208 +1,205 @@
-#!/usr/bin/env python
-
-import unittest
+import pytest
 from unittest.mock import patch, MagicMock
 import networkx as nx
-
 from networkcommons.visual import NetworkXVisualizer, NetworkVisualizerBase
+from networkcommons.visual import _styles
 
-class TestVisualizeGraphSimple(unittest.TestCase):
-
-    @patch('networkcommons.visual._vis_networkx.nx.nx_agraph.to_agraph')
-    def test_visualize_graph_simple(self, mock_to_agraph):
-        # Create a simple network graph for testing
-        network = nx.DiGraph()
-        network.add_node('Node1')
-        network.add_node('Node2')
-        network.add_edge('Node1', 'Node2', interaction=1)
-
-        source_dict = {'Node1': 1}
-        target_dict = {'Node2': 1}
-
-        mock_agraph = mock_to_agraph.return_value
-        mock_agraph.graph_attr.__getitem__.return_value = '1.2'  # Set return value for graph_attr
-
-        # Call the function to visualize the graph
-        nwb = NetworkVisualizerBase(network)
-        nwb.visualize_network_simple(source_dict, target_dict, prog='dot', is_sign_consistent=True, max_nodes=75)
-
-        # Check that the network was converted to an AGraph object
-        mock_to_agraph.assert_called_once_with(network)
-
-        # Check that the layout and attributes were set correctly
-        mock_agraph.layout.assert_called_once_with(prog='dot')
-        self.assertEqual(mock_agraph.graph_attr['ratio'], '1.2')  # Assertion
-
-        for node in mock_agraph.nodes():
-            self.assertIn(node.attr['shape'], ['circle'])
-            self.assertIn(node.attr['style'], ['filled'])
-
-        for edge in mock_agraph.edges():
-            self.assertIn(edge.attr['color'], ['forestgreen', 'tomato3', 'gray30'])
+import matplotlib
+# Set the matplotlib backend to 'Agg' for headless environments (like GitHub Actions)
+matplotlib.use('Agg')
 
 
-class TestNetworkXVisualizer(unittest.TestCase):
+@pytest.fixture
+def sample_network():
+    # Create a simple directed graph with some nodes and edges
+    G = nx.DiGraph()
+    G.add_edge(1, 2, interaction=1)
+    G.add_edge(2, 3, interaction=-1)
+    G.add_edge(3, 4, interaction=-1)
+    G.add_edge(4, 5, interaction=-1)
+    return G
 
-    def setUp(self):
-        # Set up a simple network graph for testing
-        self.network = nx.DiGraph()
-        self.network.add_node('Node1', type='source')
-        self.network.add_node('Node2', type='target')
-        self.network.add_edge('Node1', 'Node2', effect=1)
 
-        self.visualizer = NetworkXVisualizer(self.network)
-
-    @patch('networkcommons.visual._vis_networkx.nx.nx_agraph.to_agraph')
-    def test_visualize_network_default(self, mock_to_agraph):
-        mock_agraph = mock_to_agraph.return_value
-
-        source_dict = {'Node1': 1}
-        target_dict = {'Node2': 1}
-
-        # Mocking the styles to avoid AttributeError on 'items'
-        with patch('networkcommons.visual._styles.get_styles') as mock_get_styles:
-            mock_get_styles.return_value = {
-                'default': {
-                    'nodes': {
-                        'sources': {
-                            'color': '#0000ff',
-                            'fillcolor': '#ff0000',
-                        },
-                        'targets': {
-                            'color': '#ff0000',
-                            'fillcolor': '#ff00ff',
-                        },
-                        'other': {
-                            'color': '#cccccc',
-                            'fillcolor': '#cccccc',
-                        },
-                    },
-                    'edges': {
-                        'neutral': {
-                            'color': '#999999',
-                        }
-                    }
-                }
-            }
-
-            # Call the method to visualize the network
-            self.visualizer.visualize_network_default(source_dict, target_dict, prog='dot')
-
-            # Check that the network was converted to an AGraph object
-            mock_to_agraph.assert_called_once_with(self.network)
-
-            # Check that the layout was set correctly
-            mock_agraph.layout.assert_called_once_with(prog='dot')
-
-    def test_color_nodes(self):
-        # Mocking the return value of _styles.get_styles
-        with patch('networkcommons.visual._styles.get_styles') as mock_get_styles:
-            mock_get_styles.return_value = {
-                'default': {
-                    'nodes': {
-                        'other': {
-                            'default': {
-                                'fillcolor': '#00ff00'  # Default fill color
-                            }
-                        },
-                        'sources': {
-                            'fillcolor': '#0000ff'  # Source fill color
-                        },
-                        'targets': {
-                            'fillcolor': '#ff0000'  # Target fill color
-                        }
-                    }
-                }
-            }
-
-            # Set up the network with test nodes
-            self.network.add_node('source_node', type='source')
-            self.network.add_node('target_node', type='target')
-            self.network.add_node('other_node')
-
-            # Test the color_nodes method
-            self.visualizer.color_nodes()
-
-            # Assertions
-            self.assertEqual(self.network.nodes['source_node']['color'], '#0000ff')
-            self.assertEqual(self.network.nodes['target_node']['color'], '#ff0000')
-            self.assertEqual(self.network.nodes['other_node']['color'], '#00ff00')
-
-    def test_color_edges(self):
-        # Mocking the return value of _styles.get_styles
-        with patch('networkcommons.visual._styles.get_styles') as mock_get_styles:
-            mock_get_styles.return_value = {
-                'default': {
-                    'edges': {
-                        1: '#000000',
-                        'default': '#999999'
-                    }
-                }
-            }
-            # Test the color_edges method
-            self.visualizer.color_edges()
-
-            for edge in self.network.edges:
-                self.assertEqual(self.network.get_edge_data(*edge)['color'], '#000000')
-
-    @patch('networkcommons.visual._vis_networkx.tempfile.NamedTemporaryFile')
-    @patch('networkcommons.visual._vis_networkx.mpimg.imread')
-    @patch('networkcommons.visual._vis_networkx.plt.imshow')
-    @patch('networkcommons.visual._vis_networkx.plt.show')
-    @patch('networkcommons.visual._vis_networkx.plt.savefig')
-    @patch('networkcommons.visual._vis_networkx.plt.close')
-    @patch('networkcommons.visual._styles.get_styles')
-    def test_visualize(self, mock_get_styles, mock_close, mock_savefig, mock_show, mock_imshow, mock_imread,
-                       mock_tempfile):
-        mock_tempfile.return_value.__enter__.return_value.name = 'temp.png'
-        mock_imread.return_value = MagicMock()
-
-        # Mocking the return value of _styles.get_styles
-        mock_get_styles.return_value = {
-            'default': {
-                'nodes': {
-                    'other': {
-                        'default': {
-                            'fillcolor': '#ffffff'
-                        }
-                    },
-                    'sources': {
-                        'fillcolor': '#ff0000'
-                    },
-                    'targets': {
-                        'fillcolor': '#00ff00'
-                    }
-                },
-                'edges': {
-                    'default': {
-                        'color': '#000000'
-                    },
-                    'neutral': {
-                        'color': '#999999'
-                    }
-                }
+@pytest.fixture
+def minimal_styles():
+    # Return a simplified styles dictionary for testing
+    return {
+        'default': {
+            'nodes': {
+                'sources': {},
+                'targets': {},
+                'other': {'default': {}}
+            },
+            'edges': {
+                'positive': {'color': 'green'},  # Positive edge color
+                'negative': {'color': 'red'},    # Negative edge color
+                'neutral': {'color': 'gray'},    # Neutral edge color
+                'default': {'color': 'gray'}     # Default edge color
             }
         }
+    }
 
-        # Mock the AGraph object and its draw method
-        with patch('networkcommons.visual._vis_networkx.nx.nx_agraph.to_agraph') as mock_to_agraph:
-            mock_agraph = mock_to_agraph.return_value
+@patch('networkcommons.visual._styles.get_styles')
+def test_network_visualizer_base_init(mock_get_styles, sample_network):
+    # Mock the default styles
+    mock_get_styles.return_value = {
+        'default': {
+            'nodes': {
+                'sources': {},
+                'targets': {},
+                'other': {'default': {}}
+            },
+            'edges': {
+                'positive': {},
+                'negative': {},
+                'neutral': {},
+                'default': {}
+            }
+        }
+    }
+    visualizer = NetworkVisualizerBase(sample_network)
+    assert visualizer.network == sample_network
+    assert visualizer.style == mock_get_styles()['default']
 
-            # Call the visualize method with render=True
-            self.visualizer.visualize(output_file='network.png', render=True)
 
-            mock_agraph.draw.assert_called_once_with('temp.png', format='png', prog='dot')
-            mock_imread.assert_called_once_with('temp.png')
-            mock_imshow.assert_called_once()
-            mock_show.assert_called_once()
+@patch('networkcommons.visual.NetworkVisualizerBase.set_custom_style')
+def test_network_visualizer_base_set_custom_style(mock_set_custom_style, sample_network):
+    visualizer = NetworkVisualizerBase(sample_network)
+    custom_style = {'custom': 'style'}
+    visualizer.set_custom_style(custom_style)
+    mock_set_custom_style.assert_called_once_with(custom_style)
 
-            # Reset the mock draw call count
-            mock_agraph.draw.reset_mock()
 
-            # Call the visualize method with render=False (saving)
-            self.visualizer.visualize(output_file='network.png', render=False)
+@patch('networkcommons.visual._styles.set_style_attributes')
+@patch('networkcommons.visual._vis_networkx._log')
+def test_network_visualizer_base_visualize_too_many_nodes(mock_log, mock_set_style_attributes, sample_network):
+    visualizer = NetworkVisualizerBase(sample_network)
+    visualizer.visualize_network_simple({}, {}, max_nodes=3)
+    mock_log.assert_called_once_with(
+        "The network is too large to visualize, you can increase the max_nodes parameter if needed.")
+    assert mock_set_style_attributes.call_count == 0
 
-            mock_agraph.draw.assert_called_once_with('network.png', format='png', prog='dot')
 
-if __name__ == '__main__':
-    unittest.main()
+@patch('networkcommons.visual._styles.set_style_attributes')
+@patch('pygraphviz.AGraph.layout')
+def test_network_visualizer_base_visualize_network_simple(mock_layout, mock_set_style_attributes, sample_network):
+    visualizer = NetworkVisualizerBase(sample_network)
+    source_dict = {str(1): 1}
+    target_dict = {str(4): -1}
+    graph = visualizer.visualize_network_simple(source_dict, target_dict)
+    assert mock_set_style_attributes.call_count == len(graph.nodes()) + len(graph.edges())
+    mock_layout.assert_called_once_with(prog='dot')
+
+
+@patch('networkcommons.visual._styles.set_style_attributes')
+@patch('pygraphviz.AGraph.layout')
+def test_network_visualizer_sign_consistent(mock_layout, mock_set_style_attributes, sample_network):
+    visualizer = NetworkXVisualizer(sample_network)
+    source_dict = {str(1): 1}
+    target_dict = {str(5): -1}
+
+    # Call the sign-consistent visualization method
+    visualizer.visualize_network_sign_consistent(source_dict, target_dict)
+
+    # Assert that set_style_attributes was called for nodes and edges
+    assert mock_set_style_attributes.call_count > 0
+
+    # Assert that the layout function was called exactly once
+    mock_layout.assert_called_once()
+
+
+@patch('networkcommons.visual._vis_networkx._log')
+@patch('networkcommons.visual._vis_networkx.plt.imshow')
+@patch('networkcommons.visual._vis_networkx.plt.imread')  # Mock imread
+@patch('networkcommons.visual._vis_networkx.plt.show')
+def test_network_visualizer_render(mock_show, mock_imread, mock_imshow, mock_log, sample_network):
+    # Initialize the visualizer
+    visualizer = NetworkXVisualizer(sample_network)
+
+    # Define source and target dictionaries
+    source_dict = {str(1): 1}
+    target_dict = {str(5): -1}
+
+    # Mock the return value of plt.imread (since plt.imshow requires an image array)
+    mock_img_data = MagicMock()
+    mock_imread.return_value = mock_img_data  # Mocking imread to return mock image data
+
+    # Call the visualize method with render=True
+    visualizer.visualize(source_dict, target_dict, render=True)
+
+    # Check if imshow was called with the mock image data
+    mock_imshow.assert_called_once_with(mock_img_data)
+
+    # Check if plt.show() was called to render the plot
+    mock_show.assert_called_once()
+
+
+@patch('networkcommons.visual._vis_networkx._log')
+@patch('pygraphviz.AGraph.draw')
+def test_network_visualizer_save_plot(mock_draw, mock_log, sample_network, ):
+    visualizer = NetworkXVisualizer(sample_network)
+    source_dict = {str(1): 1}
+    target_dict = {str(5): -1}
+    visualizer.visualize(source_dict, target_dict, output_file='test_plot.png')
+    mock_draw.assert_called_once_with('test_plot.png', format='png', prog='dot')
+    mock_log.assert_called_once_with("Network visualization saved to test_plot.png.")
+
+
+@patch('networkcommons.visual._styles.set_style_attributes')
+@patch('pygraphviz.AGraph.layout')
+def test_network_visualizer_default_custom_style(mock_layout, mock_set_style_attributes, sample_network):
+    visualizer = NetworkXVisualizer(sample_network)
+    custom_style = {
+        'nodes': {'sources': {'color': 'red'}, 'targets': {'color': 'green'}},
+        'edges': {'neutral': {'color': 'blue'}}
+    }
+    graph = visualizer.visualize_network_default({1: 1}, {5: -1}, custom_style=custom_style)
+    assert mock_set_style_attributes.call_count == len(graph.nodes()) + len(graph.edges())
+    mock_layout.assert_called_once_with(prog='dot')
+
+
+@patch('networkcommons.visual._styles.set_style_attributes')
+def test_network_visualizer_edge_coloring(mock_set_style_attributes, sample_network):
+    visualizer = NetworkXVisualizer(sample_network)
+    for u, v in sample_network.edges():
+        sample_network[u][v]['effect'] = 'positive'
+    visualizer.color_edges()
+    for u, v in sample_network.edges():
+        assert sample_network[u][v]['color'] == visualizer.edge_colors['positive']['color']
+
+
+def test_network_visualizer_empty_network():
+    G = nx.DiGraph()
+    visualizer = NetworkXVisualizer(G)
+    result = visualizer.visualize_network_default({}, {})
+    assert result is None
+
+@patch('networkcommons.visual._styles.set_style_attributes')
+@patch('pygraphviz.AGraph.layout')
+def test_network_visualizer_layout_programs(mock_layout, mock_set_style_attributes, sample_network):
+    visualizer = NetworkXVisualizer(sample_network)
+    layout_programs = ['dot', 'neato', 'fdp', 'circo']
+    for prog in layout_programs:
+        visualizer.visualize(source_dict={str(1): 1}, target_dict={str(5): -1}, prog=prog)
+        mock_layout.assert_called_with(prog=prog)
+        mock_set_style_attributes.assert_called()
+
+
+@patch('networkcommons.visual._styles.get_styles')
+def test_network_visualizer_edge_interaction(mock_get_styles, sample_network, minimal_styles):
+    # Mock the get_styles function to return the minimal styles
+    mock_get_styles.return_value = minimal_styles
+
+    # Initialize the visualizer with the sample network
+    visualizer = NetworkXVisualizer(sample_network)
+
+    # Visualize the network and return the AGraph object
+    graph = visualizer.visualize_network_default({1: 1}, {5: -1}, prog='dot', custom_style=None)
+
+    # Assert that the style (color) is set correctly for each edge based on the interaction
+    for edge in graph.edges():
+        u, v = int(edge[0]), int(edge[1])
+
+        # Retrieve the edge color from the visualizer's AGraph object
+        edge_color = graph.get_edge(u, v).attr['color']
+        assert edge_color == 'gray', f"Edge {u}-{v} has unexpected color {edge_color}"

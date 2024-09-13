@@ -39,8 +39,6 @@ __all__ = ['NetworkVisualizerBase', 'NetworkXVisualizer']
 import lazy_import
 import networkx as nx
 import matplotlib.pyplot as plt
-import matplotlib.image as mpimg
-import tempfile
 
 from . import _aux
 from . import _styles
@@ -102,8 +100,12 @@ class NetworkVisualizerBase:
             A (pygraphviz.AGraph): The visualized network graph.
         """
         if len(self.network.nodes) > max_nodes:
-            _log("The network is too large to visualize, you can increase the max_nodes parameter if needed.", level=40)
+            _log("The network is too large to visualize, you can increase the max_nodes parameter if needed.")
             print("The network is too large to visualize, you can increase the max_nodes parameter if needed.")
+            return None
+        if len(self.network.nodes) == 0:
+            _log("The network is empty, nothing to visualize.")
+            print("The network is empty, nothing to visualize.")
             return None
 
         A = nx.nx_agraph.to_agraph(self.network)
@@ -126,15 +128,19 @@ class NetworkVisualizerBase:
         for edge in A.edges():
             u, v = edge
             edge_data = self.network.get_edge_data(u, v)
-            if 'interaction' in edge_data:
-                edge_data['sign'] = edge_data.pop('interaction')
-
-            if edge_data['sign'] == 1 and is_sign_consistent:
-                edge_style = self.style['edges']['positive']
-            elif edge_data['sign'] == -1 and is_sign_consistent:
-                edge_style = self.style['edges']['negative']
-            else:
+            if not edge_data:
+                _log(f"Edge data not found for edge {u} -> {v}.")
                 edge_style = self.style['edges']['default']
+            else:
+                if 'interaction' in edge_data:
+                    edge_data['sign'] = edge_data.pop('interaction')
+
+                if edge_data['sign'] == 1 and is_sign_consistent:
+                    edge_style = self.style['edges']['positive']
+                elif edge_data['sign'] == -1 and is_sign_consistent:
+                    edge_style = self.style['edges']['negative']
+                else:
+                    edge_style = self.style['edges']['default']
 
             _styles.set_style_attributes(edge, edge_style)
 
@@ -242,8 +248,12 @@ class NetworkXVisualizer(NetworkVisualizerBase):
             A (pygraphviz.AGraph): The visualized network graph.
         """
         if len(self.network.nodes) > max_nodes:
-            _log("The network is too large to visualize, you can increase the max_nodes parameter if needed.", level=40)
+            _log("The network is too large to visualize, you can increase the max_nodes parameter if needed.")
             print("The network is too large to visualize, you can increase the max_nodes parameter if needed.")
+            return None
+        if len(self.network.nodes) == 0:
+            _log("The network is empty, nothing to visualize.")
+            print("The network is empty, nothing to visualize.")
             return None
 
         default_style = _styles.get_styles()['default']
@@ -299,14 +309,18 @@ class NetworkXVisualizer(NetworkVisualizerBase):
             A (pygraphviz.AGraph): The visualized network graph.
         """
         if len(self.network.nodes) > max_nodes:
-            _log("The network is too large to visualize, you can increase the max_nodes parameter if needed.", level=40)
+            _log("The network is too large to visualize, you can increase the max_nodes parameter if needed.")
             print("The network is too large to visualize, you can increase the max_nodes parameter if needed.")
+            return None
+        if len(self.network.nodes) == 0:
+            _log("The network is empty, nothing to visualize.")
+            print("The network is empty, nothing to visualize.")
             return None
 
         default_style = _styles.get_styles()['sign_consistent']
         style = _styles.merge_styles(default_style, custom_style)
 
-        A = self.visualize_network_default(source_dict, target_dict, prog, style)
+        A = self.visualize_network_default(source_dict, target_dict, prog=prog, custom_style=style, max_nodes=max_nodes)
 
         if source_dict:
             sources = set(source_dict.keys())
@@ -326,6 +340,8 @@ class NetworkXVisualizer(NetworkVisualizerBase):
                 nodes_type = "sources"
             elif n in targets:
                 nodes_type = "targets"
+            else:
+                nodes_type = "other"
 
             if sign_value > 0:
                 condition_style = style['nodes'][nodes_type].get('positive_consistent')
@@ -338,15 +354,19 @@ class NetworkXVisualizer(NetworkVisualizerBase):
         for edge in A.edges():
             u, v = edge
             edge_data = self.network.get_edge_data(u, v)
-            if 'interaction' in edge_data:
-                edge_data['sign'] = edge_data.pop('interaction')
-
-            if edge_data['sign'] == 1:
-                edge_style = style['edges']['positive']
-            elif edge_data['sign'] == -1:
-                edge_style = style['edges']['negative']
+            if not edge_data:
+                _log(f"Edge data not found for edge {u} -> {v}.")
+                edge_style = style['edges']['default']
             else:
-                edge_style = style['edges']['neutral']
+                if 'interaction' in edge_data:
+                    edge_data['sign'] = edge_data.pop('interaction')
+
+                if edge_data['sign'] == 1:
+                    edge_style = style['edges']['positive']
+                elif edge_data['sign'] == -1:
+                    edge_style = style['edges']['negative']
+                else:
+                    edge_style = style['edges']['neutral']
 
             _styles.set_style_attributes(edge, edge_style)
 
@@ -357,7 +377,8 @@ class NetworkXVisualizer(NetworkVisualizerBase):
                           target_dict,
                           prog='dot',
                           network_type='default',
-                          custom_style=None):
+                          custom_style=None,
+                          max_nodes=75):
         """
         Main function for network visualization based on network type.
 
@@ -368,23 +389,26 @@ class NetworkXVisualizer(NetworkVisualizerBase):
             prog (str, optional): Layout program to use. Defaults to 'dot'.
             network_type (str, optional): Type of visualization. Defaults to "default".
             custom_style (dict, optional): Custom style dictionary to apply.
+            max_nodes (int, optional): Maximum number of nodes to visualize. Defaults to 75.
 
         Returns:
             A (pygraphviz.AGraph): The visualized network graph.
         """
         if network_type == 'sign_consistent':
-            return self.visualize_network_sign_consistent(source_dict, target_dict, prog, custom_style)
+            return self.visualize_network_sign_consistent(source_dict, target_dict, prog, custom_style, max_nodes)
         else:
             default_style = _styles.get_styles().get(network_type, 'default')
-            return self.visualize_network_default(source_dict, target_dict, prog, custom_style)
+            return self.visualize_network_default(source_dict, target_dict, prog, custom_style, max_nodes)
 
     def visualize(self,
                   source_dict=None,
                   target_dict=None,
-                  output_file='network.png',
+                  output_file='',
+                  prog='dot',
                   render=False,
                   highlight_nodes=None,
-                  style=None):
+                  style=None,
+                  max_nodes=75):
         """
         Visualizes the network and saves or shows the plot.
 
@@ -393,12 +417,21 @@ class NetworkXVisualizer(NetworkVisualizerBase):
             render (bool, optional): If True, displays the plot. If False, saves it to a file. Defaults to False.
             highlight_nodes (list, optional): List of nodes to highlight. Defaults to None.
             style (dict, optional): Style dictionary for visualization. Defaults to None.
+            max_nodes (int, optional): Maximum number of nodes to visualize. Defaults to 75.
         """
-        # Visualize the network using the appropriate method based on style
+
+        if len(self.network.nodes) > max_nodes:
+            _log("The network is too large to visualize, you can increase the max_nodes parameter if needed.")
+            print("The network is too large to visualize, you can increase the max_nodes parameter if needed.")
+            return None
+        if len(self.network.nodes) == 0:
+            _log("The network is empty, nothing to visualize.")
+            print("The network is empty, nothing to visualize.")
+            return None
 
         if style:
             self.set_custom_style(style)
-        A = self.visualize_network(source_dict, target_dict, custom_style=style)
+        A = self.visualize_network(source_dict, target_dict, prog=prog, custom_style=style, max_nodes=max_nodes)
 
         # Highlight specific nodes if provided
         if highlight_nodes:
@@ -411,13 +444,15 @@ class NetworkXVisualizer(NetworkVisualizerBase):
 
         # Save or render the plot
         if render:
-            # Create a temporary file to store the image
-            with tempfile.NamedTemporaryFile(suffix='.png') as temp_file:
-                A.draw(temp_file.name, format='png', prog='dot')
-                img = mpimg.imread(temp_file.name)
-                plt.imshow(img)
-                plt.axis('off')
-                plt.show()
-        else:
+            img_data = A.draw(format='png', prog=prog)  # Get image data in-memory
+            plt.imshow(plt.imread(img_data))  # Render the image from the in-memory data
+            plt.axis('off')
+            plt.show()
+        elif output_file:
             A.draw(output_file, format='png', prog='dot')
-            _log(f"Network visualization saved to {output_file}.", level=20)
+            _log(f"Network visualization saved to {output_file}.")
+            print(f"Network visualization saved to {output_file}.")
+        else:
+            _log("No output file specified. Set 'output_file' to save the visualization.")
+            print("No output file specified. Set 'output_file' to save the visualization.")
+        return A

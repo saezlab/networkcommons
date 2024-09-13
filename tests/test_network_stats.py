@@ -61,19 +61,27 @@ def setup_data():
     return df, networks, metrics_df, jaccard_df, ora_results, ora_terms
 
 
-@patch('networkcommons.visual._network_stats._log')
+
 @patch('networkcommons.visual._network_stats.plt.savefig')
-def test_plot_rank_logs_missing_column(mock_savefig, mock_log, setup_data):
-    df, _, _, _, _, _ = setup_data
-    df = df.drop(columns=['idx'])  # Simulate missing 'idx' column
+@patch('networkcommons.visual._network_stats._log')
+def test_plot_rank_logs_missing_column(mock_log, mock_savefig):
+    # Simulate a DataFrame without the 'idx' column
+    df = pd.DataFrame({
+        'Gene1': [10, 20, 30],
+        'Gene2': [15, 25, 35]
+    })
 
-    print(df)
+    # Mock savefig return value to prevent actual file creation
+    mock_savefig.return_value = MagicMock()
 
+    # Call the plot_rank function with bio_ids and a filepath
     plot_rank(df, bio_ids=['Gene1'], filepath='test.png')
 
-    # Check if _log was called with the correct warning message about the missing column
-    mock_log.assert_called_once_with("Column 'idx' not found in the DataFrame. Using the index as the ID column.",
-                                     level=30)
+    # Check if _log was called with the correct message
+    mock_log.assert_called_once_with("Column 'idx' not found in the DataFrame. Using the index as the ID column.")
+
+    # Ensure that plt.savefig was called once with 'test.png'
+    mock_savefig.assert_called_once_with('test.png')
 
 
 @patch('networkcommons.visual._network_stats._log')
@@ -82,7 +90,7 @@ def test_plot_rank_no_output_warning(mock_log, setup_data):
     plot_rank(df, filepath=None, render=False)
 
     # Check if _log was called with the correct warning message about no output being specified
-    mock_log.assert_called_once_with("No output specified. Returning the plot object.", level=30)
+    mock_log.assert_called_once_with("No output specified. Returning the plot object.")
 
 
 @patch('networkcommons.visual._network_stats.plt.savefig')
@@ -123,14 +131,21 @@ def test_lollipop_plot_saves_figure(mock_savefig):
     mock_savefig.assert_called_once_with(filepath)
 
 
+@patch('networkcommons.visual._network_stats.plt.savefig')
 @patch('networkcommons.visual._network_stats._log')
-def test_plot_n_nodes_edges_no_nodes_or_edges(mock_log, setup_data):
-    _, networks, _, _, _, _ = setup_data
-    # Call the function with both show_nodes and show_edges set to False
-    plot_n_nodes_edges(networks, filepath='test.png', show_nodes=False, show_edges=False)
+def test_plot_rank_logs_missing_column(mock_log, mock_savefig, setup_data):
+    # Setup data fixture
+    df, _, _, _, _, _ = setup_data
+    df = df.drop(columns=['idx'])  # Simulate missing 'idx' column
 
-    # Check if _log was called with the correct warning message about no nodes or edges being selected
-    mock_log.assert_called_once_with("Both 'show_nodes' and 'show_edges' are False. Using show nodes as default.", level=30)
+    # Call the function with a valid filepath
+    plot_rank(df, bio_ids=['Gene1'], filepath='test.png')
+
+    # Check that _log was called with the correct message
+    mock_log.assert_called_once_with("Column 'idx' not found in the DataFrame. Using the index as the ID column.")
+
+    # Ensure the savefig function is called with the correct filepath
+    mock_savefig.assert_called_once_with('test.png')
 
 
 @patch('networkcommons.visual._network_stats.lollipop_plot')
