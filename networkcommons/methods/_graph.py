@@ -304,6 +304,10 @@ def add_pagerank_scores(network,
     sources = source_dict.keys()
     targets = target_dict.keys()
 
+    if nx.is_empty(network):
+        _log('PPR: WARNING: Empty network, no scores added.')
+        return network
+
     if personalize_for == "source":
         personalized_prob = {n: 1/len(sources) for n in sources}
         attribute_name = 'pagerank_from_sources'
@@ -349,6 +353,10 @@ def compute_ppr_overlap(network, percentage=20):
     """
     _log('PPR: Computing personalized PageRank overlap with percentage', percentage)
     # Sorting nodes by PageRank score from sources and targets
+    if nx.is_empty(network):
+        _log('PPR: WARNING: Empty network, no PPR overlap computed.')
+        return network
+
     try:
         nodes_sources = [(node, data['pagerank_from_sources']) for node, data in network.nodes(data=True)]
         nodes_targets = [(node, data['pagerank_from_targets']) for node, data in network.nodes(data=True)]

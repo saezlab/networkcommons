@@ -29,7 +29,7 @@ __all__ = [
     'plot_n_nodes_edges_from_df',
     'build_heatmap_with_tree',
     'lollipop_plot',
-    'create_rank_heatmap',
+    'create_heatmap',
     'plot_scatter',
     'plot_rank'
 ]
@@ -578,38 +578,53 @@ def build_heatmap_with_tree(distance_df: pd.DataFrame,
     return g.fig
 
 
-def create_rank_heatmap(ora_results: pd.DataFrame,
-                        ora_terms: List[str],
-                        filepath="rank_heatmap.png",
-                        render=False):
+def create_heatmap(results: pd.DataFrame,
+                   terms=None,
+                   y_axis_col: str = 'ora_Term',
+                   x_axis_col: str = 'network',
+                   value_col: str = 'ora_rank',
+                   title: str = "Heatmap of ORA Term Ranks by Network",
+                   x_label: str = 'Network',
+                   y_label: str = 'ORA Term',
+                   cmap="coolwarm_r",
+                   filepath="rank_heatmap.png",
+                   render=False):
     """
-    Create a heatmap with rows as ora_terms and columns as networks,
+    Create a heatmap. By default, creates a heatmap with rows as ora_terms and columns as networks,
     displaying the rank number in the cells.
 
     Args:
-        ora_results (pd.DataFrame): DataFrame containing the ORA results with ranks.
-        ora_terms (list): List of ORA terms to include in the heatmap.
-        filepath (str, optional): Path to save the plot. Defaults to "rank_heatmap.png".
-        render (bool, optional): Whether to display the plot. Defaults to False.
+        results (pd.DataFrame): DataFrame containing the ORA results with ranks.
+        terms (list): List of ORA terms to include in the heatmap.
+        y_axis_col (str): Column name for the y-axis. Default is 'ora_Term'.
+        x_axis_col (str): Column name for the x-axis. Default is 'network'.
+        value_col (str): Column name for the values. Default is 'ora_rank'.
+        title (str): Title of the plot. Default is "Heatmap of ORA Term Ranks by Network".
+        x_label (str): Label for the x-axis. Default is 'Network'.
+        y_label (str): Label for the y-axis. Default is 'ORA Term'.
+        cmap (str): Color map for the heatmap. Default is "coolwarm_r".
+        filepath (str): Path to save the plot. Default is "rank_heatmap.png".
+        render (bool): Whether to display the plot. Default is False.
 
     Returns:
         matplotlib.figure.Figure: The figure object for the plot.
     """
-    # Filter the ORA results to include only the specified ORA terms
-    filtered_data = ora_results[ora_results['ora_Term'].isin(ora_terms)]
+    if terms is not None:
+        # Filter the results to include only the specified terms
+        results = results[results[y_axis_col].isin(terms)]
 
     # Pivot the DataFrame to have ora_Term as rows and network as columns
-    heatmap_data = filtered_data.pivot(index='ora_Term', columns='network', values='ora_rank')
+    heatmap_data = results.pivot(index=y_axis_col, columns=x_axis_col, values=value_col)
 
     xsize = len(heatmap_data.columns)
-    ysize = len(heatmap_data.index) * 2
+    ysize = len(heatmap_data.index)
 
     # Create the heatmap
     plt.figure(figsize=(xsize, ysize))
-    sns.heatmap(heatmap_data, annot=True, fmt=".0f", cmap="coolwarm_r", linewidths=.5, cbar=False)
-    plt.title("Heatmap of ORA Term Ranks by Network")
-    plt.ylabel('ORA Term')
-    plt.xlabel('Network')
+    sns.heatmap(heatmap_data, annot=True, fmt=".0f", cmap=cmap, linewidths=.5, cbar=False)
+    plt.title(title)
+    plt.xlabel(x_label)
+    plt.ylabel(y_label)
     plt.xticks(rotation=90)
     plt.yticks(rotation=0)
     plt.tight_layout()

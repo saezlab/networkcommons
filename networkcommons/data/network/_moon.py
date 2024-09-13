@@ -55,6 +55,10 @@ def get_cosmos_pkn(update: bool = False):
 
         file_legend = pd.read_csv(baseurl + '/meta_network.sif', sep='\t')
 
+        # removing duplicated interactions
+        file_legend = file_legend.drop_duplicates(subset=['source', 'target', 'sign'], keep='first')
+        file_legend = file_legend.drop_duplicates(subset=['source', 'target'], keep=False)
+
         file_legend.to_pickle(path)
 
     else:
@@ -63,5 +67,6 @@ def get_cosmos_pkn(update: bool = False):
         file_legend = pd.read_pickle(path)
 
     _log(f'COSMOS: Done. Network has {len(file_legend)} interactions.')
+
 
     return file_legend
