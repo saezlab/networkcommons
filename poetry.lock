@@ -912,29 +912,6 @@ url = "https://pypi.org/simple"
 reference = "pypi-public"
 
 [[package]]
-name = "corneto"
-version = "1.0.0.dev0"
-description = "CORNETO: A Unified Framework for Omics-Driven Network Inference"
-optional = false
-python-versions = "^3.9"
-files = []
-develop = false
-
-[package.dependencies]
-numpy = ">=1.15"
-
-[package.extras]
-highs = ["cvxpy-base (>=1.5.0,<2.0.0)"]
-os = ["cvxpy-base (>=1.5.0,<2.0.0)", "scipy (>=1.11.0)"]
-picos = ["picos (>=2.4.1,<3.0.0)"]
-
-[package.source]
-type = "git"
-url = "https://github.com/deeenes/corneto.git"
-reference = "main"
-resolved_reference = "cfa311a6d1463f94d94b5e6e5735b5267e69a8a4"
-
-[[package]]
 name = "coverage"
 version = "7.6.1"
 description = "Code coverage measurement for Python"
@@ -1252,25 +1229,26 @@ reference = "pypi-public"
 
 [[package]]
 name = "decoupler"
-version = "1.8.1"
+version = "1.8.0"
 description = "Ensemble of methods to infer biological activities from omics data"
 optional = false
-python-versions = "^3.9"
-files = []
-develop = false
+python-versions = ">=3.9,<4.0"
+files = [
+    {file = "decoupler-1.8.0-py3-none-any.whl", hash = "sha256:726244bd809e70412ac82b51defc92b848b5a8f347084d1b4479d9b16ecd6228"},
+    {file = "decoupler-1.8.0.tar.gz", hash = "sha256:4f6cda3fb2c807ff8681f1d15c3167e14f3a419378b4446c8ede3b60d40afb74"},
+]
 
 [package.dependencies]
-numba = "^0.60.0"
-numpy = "^1"
-pandas = "^2.2.2"
-tqdm = "^4.66.4"
-typing-extensions = "^4.12.2"
+numba = ">=0.60.0,<0.61.0"
+numpy = ">=1,<2"
+pandas = ">=2.2.2,<3.0.0"
+tqdm = ">=4.66.4,<5.0.0"
+typing-extensions = ">=4.12.2,<5.0.0"
 
 [package.source]
-type = "git"
-url = "https://github.com/saezlab/decoupler-py.git"
-reference = "main"
-resolved_reference = "3b33dc663b1817ab15151a9d3c51ff18b315e160"
+type = "legacy"
+url = "https://pypi.org/simple"
+reference = "pypi-public"
 
 [[package]]
 name = "defusedxml"
@@ -1604,22 +1582,6 @@ python-versions = ">=2.6, !=3.0.*, !=3.1.*, !=3.2.*"
 files = [
     {file = "future-1.0.0-py3-none-any.whl", hash = "sha256:929292d34f5872e70396626ef385ec22355a1fae8ad29e1a734c3e43f9fbc216"},
     {file = "future-1.0.0.tar.gz", hash = "sha256:bd2968309307861edae1458a4f8a4f3598c03be43b97521076aebf5d94c07b05"},
-]
-
-[package.source]
-type = "legacy"
-url = "https://pypi.org/simple"
-reference = "pypi-public"
-
-[[package]]
-name = "get-annotations"
-version = "0.1.2"
-description = "A backport of Python 3.10's inspect.get_annotation() function"
-optional = false
-python-versions = ">=3.6,<4.0"
-files = [
-    {file = "get-annotations-0.1.2.tar.gz", hash = "sha256:da7b69b8043237cc7f7ce5919e9cc59bd18fc4e2704b43eb34e3ba4fa9374bab"},
-    {file = "get_annotations-0.1.2-py3-none-any.whl", hash = "sha256:788ba8aa2434ee34ffb985c4aea2f9e575204c884c0e0dd0f969be846470e527"},
 ]
 
 [package.source]
@@ -3065,53 +3027,6 @@ reference = "master"
 resolved_reference = "29c74c83e90adff62d363220fee8cf7d6f0dd3c9"
 
 [[package]]
-name = "legacy-api-wrap"
-version = "1.4"
-description = ""
-optional = false
-python-versions = ">=3.8"
-files = [
-    {file = "legacy_api_wrap-1.4-py3-none-any.whl", hash = "sha256:bf81b8ee432d80e7203aa079c26fc3a0f228d158db808868f10c2e36a8f64dbd"},
-    {file = "legacy_api_wrap-1.4.tar.gz", hash = "sha256:92dfa274cedb26d6e6f70fac85c856fbdcc05058066656d76a665fb4bf11b785"},
-]
-
-[package.extras]
-test = ["coverage", "coverage-rich", "pytest", "toml"]
-
-[package.source]
-type = "legacy"
-url = "https://pypi.org/simple"
-reference = "pypi-public"
-
-[[package]]
-name = "liana"
-version = "1.2.0"
-description = "LIANA+: a one-stop-shop framework for cell-cell communication"
-optional = false
-python-versions = "^3.8"
-files = []
-develop = false
-
-[package.dependencies]
-anndata = ">=0.7.4,<=0.10.8"
-docrep = ">=0.3.1"
-mudata = "*"
-numba = ">=0.54.0"
-plotnine = ">=0.10.0"
-scanpy = ">=1.8.0"
-tqdm = "^4.0"
-
-[package.extras]
-common = ["decoupler (>=1.4.0)", "omnipath (>=1.0.6)", "requests (>=2.25.1,<3.0.0)"]
-full = ["cell2cell", "corneto (==0.9.1-alpha.4)", "cvxpy (>=1.2.1,<2.0.0)", "cylp (>=0.91.5,<0.92.0)", "decoupler (>=1.4.0)", "mofapy2 (>=0.7.0)", "mofax", "muon", "omnipath (>=1.0.6)", "pydeseq2 (>=0.3.5)", "requests (>=2.25.1,<3.0.0)", "squidpy"]
-
-[package.source]
-type = "git"
-url = "https://github.com/deeenes/liana-py.git"
-reference = "main"
-resolved_reference = "a402a902e15a797d9483ecec0f746c9ac743a63b"
-
-[[package]]
 name = "llvmlite"
 version = "0.43.0"
 description = "lightweight wrapper around basic LLVM functionality"
@@ -3553,38 +3468,6 @@ url = "https://pypi.org/simple"
 reference = "pypi-public"
 
 [[package]]
-name = "mizani"
-version = "0.11.4"
-description = "Scales for Python"
-optional = false
-python-versions = ">=3.9"
-files = [
-    {file = "mizani-0.11.4-py3-none-any.whl", hash = "sha256:5b6271dc3da2c88694dca2e0e0a7e1879f0e2fb046c789776f54d090a5243735"},
-    {file = "mizani-0.11.4.tar.gz", hash = "sha256:9fdb79e88602ca29132613b428d6c1e8af436e88e37d55a0f8eb99fe044c9bc2"},
-]
-
-[package.dependencies]
-numpy = ">=1.23.0"
-pandas = ">=2.1.0"
-scipy = ">=1.7.0"
-tzdata = {version = "*", markers = "platform_system == \"Windows\" or platform_system == \"Emscripten\""}
-
-[package.extras]
-all = ["mizani[build]", "mizani[dev]", "mizani[doc]", "mizani[lint]", "mizani[test]"]
-build = ["build", "wheel"]
-dev = ["mizani[typing]", "notebook", "pre-commit", "twine"]
-doc = ["numpydoc (>=1.6.0)", "sphinx (>=7.2.0)"]
-lint = ["ruff"]
-rtd = ["mock"]
-test = ["pytest-cov"]
-typing = ["pandas-stubs", "pyright (==1.1.364)"]
-
-[package.source]
-type = "legacy"
-url = "https://pypi.org/simple"
-reference = "pypi-public"
-
-[[package]]
 name = "more-itertools"
 version = "10.5.0"
 description = "More routines for operating on iterables, beyond itertools"
@@ -3594,32 +3477,6 @@ files = [
     {file = "more-itertools-10.5.0.tar.gz", hash = "sha256:5482bfef7849c25dc3c6dd53a6173ae4795da2a41a80faea6700d9f5846c5da6"},
     {file = "more_itertools-10.5.0-py3-none-any.whl", hash = "sha256:037b0d3203ce90cca8ab1defbbdac29d5f993fc20131f3664dc8d6acfa872aef"},
 ]
-
-[package.source]
-type = "legacy"
-url = "https://pypi.org/simple"
-reference = "pypi-public"
-
-[[package]]
-name = "mudata"
-version = "0.2.4"
-description = "Multimodal omics analysis framework"
-optional = false
-python-versions = ">= 3.9"
-files = [
-    {file = "mudata-0.2.4-py3-none-any.whl", hash = "sha256:d4dd670d1470dbdb2a2c9d49df82862ee01e58ed01fa8184d495ce5b01aafef7"},
-    {file = "mudata-0.2.4.tar.gz", hash = "sha256:85a34a43778667f227acf1d924fff38baee40d2e99cb5cd5355a0901ded9154a"},
-]
-
-[package.dependencies]
-anndata = ">=0.10.8"
-h5py = "*"
-numpy = "*"
-pandas = "*"
-
-[package.extras]
-docs = ["nbsphinx", "pydata-sphinx-theme", "readthedocs-sphinx-search", "recommonmark", "sphinx", "sphinx-book-theme", "sphinx_automodapi"]
-test = ["zarr"]
 
 [package.source]
 type = "legacy"
@@ -4055,8 +3912,10 @@ version = "1.0.8"
 description = "Python client for the OmniPath web service"
 optional = false
 python-versions = ">=3.7"
-files = []
-develop = false
+files = [
+    {file = "omnipath-1.0.8-py3-none-any.whl", hash = "sha256:34dba15830c225421d9464e062e7dd0b4d46b569e7394786ce181f9e294a4442"},
+    {file = "omnipath-1.0.8.tar.gz", hash = "sha256:3821b9ba11957412ff9e4932eb6d0c17242939661468064ad1ce28ee3e27394f"},
+]
 
 [package.dependencies]
 attrs = ">=20.2.0"
@@ -4077,10 +3936,9 @@ graph = ["networkx (>=2.3.0)"]
 tests = ["tox (>=3.20.1)"]
 
 [package.source]
-type = "git"
-url = "https://github.com/saezlab/omnipath.git"
-reference = "main"
-resolved_reference = "3d1613493aa1554618fb2d7297f82e034b7694ce"
+type = "legacy"
+url = "https://pypi.org/simple"
+reference = "pypi-public"
 
 [[package]]
 name = "openpyxl"
@@ -4330,29 +4188,6 @@ url = "https://pypi.org/simple"
 reference = "pypi-public"
 
 [[package]]
-name = "patsy"
-version = "0.5.6"
-description = "A Python package for describing statistical models and for building design matrices."
-optional = false
-python-versions = "*"
-files = [
-    {file = "patsy-0.5.6-py2.py3-none-any.whl", hash = "sha256:19056886fd8fa71863fa32f0eb090267f21fb74be00f19f5c70b2e9d76c883c6"},
-    {file = "patsy-0.5.6.tar.gz", hash = "sha256:95c6d47a7222535f84bff7f63d7303f2e297747a598db89cf5c67f0c0c7d2cdb"},
-]
-
-[package.dependencies]
-numpy = ">=1.4"
-six = "*"
-
-[package.extras]
-test = ["pytest", "pytest-cov", "scipy"]
-
-[package.source]
-type = "legacy"
-url = "https://pypi.org/simple"
-reference = "pypi-public"
-
-[[package]]
 name = "pexpect"
 version = "4.9.0"
 description = "Pexpect allows easy control of interactive console applications."
@@ -4507,40 +4342,6 @@ files = [
 docs = ["furo (>=2024.8.6)", "proselint (>=0.14)", "sphinx (>=8.0.2)", "sphinx-autodoc-typehints (>=2.4)"]
 test = ["appdirs (==1.4.4)", "covdefaults (>=2.3)", "pytest (>=8.3.2)", "pytest-cov (>=5)", "pytest-mock (>=3.14)"]
 type = ["mypy (>=1.11.2)"]
-
-[package.source]
-type = "legacy"
-url = "https://pypi.org/simple"
-reference = "pypi-public"
-
-[[package]]
-name = "plotnine"
-version = "0.13.6"
-description = "A Grammar of Graphics for Python"
-optional = false
-python-versions = ">=3.9"
-files = [
-    {file = "plotnine-0.13.6-py3-none-any.whl", hash = "sha256:4acc1af29fa4e91e726b67d49277e8368f62e1c817f01bf14ecd8ca5e83bfaea"},
-    {file = "plotnine-0.13.6.tar.gz", hash = "sha256:3c8c8f958c295345140230ea29803488f83aba9b5a8d0b1b2eb3eaefbf0a06b8"},
-]
-
-[package.dependencies]
-matplotlib = ">=3.7.0"
-mizani = ">=0.11.0,<0.12.0"
-numpy = ">=1.23.0"
-pandas = ">=2.1.0,<3.0.0"
-scipy = ">=1.7.0"
-statsmodels = ">=0.14.0"
-
-[package.extras]
-all = ["plotnine[build]", "plotnine[dev]", "plotnine[doc]", "plotnine[extra]", "plotnine[lint]", "plotnine[test]"]
-build = ["build", "wheel"]
-dev = ["plotnine[typing]", "pre-commit", "twine"]
-doc = ["click", "importlib-resources", "jupyter", "nbsphinx", "numpydoc (>=0.9.1)", "quartodoc (>=0.7.2)"]
-extra = ["adjustText", "geopandas", "scikit-learn", "scikit-misc (>=0.3.0)"]
-lint = ["ruff"]
-test = ["pytest-cov"]
-typing = ["ipython", "pandas-stubs", "pyright (==1.1.362)"]
 
 [package.source]
 type = "legacy"
@@ -4926,29 +4727,6 @@ cffi = ">=1.4.1"
 [package.extras]
 docs = ["sphinx (>=1.6.5)", "sphinx-rtd-theme"]
 tests = ["hypothesis (>=3.27.0)", "pytest (>=3.2.1,!=3.3.0)"]
-
-[package.source]
-type = "legacy"
-url = "https://pypi.org/simple"
-reference = "pypi-public"
-
-[[package]]
-name = "pynndescent"
-version = "0.5.13"
-description = "Nearest Neighbor Descent"
-optional = false
-python-versions = "*"
-files = [
-    {file = "pynndescent-0.5.13-py3-none-any.whl", hash = "sha256:69aabb8f394bc631b6ac475a1c7f3994c54adf3f51cd63b2730fefba5771b949"},
-    {file = "pynndescent-0.5.13.tar.gz", hash = "sha256:d74254c0ee0a1eeec84597d5fe89fedcf778593eeabe32c2f97412934a9800fb"},
-]
-
-[package.dependencies]
-joblib = ">=0.11"
-llvmlite = ">=0.30"
-numba = ">=0.51.2"
-scikit-learn = ">=0.18"
-scipy = ">=1.0"
 
 [package.source]
 type = "legacy"
@@ -5910,64 +5688,6 @@ url = "https://pypi.org/simple"
 reference = "pypi-public"
 
 [[package]]
-name = "scanpy"
-version = "1.10.2"
-description = "Single-Cell Analysis in Python."
-optional = false
-python-versions = ">=3.9"
-files = [
-    {file = "scanpy-1.10.2-py3-none-any.whl", hash = "sha256:2ad4348e214b1dd0db5a4cf21d73695be11b8f5f0ef47508d3075525d9d1c7c6"},
-    {file = "scanpy-1.10.2.tar.gz", hash = "sha256:5d1649e73ac35e3ad02b455d8a16fdb16d4c8dc27330e696f4cd4e27f2d879be"},
-]
-
-[package.dependencies]
-anndata = ">=0.8"
-get-annotations = {version = "*", markers = "python_version < \"3.10\""}
-h5py = ">=3.1"
-joblib = "*"
-legacy-api-wrap = ">=1.4"
-matplotlib = ">=3.6"
-natsort = "*"
-networkx = ">=2.7"
-numba = ">=0.56"
-numpy = ">=1.23,<2"
-packaging = ">=21.3"
-pandas = ">=1.5"
-patsy = "*"
-pynndescent = ">=0.5"
-scikit-learn = ">=0.24"
-scipy = ">=1.8"
-seaborn = ">=0.13"
-session-info = "*"
-statsmodels = ">=0.13"
-tqdm = "*"
-umap-learn = ">0.5.0"
-
-[package.extras]
-bbknn = ["bbknn"]
-dask = ["dask[array] (>=2022.09.2)"]
-dask-ml = ["dask-ml", "dask[array] (>=2022.09.2)"]
-dev = ["pre-commit", "setuptools-scm"]
-doc = ["dask", "igraph", "ipython (>=7.20)", "matplotlib (!=3.6.1)", "myst-nb (>=1)", "myst-parser (>=2)", "nbsphinx (>=0.9)", "readthedocs-sphinx-search", "sam-algorithm", "scanpydoc (>=0.13.4)", "setuptools", "sphinx (>=7)", "sphinx-autodoc-typehints (>=1.25.2)", "sphinx-book-theme (>=1.1.0)", "sphinx-copybutton", "sphinx-design", "sphinxcontrib-bibtex", "sphinxext-opengraph"]
-harmony = ["harmonypy"]
-leiden = ["igraph (>=0.10)", "leidenalg (>=0.9.0)"]
-louvain = ["igraph", "louvain (>=0.6.0,!=0.6.2)"]
-magic = ["magic-impute (>=2.0)"]
-paga = ["igraph"]
-rapids = ["cudf (>=0.9)", "cugraph (>=0.9)", "cuml (>=0.9)"]
-scanorama = ["scanorama"]
-scrublet = ["scikit-image"]
-skmisc = ["scikit-misc (>=0.1.3)"]
-test = ["dask[array] (>=2022.09.2)", "igraph (>=0.10)", "leidenalg (>=0.9.0)", "profimp", "pytest (>=8.2)", "pytest-cov", "pytest-mock", "pytest-nunit", "scikit-image", "zarr"]
-test-full = ["dask-ml", "dask[array] (>=2022.09.2)", "harmonypy", "igraph", "igraph (>=0.10)", "leidenalg (>=0.9.0)", "louvain (>=0.6.0,!=0.6.2)", "magic-impute (>=2.0)", "profimp", "pytest (>=8.2)", "pytest-cov", "pytest-mock", "pytest-nunit", "scanorama", "scikit-image", "scikit-misc (>=0.1.3)", "zappy", "zarr"]
-test-min = ["profimp", "pytest (>=8.2)", "pytest-cov", "pytest-mock", "pytest-nunit"]
-
-[package.source]
-type = "legacy"
-url = "https://pypi.org/simple"
-reference = "pypi-public"
-
-[[package]]
 name = "scikit-learn"
 version = "1.5.1"
 description = "A set of python modules for machine learning and data mining"
@@ -6106,32 +5826,6 @@ url = "https://pypi.org/simple"
 reference = "pypi-public"
 
 [[package]]
-name = "seaborn"
-version = "0.13.2"
-description = "Statistical data visualization"
-optional = false
-python-versions = ">=3.8"
-files = [
-    {file = "seaborn-0.13.2-py3-none-any.whl", hash = "sha256:636f8336facf092165e27924f223d3c62ca560b1f2bb5dff7ab7fad265361987"},
-    {file = "seaborn-0.13.2.tar.gz", hash = "sha256:93e60a40988f4d65e9f4885df477e2fdaff6b73a9ded434c1ab356dd57eefff7"},
-]
-
-[package.dependencies]
-matplotlib = ">=3.4,<3.6.1 || >3.6.1"
-numpy = ">=1.20,<1.24.0 || >1.24.0"
-pandas = ">=1.2"
-
-[package.extras]
-dev = ["flake8", "flit", "mypy", "pandas-stubs", "pre-commit", "pytest", "pytest-cov", "pytest-xdist"]
-docs = ["ipykernel", "nbconvert", "numpydoc", "pydata_sphinx_theme (==0.10.0rc2)", "pyyaml", "sphinx (<6.0.0)", "sphinx-copybutton", "sphinx-design", "sphinx-issues"]
-stats = ["scipy (>=1.7)", "statsmodels (>=0.12)"]
-
-[package.source]
-type = "legacy"
-url = "https://pypi.org/simple"
-reference = "pypi-public"
-
-[[package]]
 name = "send2trash"
 version = "1.8.3"
 description = "Send file to trash natively under Mac OS X, Windows and Linux"
@@ -6146,24 +5840,6 @@ files = [
 nativelib = ["pyobjc-framework-Cocoa", "pywin32"]
 objc = ["pyobjc-framework-Cocoa"]
 win32 = ["pywin32"]
-
-[package.source]
-type = "legacy"
-url = "https://pypi.org/simple"
-reference = "pypi-public"
-
-[[package]]
-name = "session-info"
-version = "1.0.0"
-description = "session_info outputs version information for modules loaded in the current session, Python, and the OS."
-optional = false
-python-versions = ">=3.6"
-files = [
-    {file = "session_info-1.0.0.tar.gz", hash = "sha256:3cda5e03cca703f32ae2eadbd6bd80b6c21442cfb60e412c21cb8ad6d5cbb6b7"},
-]
-
-[package.dependencies]
-stdlib_list = "*"
 
 [package.source]
 type = "legacy"
@@ -6732,79 +6408,6 @@ url = "https://pypi.org/simple"
 reference = "pypi-public"
 
 [[package]]
-name = "statsmodels"
-version = "0.14.2"
-description = "Statistical computations and models for Python"
-optional = false
-python-versions = ">=3.9"
-files = [
-    {file = "statsmodels-0.14.2-cp310-cp310-macosx_10_9_x86_64.whl", hash = "sha256:df5d6f95c46f0341da6c79ee7617e025bf2b371e190a8e60af1ae9cabbdb7a97"},
-    {file = "statsmodels-0.14.2-cp310-cp310-macosx_11_0_arm64.whl", hash = "sha256:a87ef21fadb445b650f327340dde703f13aec1540f3d497afb66324499dea97a"},
-    {file = "statsmodels-0.14.2-cp310-cp310-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:5827a12e3ede2b98a784476d61d6bec43011fedb64aa815f2098e0573bece257"},
-    {file = "statsmodels-0.14.2-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:10f2b7611a61adb7d596a6d239abdf1a4d5492b931b00d5ed23d32844d40e48e"},
-    {file = "statsmodels-0.14.2-cp310-cp310-musllinux_1_1_x86_64.whl", hash = "sha256:c254c66142f1167b4c7d031cf8db55294cc62ff3280e090fc45bd10a7f5fd029"},
-    {file = "statsmodels-0.14.2-cp310-cp310-win_amd64.whl", hash = "sha256:0e46e9d59293c1af4cc1f4e5248f17e7e7bc596bfce44d327c789ac27f09111b"},
-    {file = "statsmodels-0.14.2-cp311-cp311-macosx_10_9_x86_64.whl", hash = "sha256:50fcb633987779e795142f51ba49fb27648d46e8a1382b32ebe8e503aaabaa9e"},
-    {file = "statsmodels-0.14.2-cp311-cp311-macosx_11_0_arm64.whl", hash = "sha256:876794068abfaeed41df71b7887000031ecf44fbfa6b50d53ccb12ebb4ab747a"},
-    {file = "statsmodels-0.14.2-cp311-cp311-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:7a91f6c4943de13e3ce2e20ee3b5d26d02bd42300616a421becd53756f5deb37"},
-    {file = "statsmodels-0.14.2-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:4864a1c4615c5ea5f2e3b078a75bdedc90dd9da210a37e0738e064b419eccee2"},
-    {file = "statsmodels-0.14.2-cp311-cp311-musllinux_1_1_x86_64.whl", hash = "sha256:afbd92410e0df06f3d8c4e7c0e2e71f63f4969531f280fb66059e2ecdb6e0415"},
-    {file = "statsmodels-0.14.2-cp311-cp311-win_amd64.whl", hash = "sha256:8e004cfad0e46ce73fe3f3812010c746f0d4cfd48e307b45c14e9e360f3d2510"},
-    {file = "statsmodels-0.14.2-cp312-cp312-macosx_10_9_x86_64.whl", hash = "sha256:eb0ba1ad3627705f5ae20af6b2982f500546d43892543b36c7bca3e2f87105e7"},
-    {file = "statsmodels-0.14.2-cp312-cp312-macosx_11_0_arm64.whl", hash = "sha256:90fd2f0110b73fc3fa5a2f21c3ca99b0e22285cccf38e56b5b8fd8ce28791b0f"},
-    {file = "statsmodels-0.14.2-cp312-cp312-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:ac780ad9ff552773798829a0b9c46820b0faa10e6454891f5e49a845123758ab"},
-    {file = "statsmodels-0.14.2-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:55d1742778400ae67acb04b50a2c7f5804182f8a874bd09ca397d69ed159a751"},
-    {file = "statsmodels-0.14.2-cp312-cp312-musllinux_1_1_x86_64.whl", hash = "sha256:f870d14a587ea58a3b596aa994c2ed889cc051f9e450e887d2c83656fc6a64bf"},
-    {file = "statsmodels-0.14.2-cp312-cp312-win_amd64.whl", hash = "sha256:f450fcbae214aae66bd9d2b9af48e0f8ba1cb0e8596c6ebb34e6e3f0fec6542c"},
-    {file = "statsmodels-0.14.2-cp39-cp39-macosx_10_9_x86_64.whl", hash = "sha256:201c3d00929c4a67cda1fe05b098c8dcf1b1eeefa88e80a8f963a844801ed59f"},
-    {file = "statsmodels-0.14.2-cp39-cp39-macosx_11_0_arm64.whl", hash = "sha256:9edefa4ce08e40bc1d67d2f79bc686ee5e238e801312b5a029ee7786448c389a"},
-    {file = "statsmodels-0.14.2-cp39-cp39-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:29c78a7601fdae1aa32104c5ebff2e0b72c26f33e870e2f94ab1bcfd927ece9b"},
-    {file = "statsmodels-0.14.2-cp39-cp39-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:f36494df7c03d63168fccee5038a62f469469ed6a4dd6eaeb9338abedcd0d5f5"},
-    {file = "statsmodels-0.14.2-cp39-cp39-win_amd64.whl", hash = "sha256:8875823bdd41806dc853333cc4e1b7ef9481bad2380a999e66ea42382cf2178d"},
-    {file = "statsmodels-0.14.2.tar.gz", hash = "sha256:890550147ad3a81cda24f0ba1a5c4021adc1601080bd00e191ae7cd6feecd6ad"},
-]
-
-[package.dependencies]
-numpy = ">=1.22.3"
-packaging = ">=21.3"
-pandas = ">=1.4,<2.1.0 || >2.1.0"
-patsy = ">=0.5.6"
-scipy = ">=1.8,<1.9.2 || >1.9.2"
-
-[package.extras]
-build = ["cython (>=0.29.33)"]
-develop = ["colorama", "cython (>=0.29.33)", "cython (>=3.0.10,<4)", "flake8", "isort", "joblib", "matplotlib (>=3)", "pytest (>=7.3.0,<8)", "pytest-cov", "pytest-randomly", "pytest-xdist", "pywinpty", "setuptools-scm[toml] (>=8.0,<9.0)"]
-docs = ["ipykernel", "jupyter-client", "matplotlib", "nbconvert", "nbformat", "numpydoc", "pandas-datareader", "sphinx"]
-
-[package.source]
-type = "legacy"
-url = "https://pypi.org/simple"
-reference = "pypi-public"
-
-[[package]]
-name = "stdlib-list"
-version = "0.10.0"
-description = "A list of Python Standard Libraries (2.7 through 3.12)."
-optional = false
-python-versions = ">=3.7"
-files = [
-    {file = "stdlib_list-0.10.0-py3-none-any.whl", hash = "sha256:b3a911bc441d03e0332dd1a9e7d0870ba3bb0a542a74d7524f54fb431256e214"},
-    {file = "stdlib_list-0.10.0.tar.gz", hash = "sha256:6519c50d645513ed287657bfe856d527f277331540691ddeaf77b25459964a14"},
-]
-
-[package.extras]
-dev = ["build", "stdlib-list[doc,lint,test]"]
-doc = ["furo", "sphinx"]
-lint = ["black", "mypy", "ruff"]
-support = ["sphobjinv"]
-test = ["coverage[toml]", "pytest", "pytest-cov"]
-
-[package.source]
-type = "legacy"
-url = "https://pypi.org/simple"
-reference = "pypi-public"
-
-[[package]]
 name = "tabulate"
 version = "0.9.0"
 description = "Pretty-print tabular data"
@@ -7327,35 +6930,6 @@ url = "https://pypi.org/simple"
 reference = "pypi-public"
 
 [[package]]
-name = "umap-learn"
-version = "0.5.6"
-description = "Uniform Manifold Approximation and Projection"
-optional = false
-python-versions = "*"
-files = [
-    {file = "umap-learn-0.5.6.tar.gz", hash = "sha256:5b3917a862c23ba0fc83bfcd67a7b719dec85b3d9c01fdc7d894cce455df4e03"},
-    {file = "umap_learn-0.5.6-py3-none-any.whl", hash = "sha256:881cc0c2ee845b790bf0455aa1664f9f68b838d9d0fe12a1291b85c5a559c913"},
-]
-
-[package.dependencies]
-numba = ">=0.51.2"
-numpy = ">=1.17"
-pynndescent = ">=0.5"
-scikit-learn = ">=0.22"
-scipy = ">=1.3.1"
-tqdm = "*"
-
-[package.extras]
-parametric-umap = ["tensorflow (>=2.1)"]
-plot = ["bokeh", "colorcet", "datashader", "holoviews", "matplotlib", "pandas", "scikit-image", "seaborn"]
-tbb = ["tbb (>=2019.0)"]
-
-[package.source]
-type = "legacy"
-url = "https://pypi.org/simple"
-reference = "pypi-public"
-
-[[package]]
 name = "uri-template"
 version = "1.3.0"
 description = "RFC 6570 URI Template Processor"
@@ -7693,4 +7267,4 @@ igraph = ["igraph"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.9"
-content-hash = "e780be12f03bb50e8295e26cb5655de7f3f06359c4ee5f36a23861afad67fd27"
+content-hash = "9569d9c0af692a45796102b99e3202890f3dcfd506995ed1faf00e6fb0da005d"
