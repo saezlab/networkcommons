@@ -1,7 +1,0 @@
-Node1,Effect,Node2,Type
-Node0,-1,Node2,none
-Node0,1,Node6,none
-Node2,-1,Node9,target
-Node6,-1,Node7,source
-Node6,1,Node8,target
-Node8,1,Node4,target
