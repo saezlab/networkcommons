@@ -37,4 +37,10 @@ NetworkCommons: Table of Contents
    vignettes/3_evaluation_offt_path
    vignettes/4_evaluation_decryptm
    vignettes/5_cptac_phosphoactivity
+
+
+.. toctree::
+   :maxdepth: 2
+   :caption: Additional resources
+
    vignettes/6_moon
