@@ -64,15 +64,15 @@ def adjust_node_name(node_name: str,
     if new_node_name != node_name:
         _log(f"Replaced special characters in '{node_name}' with underscores.", level=10)
 
-    # If the modified node name is longer than the specified maximum length, truncate it
-    if truncate and len(new_node_name) > max_length:
-        new_node_name = new_node_name[:max_length] + ".."
-        _log(f"Truncated node name '{node_name}' to '{new_node_name}'.", level=10)
-
     # If the wrap flag is set to True, wrap the node name
     if wrap:
         new_node_name = "\n".join([new_node_name[i:i + wrap_length]
                                    for i in range(0, len(new_node_name), wrap_length)])
+
+    # If the modified node name is longer than the specified maximum length, truncate it
+    if truncate and len(new_node_name) > max_length:
+        new_node_name = new_node_name[:max_length] + "..."
+        _log(f"Truncated node name '{node_name}' to '{new_node_name}'.", level=10)
 
     # If multiple underscores are present, replace them with a single underscore
     new_node_name = re.sub(r'_+', '_', new_node_name)

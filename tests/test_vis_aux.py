@@ -29,7 +29,7 @@ def test_truncate_node_name():
         "VeryLongNodeName",
         truncate=True,
         max_length=8
-    ) == "VeryLong.."
+    ) == "VeryLong..."
 
 
 def test_wrap_node_name():

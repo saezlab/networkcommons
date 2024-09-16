@@ -13,10 +13,10 @@ matplotlib.use('Agg')
 def sample_network():
     # Create a simple directed graph with some nodes and edges
     G = nx.DiGraph()
-    G.add_edge(1, 2, interaction=1)
-    G.add_edge(2, 3, interaction=-1)
-    G.add_edge(3, 4, interaction=-1)
-    G.add_edge(4, 5, interaction=-1)
+    G.add_edge("1", "2", interaction=1)
+    G.add_edge("2", "3", interaction=-1)
+    G.add_edge("3", "4", interaction=-1)
+    G.add_edge("4", "5", interaction=-1)
     return G
 
 

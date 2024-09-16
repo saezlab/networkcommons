@@ -227,12 +227,38 @@ class NetworkXVisualizer(NetworkVisualizerBase):
 
             edge_data['color'] = color
 
+    def adjust_node_labels(self,
+                           wrap: bool = True,
+                           truncate: bool = False,
+                           max_length: int = 6,
+                           wrap_length: int = 6):
+        """
+        Adjust node labels using the adjust_node_name function.
+
+        Args:
+            wrap (bool): Whether to wrap the node labels.
+            truncate (bool): Whether to truncate the node labels.
+            max_length (int): The maximum length of node labels before truncation.
+            wrap_length (int): The length at which to wrap the node labels.
+        """
+        for node in self.network.nodes():
+            node_data = self.network.nodes[node]
+            adjusted_name = _aux.adjust_node_name(node,
+                                                  truncate=truncate,
+                                                  wrap=wrap,
+                                                  max_length=max_length,
+                                                  wrap_length=wrap_length)
+            node_data['label'] = adjusted_name
+            print(adjusted_name)
+
+
     def visualize_network_default(self,
                                   source_dict,
                                   target_dict,
                                   prog='dot',
                                   custom_style=None,
-                                  max_nodes=75):
+                                  max_nodes=75,
+                                  wrap_names=True):
         """
         Visualizes the network using default styles.
 
@@ -243,6 +269,7 @@ class NetworkXVisualizer(NetworkVisualizerBase):
             prog (str, optional): Layout program to use. Defaults to 'dot'.
             custom_style (dict, optional): Custom style dictionary to apply.
             max_nodes (int, optional): Maximum number of nodes to visualize. Defaults to 75.
+            wrap_names (bool, optional): Whether to wrap node names. Defaults to True.
 
         Returns:
             A (pygraphviz.AGraph): The visualized network graph.
@@ -261,6 +288,10 @@ class NetworkXVisualizer(NetworkVisualizerBase):
 
         A = nx.nx_agraph.to_agraph(self.network)
         A.graph_attr['ratio'] = '1.2'
+
+        # Adjust node labels before visualization
+        if wrap_names:
+            self.adjust_node_labels(wrap=True, truncate=True)
 
         if source_dict:
             sources = set(source_dict.keys())
