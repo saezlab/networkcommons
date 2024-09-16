@@ -250,7 +250,7 @@ Visualization
     visual.plot_pca
     visual.build_heatmap_with_tree
     visual.lollipop_plot
-    visual.create_rank_heatmap
+    visual.create_heatmap
     visual.plot_density
     visual.plot_scatter
     visual.plot_rank
