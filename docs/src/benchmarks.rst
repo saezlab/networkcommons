@@ -18,7 +18,7 @@ See :ref:`PANACEA <details-panacea>`.
 **Assumption**: In this setting, we assume that, in a perturbational context, the effects that are measured via omics data is not only a product of the perturbation origin 
 (e.g KO, KD, drug perturbation), but also of other origins of perturbation that are not directly targeted by the perturbation agent (e.g a drug offtarget).
 
-.. image:: ./_static/nc_offtarget.png
+.. image:: ./_static/nc_offtarget.svg
    :alt: Evaluation based on offtarget recovery
    :width: 1000px
 
@@ -44,7 +44,7 @@ important in the contextualisation of said perturbation
 
 **Performance metric:** EC50 values for nodes included and excluded of the solution network.
 
-.. image:: ./_static/nc_ec50.png
+.. image:: ./_static/nc_ec50.svg
    :alt: Evaluation based on ensitivity to drug perturbation
    :width: 1000px
     
@@ -68,7 +68,7 @@ See :ref:`PANACEA <details-decryptm>`.
 
 **Performance metric:** rank of the selected gene set among all gene sets, according to ORA score
 
-.. image:: ./_static/nc_pathway.png
+.. image:: ./_static/nc_pathway.svg
    :alt: Evaluation based on pathway enrichment
    :width: 1000px
     
@@ -94,7 +94,7 @@ See :ref:`CPTAC <details-cptac>`.
 
 **Performance metric:** difference between kinase activity score in the solution network and the overall PKN.
 
-.. image:: ./_static/nc_multiomics.png
+.. image:: ./_static/nc_multiomics.svg
    :alt: Evaluation based on ensitivity to drug perturbation
    :width: 1000px
 

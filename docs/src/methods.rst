@@ -16,7 +16,7 @@ Shortest path
 
 The shortest path is an algorithm for finding one or multiple paths that minimize the distance from a set of starting nodes to a set of destination nodes in a weighted graph (https://doi.org/10.1007/BF01386390).
 
-.. image:: ./_static/sp.png
+.. image:: ./_static/nc_sp.svg
    :alt: All paths
    :width: 1000px
    
@@ -34,7 +34,7 @@ Sign consistency
 
 The sign consistency method checks for sign consistency between the nodes in a given graph. Hereby, source and target nodes, as well as the edges in the graph have an assigned sign. 
 
-.. image:: ./_static/sign.png
+.. image:: ./_static/nc_sign.svg
    :alt: All paths
    :width: 1000px
 
@@ -52,7 +52,7 @@ Reachability filter
 
 The reachability filter generates a network consisting of all reachable nodes from a set of starting nodes.
 
-.. image:: ./_static/reach.png
+.. image:: ./_static/nc_reach.svg
    :alt: All paths
    :width: 1000px
 
@@ -70,7 +70,7 @@ All paths
 
 All paths find all possible connections between a set of source nodes and a set of target nodes. In contrast to the shortest path method or the sign consistency method it doesn’t take the distance or any sign information into account, respectively.
 
-.. image:: ./_static/ap.png
+.. image:: ./_static/nc_ap.svg
    :alt: All paths
    :width: 1000px
 
@@ -91,7 +91,7 @@ Page rank
 
 The Page rank algorithm initially calculates a weight for each node in a graph based on a random walk with restart method. It starts at a set of source or target nodes and determines the importance of the other nodes in the graph based on the structure of the incoming or outgoing edges. It then builds a network considering the highest-ranking nodes starting from each of the source and the target nodes.
 
-.. image:: ./_static/ppr.png
+.. image:: ./_static/nc_ppr.svg
    :alt: PPR
    :width: 1000px
 
@@ -132,20 +132,20 @@ Network compression
 
 This is one of the most important parts of this vignette. Here, we aim to remove redundant information from the network, in order to reduce its size without compromising the information contained in it. A common example would be the following:
 
-.. image:: ./_static/nc_moon_comp_normal.png
+.. image:: ./_static/nc_moon_comp_normal.svg
    :alt: MOON
    :width: 1000px
 
 However, in other cases, we would lose information:
 
-.. image:: ./_static/nc_moon_comp_edgecases.png
+.. image:: ./_static/nc_moon_comp_edgecases.svg
    :alt: MOON
    :width: 1000px
 
 MOON scoring
 ~~~~~~~~~~~~
 
-.. image:: ./_static/nc_moon_core.png
+.. image:: ./_static/nc_moon_core.svg
    :alt: MOON
    :width: 1000px
 

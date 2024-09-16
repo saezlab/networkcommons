@@ -1,7 +1,9 @@
-.. image:: _static/nc_banner.png
+.. image:: _static/nc_banner.svg
+   :width: 1200px
+   :align: center
 
 ##############
-Bridging the gap between data, methods and knowledge in network inference
+Bridging the gap between data, methods and knowledge in the network inference field
 ##############
 
 |MainBuild| |Codecov| |Docs|
@@ -27,7 +29,7 @@ inferring context-specific protein interaction networks by integrating context-a
 These networks have a wide range of applications, from omics data interpretation to identifying drug targets and key driver 
 mutations.
 
-.. image:: _static/nc_graphabs.png
+.. image:: _static/nc_graphabs.svg
    :width: 1000px
    :alt: Networkcommons API
    :align: center

@@ -67,8 +67,8 @@ html_context = dict(
     conf_py_path='/docs/src/',  # Path in the checkout to the docs root
 )
 html_show_sphinx = False
-html_logo = '_static/nc_logo.png'
-html_favicon = '_static/nc_logo.png'
+html_logo = '_static/nc_logo.svg'
+html_favicon = '_static/nc_logo.svg'
 html_css_files = [
     'css/custom.css',
 ]
