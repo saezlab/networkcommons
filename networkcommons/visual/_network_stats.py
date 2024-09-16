@@ -44,6 +44,8 @@ import os
 from scipy.cluster.hierarchy import linkage
 from scipy.spatial.distance import squareform
 
+from networkcommons.visual._aux import is_called_from_jupyter
+
 
 def plot_rank(df: pd.DataFrame,
               bio_ids: List[str] = None,
@@ -60,7 +62,8 @@ def plot_rank(df: pd.DataFrame,
               highlight_size: int = 5,
               highlight_zorder: int = 5,
               filepath: str = None,
-              render: bool = False) -> plt.Figure:
+              render: bool = False,
+              return_fig: bool= False) -> plt.Figure:
     """
     Plot a protein abundance rank plot.
 
@@ -101,11 +104,13 @@ def plot_rank(df: pd.DataFrame,
         Path to save the plot. If None, the plot will not be saved. Defaults to None.
     render : bool, optional
         Whether to display the plot. Defaults to False.
+    return_fig : bool, optional
+        Whether to return the figure object. Defaults to False.
 
     Returns
     -------
     matplotlib.figure.Figure
-        The figure object for the plot.
+        The figure object for the plot if return_fig is True.
     """
     if id_column not in df.columns:
         _log(f"Column '{id_column}' not found in the DataFrame. Using the index as the ID column.")
@@ -170,8 +175,14 @@ def plot_rank(df: pd.DataFrame,
 
     if not filepath and not render:
         _log("No output specified. Returning the plot object.")
+        return plt.gcf()
 
-    return plt.gcf()
+    if not is_called_from_jupyter() or return_fig:
+        # prevents double plotting in Jupyter
+        return plt.gcf()
+
+    return None
+
 
 def plot_scatter(df: pd.DataFrame,
                  summarise_df: bool = True,
@@ -186,7 +197,8 @@ def plot_scatter(df: pd.DataFrame,
                  title: str = 'Coverage vs Difference in Activity scores',
                  figsize: tuple = (10, 6),
                  filepath: str = "scatter_plot.png",
-                 render: bool = False) -> plt.Figure:
+                 render: bool = False,
+                 return_fig: bool = False) -> plt.Figure:
     """
     Plot a scatter plot with customizable column labels.
 
@@ -220,11 +232,14 @@ def plot_scatter(df: pd.DataFrame,
         Path to save the plot. If None, the plot will be saved as "scatter_plot.png". Defaults to "scatter_plot.png".
     render : bool, optional
         Whether to display the plot. Defaults to False.
+    return_fig: bool, optional
+        Whether to return the figure object. Defaults to False.
 
     Returns
     -------
     matplotlib.figure.Figure
-        The figure object for the plot.
+        The figure object for the plot if return_fig is True.
+
     """
     if numeric_cols is None:
         numeric_cols = df.select_dtypes(include=['number']).columns
@@ -254,9 +269,13 @@ def plot_scatter(df: pd.DataFrame,
 
     if not filepath and not render:
         _log("No output specified. Returning the plot object.")
+        return plt.gcf()
 
-    return plt.gcf()
+    if not is_called_from_jupyter() or return_fig:
+        # prevents double plotting in Jupyter
+        return plt.gcf()
 
+    return None
 
 def lollipop_plot(
     df,
@@ -273,7 +292,8 @@ def lollipop_plot(
     title='',
     plt_size=(12, 8),
     filepath=None,
-    render=False) -> plt.Figure:
+    render=False,
+    return_fig=False) -> plt.Figure:
     """
     Function to plot metrics using a lollipop plot from a DataFrame.
 
@@ -293,6 +313,10 @@ def lollipop_plot(
         plt_size (tuple): Size of the plot. Default is (12, 8).
         filepath (str): Path to save the plot. Default is None.
         render (bool): Whether to display the plot. Default is False.
+        return_fig (bool): Whether to return the figure object. Default is True.
+
+    Returns:
+        matplotlib.figure.Figure: The figure object for the plot
     """
     # Determine color palette
     palette = plt.get_cmap(color_palette)
@@ -390,7 +414,11 @@ def lollipop_plot(
     if render:
          plt.show()
 
-    return fig
+    if not is_called_from_jupyter() or return_fig:
+        # prevents double plotting in Jupyter
+        return fig
+
+    return None
 
 
 def plot_n_nodes_edges(networks: Dict[str, nx.DiGraph],
@@ -402,7 +430,8 @@ def plot_n_nodes_edges(networks: Dict[str, nx.DiGraph],
                        linewidth: int = 2,
                        marker: str = 'o',
                        show_nodes: bool = True,
-                       show_edges: bool = True) -> plt.Figure:
+                       show_edges: bool = True,
+                       return_fig: bool = True) -> plt.Figure:
     """
     Plot the number of nodes and edges in the networks using a lollipop plot.
 
@@ -428,11 +457,13 @@ def plot_n_nodes_edges(networks: Dict[str, nx.DiGraph],
         Whether to show the number of nodes. Defaults to True.
     show_edges : bool, optional
         Whether to show the number of edges. Defaults to True.
+    return_fig : bool, optional
+        Whether to return the figure object. Defaults to True.
 
     Returns
     -------
     matplotlib.figure.Figure
-        The figure object for the plot.
+        The figure object for the plot if return_fig is True.
     """
     if not show_nodes and not show_edges:
         _log("Both 'show_nodes' and 'show_edges' are False. Using show nodes as default.")
@@ -481,7 +512,11 @@ def plot_n_nodes_edges(networks: Dict[str, nx.DiGraph],
         render=render
     )
 
-    return lolli_plot
+    if not is_called_from_jupyter() or return_fig:
+        # prevents double plotting in Jupyter
+        return lolli_plot
+
+    return None
 
 
 def plot_n_nodes_edges_from_df(metrics_df: pd.DataFrame,
@@ -492,7 +527,8 @@ def plot_n_nodes_edges_from_df(metrics_df: pd.DataFrame,
                                color_palette: str = 'Set2',
                                size: int = 10,
                                linewidth: int = 2,
-                               marker: str = 'o') -> plt.Figure:
+                               marker: str = 'o',
+                               return_fig: bool = False) -> plt.Figure:
     """
     Plot the specified metrics from a DataFrame using a lollipop plot.
 
@@ -516,11 +552,13 @@ def plot_n_nodes_edges_from_df(metrics_df: pd.DataFrame,
         Line width of the lollipops. Defaults to 2.
     marker : str, optional
         Marker style for the lollipops. Defaults to 'o'.
+    return_fig : bool, optional
+        Whether to return the figure object. Defaults to False.
 
     Returns
     -------
     matplotlib.figure.Figure
-        The figure object for the plot.
+        The figure object for the plot if return_fig is True.
 
     Raises
     ------
@@ -572,7 +610,12 @@ def plot_n_nodes_edges_from_df(metrics_df: pd.DataFrame,
         render=render
     )
 
-    return lolli_plot
+    if not is_called_from_jupyter() or return_fig:
+        # prevents double plotting in Jupyter
+        return lolli_plot
+
+    return None
+
 
 def build_heatmap_with_tree(distance_df: pd.DataFrame,
                             distance: str = 'jaccard',
@@ -580,7 +623,8 @@ def build_heatmap_with_tree(distance_df: pd.DataFrame,
                             palette: str = "viridis",
                             save: bool = False,
                             output_dir: str = ".",
-                            render=False):
+                            render=True,
+                            return_fig=False) -> plt.Figure:
     """
     Build a heatmap with hierarchical clustering based on a Jaccard distance matrix.
 
@@ -592,9 +636,10 @@ def build_heatmap_with_tree(distance_df: pd.DataFrame,
         save (bool, optional): Whether to save the plot. Defaults to False.
         output_dir (str, optional): Directory to save the plot. Defaults to ".".
         render (bool, optional): Whether to display the plot. Defaults to False.
+        return_fig (bool, optional): Whether to return the figure object. Defaults to False.
 
     Returns:
-        matplotlib.figure.Figure: The figure object for the plot.
+        matplotlib.figure.Figure: The figure object for the plot if return_fig is True.
     """
     # Convert the square distance matrix to a condensed distance matrix
     condensed_dist_matrix = squareform(distance_df)
@@ -623,9 +668,13 @@ def build_heatmap_with_tree(distance_df: pd.DataFrame,
 
     if not save and not render:
         _log("No output specified. Returning the plot")
+        return g.fig
 
+    if not is_called_from_jupyter() or return_fig:
+        # prevents double plotting in Jupyter
+        return g.fig
 
-    return g.fig
+    return None
 
 
 def create_heatmap(results: pd.DataFrame,
@@ -638,7 +687,8 @@ def create_heatmap(results: pd.DataFrame,
                    y_label: str = 'ORA Term',
                    cmap="coolwarm_r",
                    filepath="rank_heatmap.png",
-                   render=False):
+                   render: bool = False,
+                   return_fig: bool = False) -> plt.Figure:
     """
     Create a heatmap. By default, creates a heatmap with rows as ora_terms and columns as networks,
     displaying the rank number in the cells.
@@ -655,9 +705,10 @@ def create_heatmap(results: pd.DataFrame,
         cmap (str): Color map for the heatmap. Default is "coolwarm_r".
         filepath (str): Path to save the plot. Default is "rank_heatmap.png".
         render (bool): Whether to display the plot. Default is False.
+        return_fig (bool): Whether to return the figure object. Default is False.
 
     Returns:
-        matplotlib.figure.Figure: The figure object for the plot.
+        matplotlib.figure.Figure: The figure object for the plot if return_fig is True.
     """
     if terms is not None:
         # Filter the results to include only the specified terms
@@ -689,5 +740,10 @@ def create_heatmap(results: pd.DataFrame,
 
     if not filepath and not render:
         _log("No output specified. Returning the plot object.")
+        return plt.gcf()
 
-    return plt.gcf()
+    if not is_called_from_jupyter() or return_fig:
+        # prevents double plotting in Jupyter
+        return plt.gcf()
+
+    return None

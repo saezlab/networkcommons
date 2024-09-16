@@ -37,8 +37,10 @@ import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
 from sklearn import decomposition as sklearn_decomp
+
 from networkcommons.utils import handle_missing_values
 from networkcommons._session import _log
+from networkcommons.visual._aux import is_called_from_jupyter
 
 
 def plot_density(df,
@@ -50,7 +52,10 @@ def plot_density(df,
                  quantiles=[10, 90],
                  title='Density Plot of Intensity Values',
                  xlabel='Intensity',
-                 ylabel='Density'):
+                 ylabel='Density',
+                 filename=None,
+                 render=True,
+                 return_fig=False):
     """
     Plots density of intensity values for specified genes, including mean and quantile lines,
     and separates distributions by groups if metadata is provided.
@@ -67,9 +72,12 @@ def plot_density(df,
         title (str): Title of the plot.
         xlabel (str): Label for the x-axis.
         ylabel (str): Label for the y-axis.
+        filename (str): Optional filename to save the plot.
+        render (bool): Whether to render the plot.
+        return_fig (bool): Whether to return the figure object.
 
     Returns:
-        None
+        plt.Figure: The figure object if return_fig is True
     """
     num_genes = len(gene_ids)
     num_cols = 3
@@ -124,7 +132,17 @@ def plot_density(df,
 
     plt.suptitle(title)
     plt.tight_layout(rect=[0, 0, 1, 0.96])
-    plt.show()
+
+    if filename:
+        plt.savefig(filename)
+
+    if render:
+        plt.show()
+
+    if not is_called_from_jupyter() or return_fig:
+        return fig
+
+    return None
 
 
 def build_volcano_plot(
@@ -140,8 +158,32 @@ def build_volcano_plot(
         alpha: float = 0.7,
         size: int = 50,
         save: bool = False,
-        output_dir: str = "."
-):
+        output_dir: str = ".",
+        render: bool = True,
+        return_fig: bool = False) -> plt.Figure:
+    """
+    Creates a volcano plot for the given data.
+
+    Args:
+        data (pd.DataFrame): The input data.
+        log2fc (str): The column name for the log2 fold change.
+        pval (str): The column name for the p-value.
+        pval_threshold (float): The p-value threshold for significance.
+        log2fc_threshold (float): The log2 fold change threshold for significance.
+        title (str): The title of the plot.
+        xlabel (str): The label for the x-axis.
+        ylabel (str): The label for the y-axis.
+        colors (tuple): The colors for the plot.
+        alpha (float): The alpha value for the plot.
+        size (int): The size of the data points.
+        save (bool): Whether to save the plot.
+        output_dir (str): The output directory for saving the plot.
+        render (bool): Whether to render the plot.
+        return_fig (bool): Whether to return the figure object.
+
+    Returns:
+        plt.Figure: The figure object if return_fig is True.
+    """
     data = data.copy()
     data['-log10(pval)'] = -np.log10(data[pval])
     data['significant'] = (data[pval] < pval_threshold) & (abs(data[log2fc]) >= log2fc_threshold)
@@ -202,7 +244,14 @@ def build_volcano_plot(
     if save:
         plt.savefig(f"{output_dir}/volcano_plot.png")
 
-    plt.show()
+    if render:
+        plt.show()
+
+    if not is_called_from_jupyter() or return_fig:
+        # prevents double plotting in Jupyter
+        return fig
+
+    return None
 
 
 def build_ma_plot(
@@ -217,8 +266,31 @@ def build_ma_plot(
         alpha: float = 0.7,
         size: int = 50,
         save: bool = False,
-        output_dir: str = "."
-):
+        render: bool = True,
+        output_dir: str = ".",
+        return_fig: bool = False) -> plt.Figure:
+    """
+    Creates an MA plot for the given data.
+
+    Args:
+        data (pd.DataFrame): The input data.
+        log2fc (str): The column name for the log2 fold change.
+        mean_exp (str): The column name for the mean expression.
+        log2fc_threshold (float): The log2 fold change threshold for significance.
+        title (str): The title of the plot.
+        xlabel (str): The label for the x-axis.
+        ylabel (str): The label for the y-axis.
+        colors (tuple): The colors for the plot.
+        alpha (float): The alpha value for the plot.
+        size (int): The size of the data points.
+        save (bool): Whether to save the plot.
+        render (bool): Whether to render the plot.
+        output_dir (str): The output directory for saving the plot.
+        return_fig (bool): Whether to return the figure object.
+
+    Returns:
+        plt.Figure: The figure object if return_fig is True
+    """
     data['significant'] = abs(data[log2fc]) >= log2fc_threshold
 
     fig, ax = plt.subplots(figsize=(10, 10))
@@ -255,16 +327,31 @@ def build_ma_plot(
     if save:
         plt.savefig(f"{output_dir}/ma_plot.png")
 
-    plt.show()
+    if render:
+        plt.show()
+
+    if not is_called_from_jupyter() or return_fig:
+        # prevents double plotting in Jupyter
+        return fig
+
+    return None
 
 
-def plot_pca(dataframe, metadata, feature_col='idx', **kwargs):
+def plot_pca(dataframe, metadata,
+             feature_col='idx',
+             filename=None,
+             render=True,
+             **kwargs):
     """
     Plots the PCA (Principal Component Analysis) of a dataframe.
 
     Parameters:
         dataframe (pd.DataFrame): The input dataframe containing numeric columns.
-        metadata (pd.DataFrame or array-like): The metadata associated with the dataframe or an array-like object representing the groups.
+        metadata (pd.DataFrame or array-like): The metadata associated with the dataframe or
+            an array-like object representing the groups.
+        feature_col (str): The column name to use as the index.
+        filename (str): The filename to save the plot.
+        render (bool): Whether to render the plot.
 
     Returns:
         pd.DataFrame: The dataframe with PCA results.
@@ -278,7 +365,8 @@ def plot_pca(dataframe, metadata, feature_col='idx', **kwargs):
 
     if df.isna().sum().sum() > 0:
         _log(
-            "Warning: Missing values were found in the input data and will be filled with the handle_missing_values function.")
+            "Warning: Missing values were found in the input data and will be filled "
+            "with the handle_missing_values function.")
         df = handle_missing_values(df, **kwargs)
 
     numeric_df = df.set_index(feature_col).T
@@ -316,8 +404,11 @@ def plot_pca(dataframe, metadata, feature_col='idx', **kwargs):
     plt.ylabel(f'PCA2 ({pca.explained_variance_ratio_[1] * 100:.2f}% of variance)')
     plt.grid()
 
-    # Display the plot
-    plt.show()
+    if filename:
+        plt.savefig(filename)
+
+    if render:
+        plt.show()
 
     return pca_df
 
@@ -332,8 +423,8 @@ def plot_heatmap_with_tree(
         cmap: str = 'viridis',
         save: bool = False,
         output_dir: str = ".",
-        render: bool = False
-):
+        render: bool = False,
+        return_fig: bool = False) -> plt.Figure:
     """
     Creates a heatmap with hierarchical clustering for rows and columns.
 
@@ -348,9 +439,9 @@ def plot_heatmap_with_tree(
         save (bool, optional): Whether to save the plot. Defaults to False.
         output_dir (str, optional): Directory to save the plot if `save` is True. Defaults to ".".
         render (bool, optional): Whether to show the plot. Defaults to False.
-
+        return_fig (bool, optional): Whether to return the figure object. Defaults to False.
     Returns:
-        matplotlib.figure.Figure: The created figure object.
+        plt.Figure: The figure object if return_fig is True
     """
     # Compute the distance matrices
     row_linkage = sns.clustermap(data, method=clustering_method, metric=metric, cmap=cmap)
@@ -370,4 +461,8 @@ def plot_heatmap_with_tree(
     if render:
         plt.show()
 
-    return fig
+    if not is_called_from_jupyter() or return_fig:
+        # prevents double plotting in Jupyter
+        return fig
+
+    return None

@@ -123,6 +123,17 @@ def apply_node_style(node, style):
 
 
 def update_node_property(node, type="color", value="blue"):
+    """
+    Update a node property.
+
+    Args:
+        node (dict): The node to update.
+        type (str): The property to update.
+        value (str): The new value for
+
+    Returns:
+        dict: The updated node.
+    """
     style = {type: value}
     return apply_node_style(node, style)
 
@@ -155,6 +166,17 @@ def get_edge_color(effect, styles):
 
 
 def update_edge_property(edge, type="color", value="blue"):
+    """
+    Update an edge property.
+
+    Args:
+        edge (dict): The edge to update.
+        type (str): The property to update.
+        value (str): The new value for
+
+    Returns:
+        dict: The updated edge.
+    """
     style = {type: value}
     return apply_edge_style(edge, style)
 

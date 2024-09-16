@@ -93,3 +93,19 @@ def adjust_node_name(node_name: str,
 
     # Return the modified node name, stripped of leading and trailing spaces, and _ characters
     return new_node_name.strip("_")
+
+
+def is_called_from_jupyter():
+    """
+    Check if the current code is being run from a Jupyter notebook.
+
+    Returns
+    -------
+    bool
+        True if the code is being run from a Jupyter notebook, False otherwise.
+    """
+    try:
+        from IPython import get_ipython
+        return get_ipython() is not None
+    except ImportError:
+        return False
