@@ -128,7 +128,7 @@ def test_lollipop_plot_saves_figure(mock_savefig):
     )
 
     # Assert that savefig was called on the figure object with the correct filepath
-    mock_savefig.assert_called_once_with(filepath)
+    mock_savefig.assert_called_once_with(filepath, dpi=300, bbox_inches='tight')
 
 
 @patch('networkcommons.visual._network_stats.plt.savefig')

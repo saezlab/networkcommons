@@ -266,10 +266,14 @@ def lollipop_plot(
     color_palette='tab10',
     size=10,
     linewidth=2,
+    label_fontsize=10,
+    label_gap=0.1,
+    rounding_decimals=2,
     marker='o',
     title='',
+    plt_size=(12, 8),
     filepath=None,
-    render=False):
+    render=False) -> plt.Figure:
     """
     Function to plot metrics using a lollipop plot from a DataFrame.
 
@@ -281,65 +285,110 @@ def lollipop_plot(
         color_palette (str): Matplotlib color palette. Default is 'tab10'.
         size (int): Size of the markers. Default is 10.
         linewidth (int): Line width of the lollipops. Default is 2.
+        label_fontsize (int): Font size for the labels. Default is 10.
+        label_gap (float): Gap between the value and the label. Default is 0.1.
         marker (str): Marker style for the lollipops. Default is 'o'.
+        rounding_decimals (int): Number of decimal places to round the values to. Default is 2.
         title (str): Title of the plot. Default is ''.
+        plt_size (tuple): Size of the plot. Default is (12, 8).
         filepath (str): Path to save the plot. Default is None.
         render (bool): Whether to display the plot. Default is False.
     """
+    # Determine color palette
     palette = plt.get_cmap(color_palette)
-    colors = palette.colors if hasattr(palette, 'colors') else palette(range(len(df[label_col].unique())))
+    colors = palette.colors if hasattr(palette, 'colors') else palette(np.linspace(0, 1, len(df[label_col].unique())))
 
-    fig, ax = plt.subplots(figsize=(12, 8))
+    # Dynamically adjust figure size based on number of labels
+    num_labels = len(df[label_col].unique())
+    fig, ax = plt.subplots(figsize=(max(12, num_labels * 0.6), 8))
 
     if "Category" not in df.columns:
-        # If no category column is present, create one with a single category
-        # from a column name
-        df['Category'] = df.columns[0]
+        df['Category'] = 'All'  # Default category if not provided
 
     labels = df[label_col].unique()
     categories = df['Category'].unique()
     offset = 0.15  # Offset for separating categories side by side
 
+    # Find the min and max values in the dataset and apply padding
+    borders_padding = 0.20
+    max_value = df[value_col].max()
+    min_value = df[value_col].min()
+    value_limit_max = max_value + abs(max_value) * borders_padding
+    value_limit_min = min_value - abs(min_value) * borders_padding
+
     for i, category in enumerate(categories):
         subset = df[df['Category'] == category]
+        subset_labels = subset[label_col].values  # Only use the labels available in the subset
         if orientation == 'vertical':
-            positions = np.arange(len(labels)) + (i - len(categories) / 2) * offset
+            positions = np.arange(len(subset_labels)) + (i - len(categories) / 2) * offset
         else:
-            positions = np.arange(len(labels)) + (i - len(categories) / 2) * offset
+            positions = np.arange(len(subset_labels)) + (i - len(categories) / 2) * offset
 
-        values = subset[value_col]
+        values = subset[value_col].round(rounding_decimals)  # Round the values
+        values = values.fillna(0)  # Fill NaN values with 0
         color = colors[i % len(colors)]
 
         if orientation == 'vertical':
-            ax.vlines(x=positions, ymin=0, ymax=values, color=color, linewidth=linewidth, label=category)
-            ax.scatter(positions, values, color=color, s=size ** 2, marker=marker, zorder=3)
+            # Handle both positive and negative values
             for j, value in enumerate(values):
-                ax.text(positions[j], value + size * 0.2, str(value), ha='center', va='bottom', fontsize=size)
-        else:
-            ax.hlines(y=positions, xmin=0, xmax=values, color=color, linewidth=linewidth, label=category)
-            ax.scatter(values, positions, color=color, s=size ** 2, marker=marker, zorder=3)
-            for j, value in enumerate(values):
-                ax.text(value + size * 0.2, positions[j], str(value), va='center', ha='left', fontsize=size)
+                ax.vlines(x=positions[j], ymin=0 if value >= 0 else value, ymax=value if value >= 0 else 0,
+                          color=color, linewidth=linewidth, label=category if j == 0 else "")  # Label only once
+                ax.scatter(positions[j], value, color=color, s=size ** 2, marker=marker, zorder=3)
 
+                # Determine the format based on whether it's an integer or float
+                if value == int(value):
+                    value_str = f'{int(value)}'
+                else:
+                    value_str = f'{value:.{rounding_decimals}f}'
+
+                # Adjust the label gap depending on positive or negative values
+                ax.text(positions[j], value + size * label_gap * np.sign(value), value_str,
+                        ha='center', va='bottom' if value >= 0 else 'top', fontsize=label_fontsize - 2)
+        else:
+            # Handle both positive and negative values in horizontal orientation
+            for j, value in enumerate(values):
+                ax.hlines(y=positions[j], xmin=0 if value >= 0 else value, xmax=value if value >= 0 else 0,
+                          color=color, linewidth=linewidth, label=category if j == 0 else "")  # Label only once
+                ax.scatter(value, positions[j], color=color, s=size ** 2, marker=marker, zorder=3)
+
+                # Determine the format based on whether it's an integer or float
+                if  value == int(value):
+                    value_str = f'{int(value)}'
+                else:
+                    value_str = f'{value:.{rounding_decimals}f}'
+
+                ax.text(value + size * label_gap * np.sign(value), positions[j], value_str,
+                        va='center', ha='left' if value >= 0 else 'right', fontsize=label_fontsize - 2)
+
+    # Adjust axis limits by applying padding to the min and max values
     if orientation == 'vertical':
         ax.set_xticks(np.arange(len(labels)))
-        ax.set_xticklabels(labels)
-        ax.set_xlabel("Network")
+        ax.set_xticklabels(labels, rotation=45, ha='right')
+        ax.set_xlabel(label_col)
         ax.set_ylabel(value_col)
+        ax.set_ylim(value_limit_min, value_limit_max)  # Apply padding to y-axis
     else:
         ax.set_yticks(np.arange(len(labels)))
         ax.set_yticklabels(labels)
-        ax.set_ylabel("Network")
+        ax.set_ylabel(label_col)
         ax.set_xlabel(value_col)
+        ax.set_xlim(value_limit_min, value_limit_max)  # Apply padding to x-axis
 
-    ax.set_title(title)
-    ax.legend(title=f"{df['Category'].name}", loc='upper left', bbox_to_anchor=(1, 1))
+    ax.set_title(title, fontsize=14)
+    ax.grid(True, which='both', linestyle='--', linewidth=0.5)
+    ax.legend(title="Category", loc='best')
 
+    # Adjust layout
+    fig.tight_layout()
+    fig.set_size_inches(plt_size)
+
+    # Save the figure if a filepath is provided
     if filepath:
-        fig.savefig(filepath)
+        fig.savefig(filepath, dpi=300, bbox_inches='tight')
 
+    # Render the plot if specified
     if render:
-        fig.show()
+         plt.show()
 
     return fig
 
@@ -574,6 +623,7 @@ def build_heatmap_with_tree(distance_df: pd.DataFrame,
 
     if not save and not render:
         _log("No output specified. Returning the plot")
+
 
     return g.fig
 
