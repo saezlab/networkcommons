@@ -249,7 +249,6 @@ class NetworkXVisualizer(NetworkVisualizerBase):
                                                   max_length=max_length,
                                                   wrap_length=wrap_length)
             node_data['label'] = adjusted_name
-            print(adjusted_name)
 
 
     def visualize_network_default(self,
