@@ -33,38 +33,35 @@ def get_styles():
             'nodes': {
                 'sources': {
                     'shape': 'circle',
-                    'color': '#1f78b4',  # A deep blue
+                    'color': '#62a0ca',  # A deep blue
                     'style': 'filled',
                     'fillcolor': '#a6cee3',  # Light blue for the fill
-                    'label': '',
                     'penwidth': 3
                 },
                 'targets': {
                     'shape': 'circle',
-                    'color': '#33a02c',  # A deep green
+                    'color': '#70bc6b',  # A deep green
                     'style': 'filled',
                     'fillcolor': '#b2df8a',  # Light green for the fill
-                    'label': '',
                     'penwidth': 3
                 },
                 'other': {
                     'default': {
                         'shape': 'circle',
-                        'color': '#3e3e3d',  # Dark gray for default nodes
+                        'color': '#848484',  # Dark gray for default nodes
                         'style': 'filled',
                         'fillcolor': '#bdbdbd',  # Light gray for default nodes
-                        #'label': '',
-                        'penwidth': 2
+                        'penwidth': 3
                     }
                 }
             },
             'edges': {
                 'positive': {
-                    'color': '#33a02c',  # Same deep green as target nodes
+                    'color': '#70bc6b',  # Same deep green as target nodes
                     'penwidth': 2.5
                 },
                 'negative': {
-                    'color': '#e31a1c',  # A strong red for negative edges
+                    'color': '#eb5e60',  # Red for negative edges
                     'penwidth': 2.5
                 },
                 'neutral': {
@@ -72,7 +69,7 @@ def get_styles():
                     'penwidth': 2.5
                 },
                 'default': {
-                    'color': '#bdbdbd',  # Light gray for default edges
+                    'color': '#bdbdbd', # Light gray for default edges
                     'penwidth': 2
                 }
             }
@@ -83,41 +80,44 @@ def get_styles():
                     'default': {
                         'shape': 'circle',
                         'style': 'filled',
-                        'fillcolor': '#1f78b4',  # Deep blue
-                        'label': '',
+                        'fillcolor': 'a6cee3',  # blue
                         'penwidth': 3,
-                        'color': '#1f78b4'
+                        'color': '#62a0ca' # Deep blue
                     },
                     'positive_consistent': {
-                        'color': '#33a02c'  # Consistent green for positive
+                        'color': '#62a0ca'  # Consistent blue for positive
                     },
                     'negative_consistent': {
-                        'color': '#e31a1c'  # Consistent red for negative
+                        'color': '#eb5e60'  # Consistent red for negative
                     }
                 },
                 'targets': {
                     'default': {
                         'shape': 'circle',
                         'style': 'filled',
-                        'fillcolor': '#33a02c',  # Deep green
-                        'label': '',
+                        'fillcolor': '#70bc6b',  # green
                         'penwidth': 3,
-                        'color': '#33a02c'
+                        'color': '#70bc6b'
                     },
                     'positive_consistent': {
-                        'color': '#33a02c'  # Same green for positive
+                        'color': '#70bc6b'  # Same green for positive
                     },
                     'negative_consistent': {
-                        'color': '#e31a1c'  # Same red for negative
+                        'color': '#eb5e60'  # Same red for negative
                     }
                 },
                 'other': {
                     'default': {
                         'shape': 'circle',
-                        'color': '#fdbf6f',  # Light orange
+                        'color': '#848484',  # Dark gray
                         'style': 'filled',
-                        'fillcolor': '#ff7f00',  # Stronger orange for fill
-                        'label': ''
+                        'fillcolor': '#bdbdbd',  # gray
+                    },
+                    'positive_consistent': {
+                        'color': '#848484'  # Same gray for positive
+                    },
+                    'negative_consistent': {
+                        'color': '#eb5e60'  # Same red for negative
                     }
                 }
             },

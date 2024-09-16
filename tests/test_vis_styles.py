@@ -19,17 +19,29 @@ def test_get_styles():
     assert 'default' in styles, "'default' should be a key in styles."
     assert 'sign_consistent' in styles, "'sign_consistent' should be a key in styles."
 
-    # Check structure of a 'nodes' style
+    # Check structure of a 'nodes' style in 'default'
     assert 'nodes' in styles['default'], "'nodes' should be a key in 'default' style."
     assert 'sources' in styles['default']['nodes'], "'sources' should be a key in 'default.nodes' style."
     assert 'color' in styles['default']['nodes']['sources'], "'color' should be a key in 'default.nodes.sources'."
-    assert styles['default']['nodes']['sources']['color'] == '#1f78b4', "Unexpected color for 'default.nodes.sources'."
+    assert styles['default']['nodes']['sources']['color'] == '#62a0ca', "Unexpected color for 'default.nodes.sources'."
 
-    # Check structure of an 'edges' style
+    # Check structure of 'edges' style in 'default'
     assert 'edges' in styles['default'], "'edges' should be a key in 'default' style."
     assert 'positive' in styles['default']['edges'], "'positive' should be a key in 'default.edges'."
     assert styles['default']['edges']['positive'][
-               'color'] == '#33a02c', "Unexpected color for 'default.edges.positive'."
+               'color'] == '#70bc6b', "Unexpected color for 'default.edges.positive'."
+
+    # Check structure of 'sign_consistent' style
+    assert 'nodes' in styles['sign_consistent'], "'nodes' should be a key in 'sign_consistent' style."
+    assert 'sources' in styles['sign_consistent']['nodes'], "'sources' should be a key in 'sign_consistent.nodes'."
+    assert 'color' in styles['sign_consistent']['nodes']['sources']['default'], "'color' should be a key in 'sign_consistent.nodes.sources.default'."
+    assert styles['sign_consistent']['nodes']['sources']['default']['color'] == '#62a0ca', "Unexpected color for 'sign_consistent.nodes.sources.default.color'."
+
+    # Check structure of 'edges' style in 'sign_consistent'
+    assert 'edges' in styles['sign_consistent'], "'edges' should be a key in 'sign_consistent' style."
+    assert 'positive' in styles['sign_consistent']['edges'], "'positive' should be a key in 'sign_consistent.edges'."
+    assert styles['sign_consistent']['edges']['positive'][
+               'color'] == '#33a02c', "Unexpected color for 'sign_consistent.edges.positive'."
 
 
 def test_set_style_attributes():
