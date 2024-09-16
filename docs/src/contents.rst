@@ -43,4 +43,4 @@ NetworkCommons: Table of Contents
    :maxdepth: 2
    :caption: Additional resources
 
-   vignettes/6_moon
+   vignettes/A_moon
