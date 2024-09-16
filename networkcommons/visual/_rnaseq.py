@@ -258,13 +258,24 @@ def build_ma_plot(
     plt.show()
 
 
-def plot_pca(dataframe, metadata, feature_col='idx', **kwargs):
+def plot_pca(
+    dataframe,
+    metadata,
+    feature_col='idx',
+    save: bool = False,
+    render: bool = True,
+    filename: str = 'pca_plot.png',
+    **kwargs):
     """
     Plots the PCA (Principal Component Analysis) of a dataframe.
 
     Parameters:
         dataframe (pd.DataFrame): The input dataframe containing numeric columns.
         metadata (pd.DataFrame or array-like): The metadata associated with the dataframe or an array-like object representing the groups.
+        feature_col (str): The column name to use as the index for the dataframe.
+        save (bool): Whether to save the plot.
+        render (bool): Whether to render the plot.
+        filename (str): The filename to use when saving the plot. Only used if `save` is True.
 
     Returns:
         pd.DataFrame: The dataframe with PCA results.
@@ -316,8 +327,10 @@ def plot_pca(dataframe, metadata, feature_col='idx', **kwargs):
     plt.ylabel(f'PCA2 ({pca.explained_variance_ratio_[1] * 100:.2f}% of variance)')
     plt.grid()
 
-    # Display the plot
-    plt.show()
+    if save:
+        plt.savefig(filename)
+    if render:
+        plt.show()
 
     return pca_df
 
