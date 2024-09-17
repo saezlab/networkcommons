@@ -9,3 +9,7 @@
   .wy-nav-content {
       max-width: 1200px;
   }
+
+  section {
+    text-align: justify;
+}

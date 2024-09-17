@@ -4,7 +4,7 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.poetry]
 name = "networkcommons"
-version = "0.3.0"
+version = "0.4.0"
 description = "Integrated framework for network inference and evaluation using prior knowledge and omics data"
 license = "gpl-3.0-only"
 authors = [
@@ -43,24 +43,29 @@ python = "^3.9"
 toml = "*"
 networkx = "*"
 pandas = "*"
-corneto = { git = "https://github.com/deeenes/corneto.git", branch = "main" }
-liana = { git = "https://github.com/deeenes/liana-py.git", branch = "main" }
-pypath-common = "^0.2.4"
+pypath-common = "^0.2.5"
 pydeseq2 = "^0.4.9"
-omnipath = { git = "https://github.com/saezlab/omnipath.git", branch = "main" }
-decoupler = { git = "https://github.com/saezlab/decoupler-py.git", branch = "main" }
 requests = "^2.32.3"
 beautifulsoup4 = "^4.12.3"
 pypath-omnipath = "^0.16.16"
 numpydoc = "^1.7.0"
 sphinx-rtd-theme = "^2.0.0"
-lazy-import = { git = "https://github.com/mnmelo/lazy_import.git", branch = "master" }
-anndata = "^0.10.8"
+lazy-import = "^0.2.2"
+anndata = "<=0.10.8"
 pytest = "^8.2.2"
 yfiles-jupyter-graphs = "^1.7.2"
 gurobipy = "^11.0.2"
 matplotlib = "^3.5.1"
 graphviz = "^0.17"
+biomart = "^0.9.2"
+igraph = {version = "^0.11.6", optional = true}
+decoupler = "^1.8.0"
+omnipath = "^1.0.8"
+pygraphviz = "1.11"
+picos = { version = "^2.4.17", optional = true }
+cvxpy = { version = "^1.5.1", optional = true }
+corneto = "^1.0.0.dev0"
+seaborn = "^0.13.2"
 
 [tool.poetry.dev-dependencies]
 pytest = ">=6.0"
@@ -85,9 +90,10 @@ pydata-sphinx-theme = "*"
 sphinx-remove-toctrees = "*"
 jupyter-contrib-nbextensions = { git = "https://github.com/deeenes/jupyter_contrib_nbextensions.git", branch = "master" }
 nbsphinx = { git = "https://github.com/deeenes/nbsphinx.git", branch = "timings" }
-picos = "^2.4.17"
-cvxpy = "^1.5.1"
-pygraphviz = "1.11"
+
+[tool.poetry.extras]
+igraph = ["igraph"]
+corneto-backends = ["cvxpy", "picos"]
 
 [tool.poetry.urls]
 "Bug Tracker" = "https://github.com/saezlab/networkcommons/issues"
@@ -170,10 +176,30 @@ ignore_directives = [
 ignore_roles = ["ref"]
 ignore_messages = '(Unknown target name:.*|No (directive|role) entry for "(auto)?(class|method|property|function|func|mod|attr)" in module "docutils\.parsers\.rst\.languages\.en"\.)'
 
+[tool.coverage.paths]
+source = [
+    "networkcommons",
+    "**/site-packages/networkcommons"
+]
+
 [tool.coverage.run]
+branch = true
+parallel = true
 source = ["networkcommons"]
 omit = [
 	"**/test_*.py",
+    "**/noi/*",
+]
+
+[tool.coverage.report]
+show_missing = true
+precision = 2
+exclude_also = [
+    ".*pragma:\\s*no.?cover",
+    "if __name__ == .?__main__.?",
+    "\\s*raise NotImplementedError",
+    "\\s*raise AssertionError",
+    "\\s*return NotImplemented",
 ]
 
 [tool.pytest.ini_options]

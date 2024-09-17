@@ -1,6 +1,8 @@
 import networkx as nx
 import pandas as pd
 from networkcommons.methods import _moon
+from unittest.mock import patch
+import pytest
 
 
 def test_meta_network_cleanup():
@@ -33,6 +35,32 @@ def test_prepare_metab_inputs():
     assert 'Metab__fructose_m' in prepared_input
     assert 'Metab__glucose_invalid' not in prepared_input
     assert len(prepared_input) == 4, "Unexpected number of metabolite inputs"
+
+
+def test_prepare_metab_inputs_no_valid_compartments():
+    metab_input = {'glucose': 1.0, 'fructose': 2.0}
+    compartment_codes = ['invalid']
+
+    prepared_input = _moon.prepare_metab_inputs(metab_input, compartment_codes)
+
+    assert 'Metab__glucose' in prepared_input
+    assert 'Metab__fructose' in prepared_input
+    assert 'Metab__glucose_invalid' not in prepared_input
+    assert 'Metab__fructose_invalid' not in prepared_input
+    assert len(prepared_input) == 2, "Unexpected number of metabolite inputs when no valid compartments"
+
+
+def test_prepare_metab_inputs_with_valid_compartments():
+    metab_input = {'glucose': 1.0, 'fructose': 2.0}
+    compartment_codes = ['c', 'm']
+
+    prepared_input = _moon.prepare_metab_inputs(metab_input, compartment_codes)
+
+    assert 'Metab__glucose_c' in prepared_input
+    assert 'Metab__fructose_m' in prepared_input
+    assert 'Metab__glucose_m' in prepared_input
+    assert 'Metab__fructose_c' in prepared_input
+    assert len(prepared_input) == 4, "Unexpected number of metabolite inputs with valid compartments"
 
 
 def test_is_expressed():
@@ -81,26 +109,50 @@ def test_filter_pkn_expressed_genes():
     assert len(filtered_graph.nodes) == 2, "Unexpected number of nodes"
 
 
-def test_filter_input_nodes_not_in_pkn():
-
+@patch('networkcommons.methods._moon._log')
+def test_filter_input_nodes_not_in_pkn(mock_log):
     data = {'Gene1': 1, 'Gene2': 2, 'Gene3': 3}
     graph = nx.DiGraph()
     graph.add_nodes_from(['Gene1', 'Gene2'])
 
     filtered_data = _moon.filter_input_nodes_not_in_pkn(data, graph)
 
-    assert 'Gene3' not in filtered_data, "Node not in PKN not removed"
-    assert len(filtered_data) == 2, "Unexpected number of input nodes"
+    # Check that nodes not in PKN are removed
+    assert 'Gene3' not in filtered_data
+    assert len(filtered_data) == 2
+
+    # Check that _log was called with the correct message
+    mock_log.assert_called_with("MOON: 1 input/measured nodes are not in PKN anymore: ['Gene3']")
+
+
+@patch('networkcommons.methods._moon._log')
+def test_filter_input_nodes_not_in_pkn_nofilter(mock_log):
+    data = {'Gene1': 1, 'Gene2': 2, 'Gene3': 3}
+    graph = nx.DiGraph()
+    graph.add_nodes_from(['Gene1', 'Gene2', 'Gene3'])
+
+    filtered_data = _moon.filter_input_nodes_not_in_pkn(data, graph)
+
+    # Check that nodes not in PKN are removed
+    assert 'Gene3' in filtered_data
+    assert 'Gene1' in filtered_data
+    assert 'Gene2' in filtered_data
+    assert len(filtered_data) == 3
+
+    # Check that _log was not called
+    mock_log.assert_not_called()
 
 
 def test_keep_controllable_neighbours():
-
     source_dict = {'Gene1': 1, 'Gene2': 1}
     graph = nx.DiGraph()
-    graph.add_edges_from([('Gene1', 'Gene3'),
-                          ('Gene2', 'Gene4'),
-                          ('Gene0', 'Gene1')])
+    graph.add_edges_from([
+        ('Gene1', 'Gene3'),
+        ('Gene2', 'Gene4'),
+        ('Gene0', 'Gene1')
+    ])
 
+    # Assume _graph.run_reachability_filter is correctly implemented and tested elsewhere
     filtered_sources = _moon.keep_controllable_neighbours(source_dict, graph)
 
     assert 'Gene1' in filtered_sources
@@ -111,14 +163,16 @@ def test_keep_controllable_neighbours():
 
 
 def test_keep_observable_neighbours():
-
     target_dict = {'Gene3': 1, 'Gene4': 1}
     graph = nx.DiGraph()
-    graph.add_edges_from([('Gene1', 'Gene3'),
-                          ('Gene2', 'Gene4'),
-                          ('Gene0', 'Gene1'),
-                          ('Gene4', 'Gene5')])
+    graph.add_edges_from([
+        ('Gene1', 'Gene3'),
+        ('Gene2', 'Gene4'),
+        ('Gene0', 'Gene1'),
+        ('Gene4', 'Gene5')
+    ])
 
+    # Assume _graph.run_reachability_filter is correctly implemented and tested elsewhere
     filtered_targets = _moon.keep_observable_neighbours(target_dict, graph)
 
     assert 'Gene2' in filtered_targets
@@ -173,17 +227,40 @@ def test_compress_same_children():
     assert len(duplicated_parents) == 0, "Duplicated parents mismatch" # noqa E501
 
 
-def test_run_moon_core():
+def test_compress_same_children_conflicting_signatures():
+    graph = nx.DiGraph()
+    graph.add_edges_from([
+        ('A', 'B', {'sign': -1}),
+        ('A', 'C', {'sign': 1}),
+        ('B', 'D', {'sign': 1}),
+        ('C', 'D', {'sign': 1}),  # Conflicting sign
+    ])
+    sig_input = []
+    metab_input = []
+
+    (
+        subnetwork,
+        node_signatures,
+        duplicated_parents,
+    ) = _moon.compress_same_children(graph, sig_input, metab_input)
+    assert 'A' in subnetwork.nodes, "Node with conflicting signatures compressed"
+    assert 'B' in subnetwork.nodes, "Node with conflicting signatures compressed"
+    assert 'C' in subnetwork.nodes, "Node with conflicting signatures compressed"
+    assert 'D' in subnetwork.nodes, "Node with conflicting signatures compressed"
+    assert len(subnetwork.nodes) == 4, "Unexpected number of nodes in subnetwork"
+
+
+def test_run_moon_core_no_upstream():
 
     graph = nx.DiGraph()
     graph.add_edges_from([
         ('A', 'B', {'sign': 1}),
         ('B', 'C', {'sign': 1}),
-        ('B', 'D', {'sign': 1}),
+        ('C', 'D', {'sign': 1}),
         ('D', 'E', {'sign': 1}),
         ('E', 'F', {'sign': -1}),
     ])
-    upstream_input = {'A': 1}
+    upstream_input = None
     downstream_input = {'E': 0.5, 'F': -2}
 
     result = _moon.run_moon_core(
@@ -198,6 +275,100 @@ def test_run_moon_core():
     assert 'source' in result.columns, "Source column missing in result"
     assert len(result.index) == 3, "Unexpected number of rows in result"
     assert result.empty is False, "Empty result"
+
+    result_norm = _moon.run_moon_core(
+        upstream_input=upstream_input,
+        downstream_input=downstream_input,
+        graph=graph,
+        n_layers=5,
+        statistic='norm_wmean'
+    )
+
+    assert 'score' in result_norm.columns, "Score column missing in result"
+    assert 'source' in result_norm.columns, "Source column missing in result"
+    assert len(result_norm.index) == 3, "Unexpected number of rows in result"
+    assert result_norm.empty is False, "Empty result"
+    # assert frames are different
+    assert not result.equals(result_norm), "Results are the same"
+
+
+def test_run_moon_core_invalid_method():
+    with pytest.raises(ValueError, match="Invalid method. Currently supported: 'ulm' or 'wmean'."):
+        _moon.run_moon_core(
+            upstream_input={'A': 1},
+            downstream_input={'E': 0.5, 'F': -2},
+            graph=nx.DiGraph(),
+            n_layers=5,
+            statistic='invalid_method'
+        )
+
+
+@patch('networkcommons.methods._moon._log')
+def test_run_moon_core_while_loop(mock_log):
+    # Create a sample graph
+    graph = nx.DiGraph()
+    graph.add_edges_from([
+        ('A', 'B', {'sign': 1}),
+        ('B', 'C', {'sign': 1}),
+        ('B', 'D', {'sign': 1}),
+        ('C', 'D', {'sign': 1}),
+        ('C', 'E', {'sign': 1}),
+        ('D', 'E', {'sign': 1}),
+        ('D', 'H', {'sign': 1}),
+        ('E', 'F', {'sign': -1}),
+        ('G', 'H', {'sign': 1}),
+    ])
+
+    upstream_input = {'A': 1}
+    downstream_input = {'H': 0.5, 'F': -2, 'G': 1}
+
+    # Make sure that the while loop condition is met
+    result = _moon.run_moon_core(
+        upstream_input=upstream_input,
+        downstream_input=downstream_input,
+        graph=graph,
+        n_layers=5,
+        statistic='ulm'
+    )
+
+    assert 'score' in result.columns, "Score column missing in result"
+    assert 'source' in result.columns, "Source column missing in result"
+    assert len(result.index) > 0, "Unexpected number of rows in result"
+    assert not result.empty, "Empty result"
+
+    mock_log.assert_any_call("MOON: scoring layer 1 from downstream nodes...")
+
+    result_wmean = _moon.run_moon_core(
+        upstream_input=upstream_input,
+        downstream_input=downstream_input,
+        graph=graph,
+        n_layers=5,
+        statistic='wmean'
+    )
+
+    assert 'score' in result_wmean.columns, "Score column missing in result"
+    assert 'source' in result_wmean.columns, "Source column missing in result"
+    assert len(result_wmean.index) > 0, "Unexpected number of rows in result"
+    assert not result_wmean.empty, "Empty result"
+
+    # Check that the while loop executed by checking log calls
+    mock_log.assert_any_call("MOON: scoring layer 1 from downstream nodes...")
+
+    result_norm_wmean = _moon.run_moon_core(
+        upstream_input=upstream_input,
+        downstream_input=downstream_input,
+        graph=graph,
+        n_layers=5,
+        statistic='norm_wmean'
+    )
+
+    assert 'score' in result_norm_wmean.columns, "Score column missing in result"
+    assert 'source' in result_norm_wmean.columns, "Source column missing in result"
+    assert len(result_norm_wmean.index) > 0, "Unexpected number of rows in result"
+    assert not result_norm_wmean.empty, "Empty result"
+
+    # Check that the while loop executed by checking log calls
+    mock_log.assert_any_call("MOON: scoring layer 1 from downstream nodes...")
 
 
 def test_filter_incoherent_TF_target():
@@ -336,3 +507,205 @@ def test_translate_res():
     assert 'Metab__Alpha_a' in translated_network.nodes, "Translation failed"
     assert 'Metab__Alpha_a' in translated_att['nodes'].values, \
         "Translation failed in attributes"
+
+
+def test_run_moon():
+    network = nx.DiGraph()
+    network.add_edges_from([
+        ('A', 'B', {'sign': 1}),
+        ('B', 'C', {'sign': 1}),
+        ('B', 'D', {'sign': 1}),
+        ('D', 'E', {'sign': 1}),
+        ('E', 'F', {'sign': -1}),
+    ])
+    sig_input = {'A': 1}
+    metab_input = {'E': 0.5, 'F': -2}
+    tf_regn = pd.DataFrame({'source': ['TF1', 'TF1'], 'target': ['Gene1', 'Gene2'], 'weight': [1, -1]})
+    rna_input = {'Gene1': -1, 'Gene2': -1}
+
+    moon_res, moon_network = _moon.run_moon(
+        network,
+        sig_input,
+        metab_input,
+        tf_regn,
+        rna_input,
+        n_layers=5,
+        method='ulm',
+        max_iter=3
+    )
+
+    assert 'score' in moon_res.columns, "Score column missing in result"
+    assert len(moon_network.nodes) > 0, "Empty moon network"
+
+
+@patch('networkcommons.methods._moon._log')
+def test_run_moon_non_convergence(mock_log):
+    network = nx.DiGraph()
+    network.add_edges_from([
+        ('A', 'B', {'sign': 1}),
+        ('B', 'C', {'sign': 1}),
+        ('B', 'D', {'sign': 1}),
+        ('D', 'E', {'sign': 1}),
+        ('E', 'F', {'sign': -1}),
+    ])
+    sig_input = {'A': 1}
+    metab_input = {'E': 0.5, 'F': -2}
+    tf_regn = pd.DataFrame({'source': ['TF1', 'TF1'], 'target': ['Gene1', 'Gene2'], 'weight': [1, -1]})
+    rna_input = {'Gene1': -1, 'Gene2': -1}
+
+    moon_res, moon_network = _moon.run_moon(
+        network,
+        sig_input,
+        metab_input,
+        tf_regn,
+        rna_input,
+        n_layers=5,
+        method='ulm',
+        max_iter=1
+    )
+
+    mock_log.assert_called_with("MOON: Maximum number of iterations reached."
+                                "Solution might not have converged")
+
+
+def test_reduce_solution_network_edge_removal():
+    # Sample moon_res DataFrame
+    moon_res = pd.DataFrame({
+        'source_original': ['A', 'B', 'C', 'D', 'E'],
+        'source': ['A', 'B', 'C', 'D', 'E'],
+        'score': [-1.5, 1.2, -0.8, 0.7, -0.9]
+    })
+
+    # Sample meta_network
+    meta_network = nx.DiGraph()
+    meta_network.add_edges_from([
+        ('A', 'B', {'sign': -1}),
+        ('B', 'C', {'sign': -1}),
+        ('C', 'D', {'sign': -1}),
+        ('D', 'E', {'sign': 1}),
+        ('C', 'E', {'sign': 1})
+    ])
+
+    # Sample sig_input
+    sig_input = {'A': -1}
+    rna_input = {'B': 1, 'D': -3.5}
+
+    # Expected output
+    expected_edges = [
+        ('A', 'B'),
+        ('B', 'C'),
+        ('C', 'D'),
+        ('C', 'E')
+    ]
+
+    # Run the function
+    res_network, att = _moon.reduce_solution_network(
+        moon_res, meta_network, cutoff=0.5, sig_input=sig_input, rna_input=rna_input
+    )
+
+    # edge ('B', 'C') was removed
+    assert set(res_network.edges) == set(expected_edges), "Edges do not match expected result"
+    for node in res_network.nodes:
+        assert 'moon_score' in res_network.nodes[node], "moon_score attribute missing"
+
+
+def test_reduce_solution_network_without_rna_input():
+    # Sample moon_res DataFrame
+    moon_res = pd.DataFrame({
+        'source_original': ['A', 'B', 'C', 'D', 'E'],
+        'source': ['A', 'B', 'C', 'D', 'E'],
+        'score': [-1.5, 1.2, -0.8, 0.5, 0.3]
+    })
+
+    # Sample meta_network
+    meta_network = nx.DiGraph()
+    meta_network.add_edges_from([
+        ('A', 'B', {'sign': -1}),
+        ('B', 'C', {'sign': -1}),
+        ('C', 'D', {'sign': -1}),
+        ('D', 'E', {'sign': 1}),
+        ('C', 'E', {'sign': 1})
+    ])
+
+    # Sample sig_input
+    sig_input = {'A': -1}
+
+    # Expected output
+    expected_edges = [
+        ('A', 'B'),
+        ('B', 'C')
+    ]
+
+    # Run the function
+    res_network, att = _moon.reduce_solution_network(
+        moon_res, meta_network, cutoff=0.5, sig_input=sig_input, rna_input=None
+    )
+
+    # Check if the edges are as expected
+    assert set(res_network.edges) == set(expected_edges), "Edges do not match expected result"
+
+    # Check if the moon_score attribute is present in the nodes
+    for node in res_network.nodes:
+        assert 'moon_score' in res_network.nodes[node], "moon_score attribute missing"
+
+    # Check the RNA_input column in the attributes dataframe
+    assert 'RNA_input' in att.columns, "Missing RNA_input column in attributes"
+    assert att['RNA_input'].isna().all(), "RNA_input column should contain only NaN values"
+
+
+def test_translate_res_edge_cases():
+    G = nx.DiGraph()
+    G.add_edges_from([
+        ("Metab__HMDB1_a", "Metab__HMDB2_b"),
+        ("Metab__HMDB3_b", "GeneC_c"),
+        ("Metab__HMDB4_d", "GeneD_e"),
+        ('TAP1', 'GeneD_e')
+    ])
+
+    att_data = {
+        "nodes": [
+            "Metab__HMDB1_a",
+            "Metab__HMDB2_b",
+            "Metab__HMDB3_b",
+            "GeneC_c",
+            "Metab__HMDB4_d",
+            "GeneD_e",
+            "TAP1"
+        ],
+        "score": [1, 2, 3, 4, 5, 6, 7]
+    }
+    att_df = pd.DataFrame(att_data)
+
+    mapping_dict = {
+        "HMDB1": "Alpha",
+        "HMDB2": "Beta",
+        "HMDB3": "Gamma",
+        "HMDB4": "Delta"
+    }
+
+    translated_network, translated_att = _moon.translate_res(
+        G, att_df, mapping_dict
+    )
+    expected_edges = [
+        ("Metab__Alpha_a", "Metab__Beta_b"),
+        ("Metab__Gamma_b", "EnzymeC"),
+        ("Metab__Delta_d", "EnzymeD"),
+        ('TAP1', 'EnzymeD')
+    ]
+    expected_att_nodes = [
+        "Metab__Alpha_a",
+        "Metab__Beta_b",
+        "Metab__Gamma_b",
+        "EnzymeC_c",
+        "Metab__Delta_d",
+        "EnzymeD_e",
+        "TAP1"
+    ]
+
+    assert set(translated_network.edges()) == set(expected_edges), "Translated network edges are incorrect"
+    assert translated_att['nodes'].tolist() == expected_att_nodes, "Translated attribute table nodes are incorrect"
+    assert 'Metab__Alpha_a' in translated_network.nodes, "Translation failed"
+    assert 'Metab__Alpha_a' in translated_att['nodes'].values, "Translation failed in attributes"
+    assert 'Metab__Delta_d' in translated_network.nodes, "Translation failed for new node"
+    assert 'Metab__Delta_d' in translated_att['nodes'].values, "Translation failed in attributes for new node"
+    assert 'TAP1' in translated_network.nodes, "Translation failed for TAP1"

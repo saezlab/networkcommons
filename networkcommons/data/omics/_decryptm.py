@@ -28,6 +28,7 @@ import pandas as pd
 
 from . import _common
 from networkcommons import _conf
+from networkcommons._session import _log
 
 
 def decryptm_datasets(update: bool = False) -> pd.DataFrame:
@@ -89,6 +90,8 @@ def decryptm_table(experiment: str, data_type: str, fname: str) -> pd.DataFrame:
     Returns:
         The table as a pandas data frame.
     """
+
+    _log(f'DATA: Retrieving DecryptM table `{experiment}/{data_type}/{fname}`...')
 
     return _common._open(
         _common._commons_url('decryptm', **locals()),

@@ -1,10 +1,16 @@
-# NetworkCommons - Integrated framework for network inference and evaluation using prior knowledge and omics data
+# NetworkCommons - Bridging the gap between data, methods and knowledge in the network inference field
 
-Networkcommons is a package which allows users to download data and prior knowledge to perform static network inference using different methodologies. The package also provides different visualization and evaluation strategies.
+NetworkCommons is a community-driven platform designed to simplify access to tools and resources for inferring context-specific protein interaction networks by integrating context-agnostic prior knowledge with omics data. These networks have a wide range of applications, from omics data interpretation to identifying drug targets and key driver mutations.
 
 [![codecov][badge-cov]][link-cov]
 [![Tests][badge-tests]][link-tests]
 [![Documentation][badge-docs]][link-docs]
+
+[![NetworkCommons API](./docs/src/_static/nc_graphabs.svg)](https://networkcommons.readthedocs.io)
+
+Addressing the complexity and fragmentation of data, methods, and tools across multiple repositories, NetworkCommons offers an API that provides access to raw and preprocessed omics data, directed and/or signed template graphs, and various network inference methods. By streamlining accessibility, we aim to support systematic benchmarking, enhance critical assessment, and foster collaborative advancements in network biology.
+
+We welcome any contribution to this project! For more information, please check [our documentation](https://networkcommons.readthedocs.io). 
 
 ## Contributors
 

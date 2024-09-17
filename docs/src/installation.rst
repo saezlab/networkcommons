@@ -2,15 +2,29 @@
 Installation
 ############
 
-``NetworkCommons`` requires Python version >= 3.10 to run.
+``NetworkCommons`` requires ``Python`` version >= 3.9 to run.
 
 
 -------------------
 
-Currently, it can be installed from GitHub via Poetry. Poetry is a tool for dependency management and packaging in Python. It allows you to declare the libraries your project depends on and it will manage (install/update) them for you. More information `here <https://python-poetry.org>`_.
+Currently, NetworkCommons can be installed via pip.
 
 .. code-block:: console
 
-   poetry install git+https://github.com/saezlab/networkcommons
+   pip install networkcommons
+
+
+Additionally, users can install backends for CORNETO via:
+
+.. code-block:: console
+
+   pip install networkcommons[corneto-backends]
+
+
+To install the development version (with the CORNETO solvers), run:
+
+.. code-block:: console
+
+   pip install 'networkcommons[corneto-backends] @ git+https://github.com/saezlab/networkcommons@dev'
 
 

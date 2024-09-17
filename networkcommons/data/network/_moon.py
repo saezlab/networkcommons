@@ -17,61 +17,56 @@
 Prior knowledge network used by MOON.
 """
 
-__all__ = ['build_moon_regulons']
+__all__ = ['get_cosmos_pkn']
 
 import lazy_import
 import numpy as np
 import pandas as pd
 
-dc = lazy_import.lazy_module('decoupler')
-
-from networkcommons import _utils
+from networkcommons import utils
 from . import _omnipath
 from . import _liana
 
+import os
+import urllib
+from networkcommons import _conf
+from networkcommons.data.omics import _common
 
-def build_moon_regulons(include_liana=False):
+# dc = lazy_import.lazy_module('decoupler')
+import decoupler as dc
+from networkcommons._session import _log
 
-    dorothea_df = dc.get_collectri()
+def get_cosmos_pkn(update: bool = False):
+    """
+    Retrieves the metabolic network used in COSMOS from the server
 
-    TFs = np.unique(dorothea_df['source'])
+    Returns:
+        network (pandas.DataFrame): metabolic network with
+        source, target, and sign columns.
+    """
+    path = os.path.join(_conf.get('pickle_dir'), 'metapkn.pickle')
+    
+    _log('COSMOS: Retrieving prior knowledge network...')
 
-    full_pkn = _omnipath.get_omnipath(genesymbols=True, directed_signed=True)
+    if update or not os.path.exists(path):
+        _log('COSMOS: Network not found in cache. Downloading...')
 
-    if include_liana:
+        baseurl = urllib.parse.urljoin(_common._baseurl(), 'prior_knowledge')
 
-        ligrec_resource = _liana.get_lianaplus()
+        file_legend = pd.read_csv(baseurl + '/meta_network.sif', sep='\t')
 
-        full_pkn = pd.concat([full_pkn, ligrec_resource])
-        full_pkn['edgeID'] = full_pkn['source'] + '_' + full_pkn['target']
+        # removing duplicated interactions
+        file_legend = file_legend.drop_duplicates(subset=['source', 'target', 'sign'], keep='first')
+        file_legend = file_legend.drop_duplicates(subset=['source', 'target'], keep=False)
 
-        # This prioritises edges coming from OP
-        full_pkn = full_pkn.drop_duplicates(subset='edgeID')
-        full_pkn = full_pkn.drop(columns='edgeID')
+        file_legend.to_pickle(path)
 
-    kinTF_regulons = full_pkn[full_pkn['target'].isin(TFs)].copy()
-    kinTF_regulons.columns = ['source', 'target', 'mor']
-    kinTF_regulons = kinTF_regulons.drop_duplicates()
+    else:
+        _log('COSMOS: Network found in cache. Loading...')
 
-    kinTF_regulons = kinTF_regulons.groupby(['source', 'target']).mean() \
-        .reset_index()
+        file_legend = pd.read_pickle(path)
 
-    layer_2 = {}
-    activation_pkn = full_pkn[full_pkn['sign'] == 1].copy()
+    _log(f'COSMOS: Done. Network has {len(file_legend)} interactions.')
 
-    pkn_graph = _utils.network_from_df(activation_pkn, directed=True)
 
-    relevant_nodes = list(activation_pkn['source'].unique())
-    relevant_nodes = [node for node in relevant_nodes if node in list(kinTF_regulons['source'])]
-
-    for node in relevant_nodes:
-        intermediates = activation_pkn[activation_pkn['source'] == node]['target'].tolist()
-        targets = [n for i in intermediates for n in pkn_graph.neighbors(i)]
-        targets = np.unique([n for n in targets if n in TFs])
-        layer_2[node] = targets
-
-    layer_2_df = pd.concat([pd.DataFrame({'source': k, 'target': v, 'mor': 0.25}) for k, v in layer_2.items()], ignore_index=True)
-    kinTF_regulons = pd.concat([kinTF_regulons, layer_2_df])
-    kinTF_regulons = kinTF_regulons.groupby(['source', 'target']).sum().reset_index()
-
-    return kinTF_regulons
+    return file_legend

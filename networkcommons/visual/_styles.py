@@ -33,39 +33,43 @@ def get_styles():
             'nodes': {
                 'sources': {
                     'shape': 'circle',
-                    'color': 'steelblue',
+                    'color': '#62a0ca',  # A deep blue
                     'style': 'filled',
-                    'fillcolor': 'steelblue',
-                    'label': '',
+                    'fillcolor': '#a6cee3',  # Light blue for the fill
                     'penwidth': 3
                 },
                 'targets': {
                     'shape': 'circle',
-                    'color': 'mediumpurple1',
+                    'color': '#70bc6b',  # A deep green
                     'style': 'filled',
-                    'fillcolor': 'mediumpurple1',
-                    'label': '',
+                    'fillcolor': '#b2df8a',  # Light green for the fill
                     'penwidth': 3
                 },
-                'default': {
-                    'shape': 'circle',
-                    'color': 'gray',
-                    'style': 'filled',
-                    'fillcolor': 'gray',
-                    'label': ''
+                'other': {
+                    'default': {
+                        'shape': 'circle',
+                        'color': '#848484',  # Dark gray for default nodes
+                        'style': 'filled',
+                        'fillcolor': '#bdbdbd',  # Light gray for default nodes
+                        'penwidth': 3
+                    }
                 }
             },
             'edges': {
                 'positive': {
-                    'color': 'forestgreen',
-                    'penwidth': 2
+                    'color': '#70bc6b',  # Same deep green as target nodes
+                    'penwidth': 2.5
                 },
                 'negative': {
-                    'color': 'tomato3',
-                    'penwidth': 2
+                    'color': '#eb5e60',  # Red for negative edges
+                    'penwidth': 2.5
+                },
+                'neutral': {
+                    'color': '#3e3e3e', # Dark gray for neutral edges
+                    'penwidth': 2.5
                 },
                 'default': {
-                    'color': 'gray30',
+                    'color': '#bdbdbd', # Light gray for default edges
                     'penwidth': 2
                 }
             }
@@ -76,55 +80,62 @@ def get_styles():
                     'default': {
                         'shape': 'circle',
                         'style': 'filled',
-                        'fillcolor': 'steelblue',
-                        'label': '',
+                        'fillcolor': 'a6cee3',  # blue
                         'penwidth': 3,
-                        'color': 'steelblue'
+                        'color': '#62a0ca' # Deep blue
                     },
                     'positive_consistent': {
-                        'color': 'forestgreen'
+                        'color': '#62a0ca'  # Consistent blue for positive
                     },
                     'negative_consistent': {
-                        'color': 'tomato3'
+                        'color': '#eb5e60'  # Consistent red for negative
                     }
                 },
                 'targets': {
                     'default': {
                         'shape': 'circle',
                         'style': 'filled',
-                        'fillcolor': 'mediumpurple1',
-                        'label': '',
+                        'fillcolor': '#70bc6b',  # green
                         'penwidth': 3,
-                        'color': 'mediumpurple1'
+                        'color': '#70bc6b'
                     },
                     'positive_consistent': {
-                        'color': 'forestgreen'
+                        'color': '#70bc6b'  # Same green for positive
                     },
                     'negative_consistent': {
-                        'color': 'tomato3'
+                        'color': '#eb5e60'  # Same red for negative
                     }
                 },
                 'other': {
                     'default': {
                         'shape': 'circle',
-                        'color': 'gray',
+                        'color': '#848484',  # Dark gray
                         'style': 'filled',
-                        'fillcolor': 'gray',
-                        'label': ''
+                        'fillcolor': '#bdbdbd',  # gray
+                    },
+                    'positive_consistent': {
+                        'color': '#848484'  # Same gray for positive
+                    },
+                    'negative_consistent': {
+                        'color': '#eb5e60'  # Same red for negative
                     }
                 }
             },
             'edges': {
                 'positive': {
-                    'color': 'forestgreen',
-                    'penwidth': 2
+                    'color': '#33a02c',  # Deep green
+                    'penwidth': 2.5
                 },
                 'negative': {
-                    'color': 'tomato3',
-                    'penwidth': 2
+                    'color': '#e31a1c',  # Strong red
+                    'penwidth': 2.5
                 },
                 'neutral': {
-                    'color': 'gray30',
+                    'color': '#6a3d9a',  # Purple
+                    'penwidth': 2.5
+                },
+                'default': {
+                    'color': '#bdbdbd',  # Light gray
                     'penwidth': 2
                 }
             }
@@ -176,6 +187,6 @@ def merge_styles(default_style, custom_style, path=""):
         # Log missing keys in custom_style
         for key in default_style:
             if key not in custom_style:
-                _log(f"Missing key '{path}.{key}' in custom style. Using default value.")
+                _log(f"Missing key '{path}.{key}' in custom style. Using default value.", level=30)
 
     return merged_style

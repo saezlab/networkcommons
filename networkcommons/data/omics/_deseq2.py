@@ -21,18 +21,13 @@ from __future__ import annotations
 
 __all__ = ['deseq2']
 
-from typing import TYPE_CHECKING
 import multiprocessing
-import importlib
 
-if TYPE_CHECKING:
+import pandas as pd
 
-    import pandas as pd
-
-import lazy_import
 from pypath_common import _misc as _ppcommon
 
-#for _mod in ('default_inference', 'dds', 'ds'):
+# for _mod in ('default_inference', 'dds', 'ds'):
 
 #    globals()[f'_deseq2_{_mod}'] = lazy_import.lazy_module(f'pydeseq2.{_mod}')
 
@@ -48,7 +43,9 @@ def deseq2(
         metadata: pd.DataFrame,
         test_group: str,
         ref_group: str,
-        covariates: list | None = None,
+        sample_col: str = 'sample_ID',
+        feature_col: str = 'gene_symbol',
+        covariates: list | None = None
     ) -> pd.DataFrame:
     """
     Runs DESeq2 analysis on the given counts and metadata.
@@ -58,24 +55,32 @@ def deseq2(
         metadata (pd.DataFrame): The metadata with sample IDs as index.
         test_group (str): The name of the test group.
         ref_group (str): The name of the reference group.
+        sample_col (str, optional): The name of the sample ID column in the metadata.
+            Defaults to 'sample_ID'.
+        feature_col (str, optional): The name of the feature column in the counts data.
+            Defaults to 'gene_symbol'.
         covariates (list, optional): List of covariates to include in the analysis.
             Defaults to None.
+
 
     Returns:
         pd.DataFrame: The results of the DESeq2 analysis as a data frame.
     """
 
-    _log('Running differential expression analysis using DESeq2.')
-    # TODO: hardcoding these column names in a hidden way not the best
-    # solution:
-    counts.set_index('gene_symbol', inplace=True)
-    metadata.set_index('sample_ID', inplace=True)
-    design_factors = ['group'] + _ppcommon.to_list(covariates)
+    _log('DESeq2: Running differential expression analysis...')
 
-    # TODO: this seems really arbitrary and specific to certain tables,
-    # is this suitable and useful in a general DESeq2 analysis?
-    test_group = test_group.replace('_', '-')
-    ref_group = ref_group.replace('_', '-')
+    counts = counts.set_index(feature_col)
+    metadata = metadata.set_index(sample_col)
+    design_factors = ['group'] + _ppcommon.to_list(covariates)
+    _log(f'DESeq2: Design factors: {design_factors}')
+
+    if '_' in test_group:
+        test_group = test_group.replace('_', '-')
+    if '_' in ref_group:
+        ref_group = ref_group.replace('_', '-')
+
+    _log(f'DESeq2: Test group: {test_group}')
+    _log(f'DESeq2: Reference group: {ref_group}')
 
     n_cpus = _conf.get('cpu_count', multiprocessing.cpu_count())
     inference = _deseq2_default_inference.DefaultInference(n_cpus = n_cpus)
