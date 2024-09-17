@@ -1084,7 +1084,7 @@ reference = "pypi-public"
 name = "cvxopt"
 version = "1.3.2"
 description = "Convex optimization package"
-optional = true
+optional = false
 python-versions = ">=3, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*"
 files = [
     {file = "cvxopt-1.3.2-cp310-cp310-macosx_10_9_x86_64.whl", hash = "sha256:cd4a1bba537a34808b92f1e793e3499029d339a7a2ab6d989f82e395b7b740ff"},
@@ -4248,7 +4248,7 @@ reference = "pypi-public"
 name = "picos"
 version = "2.4.17"
 description = "A Python interface to conic optimization solvers."
-optional = true
+optional = false
 python-versions = ">=3.4"
 files = [
     {file = "PICOS-2.4.17.tar.gz", hash = "sha256:627d35d9321abfa0b7d32b10a63571720bc5182fa1ed6944cba099f25fd9418c"},
@@ -7351,4 +7351,4 @@ igraph = ["igraph"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.9"
-content-hash = "dfaa67cbba3a23d0be75b5dd0928d90a8cd33aa53dff2741630af97764659894"
+content-hash = "b052aa3dd9662894e60a86cf84fa25c9664e56b2147309d5898ae8120c51edf5"
