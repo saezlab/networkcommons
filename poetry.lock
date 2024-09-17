@@ -3044,13 +3044,14 @@ url = "https://pypi.org/simple"
 reference = "pypi-public"
 
 [[package]]
-name = "lazy_import"
-version = "0.2.3.dev0"
+name = "lazy-import"
+version = "0.2.2"
 description = "A module for lazy loading of Python modules"
 optional = false
 python-versions = "*"
-files = []
-develop = false
+files = [
+    {file = "lazy_import-0.2.2.tar.gz", hash = "sha256:2149aef8579459407c62cfeccf118527939c9931ace124f355236360644f8a3d"},
+]
 
 [package.dependencies]
 six = "*"
@@ -3059,10 +3060,9 @@ six = "*"
 test = ["pytest", "pytest-xdist"]
 
 [package.source]
-type = "git"
-url = "https://github.com/mnmelo/lazy_import.git"
-reference = "master"
-resolved_reference = "29c74c83e90adff62d363220fee8cf7d6f0dd3c9"
+type = "legacy"
+url = "https://pypi.org/simple"
+reference = "pypi-public"
 
 [[package]]
 name = "llvmlite"
@@ -7351,4 +7351,4 @@ igraph = ["igraph"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.9"
-content-hash = "38df81ac3f2155c072ce8f403c52e8c5aeda81309641447cec5518d44322c91d"
+content-hash = "dfaa67cbba3a23d0be75b5dd0928d90a8cd33aa53dff2741630af97764659894"
