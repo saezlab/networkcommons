@@ -6,7 +6,7 @@ NetworkCommons is a community-driven platform designed to simplify access to too
 [![Tests][badge-tests]][link-tests]
 [![Documentation][badge-docs]][link-docs]
 
-[![NetworkCommons API](./docs/src/_static/nc_graphabs.svg)](https://networkcommons.readthedocs.io)
+[![NetworkCommons API](https://raw.githubusercontent.com/saezlab/networkcommons/0d62d40ad0b3c7ab40b61f4f236af69ce9fa019f/docs/src/_static/nc_graphabs.svg)](https://networkcommons.readthedocs.io)
 
 Addressing the complexity and fragmentation of data, methods, and tools across multiple repositories, NetworkCommons offers an API that provides access to raw and preprocessed omics data, directed and/or signed template graphs, and various network inference methods. By streamlining accessibility, we aim to support systematic benchmarking, enhance critical assessment, and foster collaborative advancements in network biology.
 
