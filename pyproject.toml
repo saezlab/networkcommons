@@ -64,7 +64,7 @@ omnipath = "^1.0.8"
 pygraphviz = "1.11"
 picos = "^2.4.17"
 cvxpy = { version = "^1.5.1", optional = true }
-corneto = "^1.0.0.dev0"
+corneto = "1.0.0.dev0"
 seaborn = "^0.13.2"
 
 [tool.poetry.dev-dependencies]
