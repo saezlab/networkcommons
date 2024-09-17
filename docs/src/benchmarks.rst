@@ -18,9 +18,10 @@ See :ref:`PANACEA <details-panacea>`.
 **Assumption**: In this setting, we assume that, in a perturbational context, the effects that are measured via omics data is not only a product of the perturbation origin 
 (e.g KO, KD, drug perturbation), but also of other origins of perturbation that are not directly targeted by the perturbation agent (e.g a drug offtarget).
 
-.. image:: ./_static/nc_offtarget.svg
-   :alt: Evaluation based on offtarget recovery
-   :width: 1000px
+.. raw:: html
+
+   <object type="image/svg+xml" data="_static/nc_offtarget.svg" width="1000px" alt="Evaluation based on offtarget recovery"></object>
+
 
 **Performance metric:** Share (%) of offtargets recovered in the solution network
     
@@ -44,9 +45,10 @@ important in the contextualisation of said perturbation
 
 **Performance metric:** EC50 values for nodes included and excluded of the solution network.
 
-.. image:: ./_static/nc_ec50.svg
-   :alt: Evaluation based on ensitivity to drug perturbation
-   :width: 1000px
+.. raw:: html
+
+   <object type="image/svg+xml" data="_static/nc_ec50.svg" width="1000px" alt="Evaluation based on sensitivity to drug perturbation"></object>
+
     
 .. note::
     Methods producing result networks whose nodes have a low average EC50 (compared to nodes not included in the network) are better performers that those producing network 
@@ -68,9 +70,10 @@ See :ref:`PANACEA <details-decryptm>`.
 
 **Performance metric:** rank of the selected gene set among all gene sets, according to ORA score
 
-.. image:: ./_static/nc_pathway.svg
-   :alt: Evaluation based on pathway enrichment
-   :width: 1000px
+.. raw:: html
+
+   <object type="image/svg+xml" data="_static/nc_pathway.svg" width="1000px" alt="Evaluation based on pathway enrichment"></object>
+
     
 .. note::
     Having preselected a gene set of interest, the methods producing networks in which the said geneset is ranked high, according to their ORA score, against others, will have a better performance. 
@@ -94,9 +97,10 @@ See :ref:`CPTAC <details-cptac>`.
 
 **Performance metric:** difference between kinase activity score in the solution network and the overall PKN.
 
-.. image:: ./_static/nc_multiomics.svg
-   :alt: Evaluation based on ensitivity to drug perturbation
-   :width: 1000px
+.. raw:: html
+
+   <object type="image/svg+xml" data="_static/nc_multiomics.svg" width="1000px" alt="Evaluation based on sensitivity to drug perturbation"></object>
+
 
 .. note::
     Methods whose result subnetworks have an average higher kinase activity score, compared to the overall PKN, will be better performers.

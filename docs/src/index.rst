@@ -29,11 +29,10 @@ inferring context-specific protein interaction networks by integrating context-a
 These networks have a wide range of applications, from omics data interpretation to identifying drug targets and key driver 
 mutations.
 
-.. image:: _static/nc_graphabs.svg
-   :width: 1000px
-   :alt: Networkcommons API
-   :align: center
-   :class: no-scaled-link
+.. raw:: html
+
+   <object type="image/svg+xml" data="_static/nc_graphabs.svg" width="1000px" alt="Networkcommons API" class="no-scaled-link" style="display: block; margin: 0 auto;"></object>
+
 
 Addressing the complexity and fragmentation of data, methods, and tools across multiple repositories, NetworkCommons 
 offers an API that provides access to raw and preprocessed omics data, directed and/or signed template graphs, and various network 

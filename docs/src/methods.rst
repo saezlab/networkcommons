@@ -16,9 +16,10 @@ Shortest path
 
 The shortest path is an algorithm for finding one or multiple paths that minimize the distance from a set of starting nodes to a set of destination nodes in a weighted graph (https://doi.org/10.1007/BF01386390).
 
-.. image:: ./_static/nc_sp.svg
-   :alt: All paths
-   :width: 1000px
+.. raw:: html
+
+   <object type="image/svg+xml" data="_static/nc_sp.svg" width="1000px"></object>
+
    
 **Input:** Set of source and target nodes, (weighted) network graph
 
@@ -34,9 +35,10 @@ Sign consistency
 
 The sign consistency method checks for sign consistency between the nodes in a given graph. Hereby, source and target nodes, as well as the edges in the graph have an assigned sign. 
 
-.. image:: ./_static/nc_sign.svg
-   :alt: All paths
-   :width: 1000px
+.. raw:: html
+
+   <object type="image/svg+xml" data="_static/nc_sign.svg" width="1000px"></object>
+
 
 **Input:** Set of source and target nodes (with a sign for up- or downregulation), network graph
 
@@ -52,9 +54,10 @@ Reachability filter
 
 The reachability filter generates a network consisting of all reachable nodes from a set of starting nodes.
 
-.. image:: ./_static/nc_reach.svg
-   :alt: All paths
-   :width: 1000px
+.. raw:: html
+
+   <object type="image/svg+xml" data="_static/nc_reach.svg" width="1000px"></object>
+
 
 **Input:** Set of source nodes, network graph
 
@@ -70,9 +73,10 @@ All paths
 
 All paths find all possible connections between a set of source nodes and a set of target nodes. In contrast to the shortest path method or the sign consistency method it doesn’t take the distance or any sign information into account, respectively.
 
-.. image:: ./_static/nc_ap.svg
-   :alt: All paths
-   :width: 1000px
+.. raw:: html
+
+   <object type="image/svg+xml" data="_static/nc_ap.svg" width="1000px"></object>
+
 
 **Input:** Set of source and target nodes, network graph
 
@@ -91,9 +95,10 @@ Page rank
 
 The Page rank algorithm initially calculates a weight for each node in a graph based on a random walk with restart method. It starts at a set of source or target nodes and determines the importance of the other nodes in the graph based on the structure of the incoming or outgoing edges. It then builds a network considering the highest-ranking nodes starting from each of the source and the target nodes.
 
-.. image:: ./_static/nc_ppr.svg
-   :alt: PPR
-   :width: 1000px
+.. raw:: html
+
+   <object type="image/svg+xml" data="_static/nc_ppr.svg" width="1000px" alt="PPR"></object>
+
 
 **Input:** Set of source and target nodes, network graph
 
@@ -132,22 +137,25 @@ Network compression
 
 This is one of the most important parts of this vignette. Here, we aim to remove redundant information from the network, in order to reduce its size without compromising the information contained in it. A common example would be the following:
 
-.. image:: ./_static/nc_moon_comp_normal.svg
-   :alt: MOON
-   :width: 1000px
+.. raw:: html
+
+   <object type="image/svg+xml" data="_static/nc_moon_comp_normal.svg" width="1000px" alt="MOON"></object>
+
 
 However, in other cases, we would lose information:
 
-.. image:: ./_static/nc_moon_comp_edgecases.svg
-   :alt: MOON
-   :width: 1000px
+.. raw:: html
+
+   <object type="image/svg+xml" data="_static/nc_moon_comp_edgecases.svg" width="1000px" alt="MOON"></object>
+
 
 MOON scoring
 ~~~~~~~~~~~~
 
-.. image:: ./_static/nc_moon_core.svg
-   :alt: MOON
-   :width: 1000px
+.. raw:: html
+
+   <object type="image/svg+xml" data="_static/nc_moon_core.svg" width="1000px" alt="MOON"></object>
+
 
 Network decompression and solution network obtention
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
