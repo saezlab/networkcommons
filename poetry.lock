@@ -7345,10 +7345,10 @@ url = "https://pypi.org/simple"
 reference = "pypi-public"
 
 [extras]
-corneto-backends = ["cvxpy", "picos"]
+corneto-backends = ["cvxpy"]
 igraph = ["igraph"]
 
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.9"
-content-hash = "b052aa3dd9662894e60a86cf84fa25c9664e56b2147309d5898ae8120c51edf5"
+content-hash = "974646d0baacb7f8f40a09819e90a8c387a37e69af6236f67941a70a588a5ef4"
