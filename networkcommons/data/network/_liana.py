@@ -23,30 +23,53 @@ __all__ = ['get_lianaplus']
 
 # liana = lazy_import.lazy_module('liana')
 
-import liana
+import pandas as pd
 
 from networkcommons._session import _log
+import os
+import urllib
+from networkcommons import _conf
+from networkcommons.data.omics import _common
 
 
-def get_lianaplus(resource='Consensus'):
+def get_lianaplus(resource='consensus', update: bool = False):
     """
-    Retrieves the Liana+ ligand-receptor interaction network with
-    directed interactions and specific criteria.
-
-    Args:
-        resource (str, optional): The resource to retrieve the network from.
-            Defaults to 'Consensus'.
+    Retrieves the metabolic network used in COSMOS from the server
 
     Returns:
-        pandas.DataFrame: Liana+ network with source, target, and sign columns.
+        network (pandas.DataFrame): metabolic network with
+        source, target, and sign columns.
     """
+    path = os.path.join(_conf.get('pickle_dir'), 'lianaplus.pickle')
 
-    _log('LIANA+: Retrieving ligand-receptor network...')
+    _log('LIANA+: Retrieving prior knowledge network...')
 
-    network = liana.resource.select_resource(resource).drop_duplicates()
-    network.columns = ['source', 'target']
-    network['sign'] = 1
+    if update or not os.path.exists(path):
+        _log('LIANA+: Network not found in cache. Downloading...')
 
-    _log(f'LIANA+: Done. Network has {len(network)} interactions.')
+        baseurl = urllib.parse.urljoin(_common._baseurl(), 'prior_knowledge')
 
-    return network
+        file_legend = pd.read_csv(baseurl + '/liana_ligrec.csv', sep=',')
+
+        # removing duplicated interactions
+        file_legend = file_legend[file_legend['resource'] == resource]
+
+        if file_legend.empty:
+            _log(f'LIANA+: No data found for resource {resource}')
+            return
+
+        file_legend = file_legend[['source_genesymbol', 'target_genesymbol']].drop_duplicates()
+        file_legend.columns = ['source', 'target']
+        file_legend['sign'] = 1
+
+        file_legend.to_pickle(path)
+
+    else:
+        _log('LIANA+: Network found in cache. Loading...')
+
+        file_legend = pd.read_pickle(path)
+
+    _log(f'LIANA+: Done. Network has {len(file_legend)} interactions.')
+
+
+    return file_legend
