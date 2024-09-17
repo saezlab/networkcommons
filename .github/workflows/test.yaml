@@ -63,7 +63,7 @@ jobs:
             run: |
               poetry install --no-interaction --no-root
         -   name: Install library
-            run: poetry install --no-interaction
+            run: poetry install --no-interaction -E corneto-backends
         -   name: Tests and coverage
             if: ${{ github.event_name == 'push' }}
             run: |
