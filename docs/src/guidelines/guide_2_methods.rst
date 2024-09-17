@@ -17,6 +17,12 @@ In the :doc:`./docs/src/methods.rst file <../methods>`, contributors should add:
 * Input/output definition
 * Link to publication and repository (if available)
 
+For example:
+
+.. literalinclude:: ../methods.rst
+   :language: rest
+   :lines: 14-30
+
 Functions should be documented using `Google style Python docstrings <https://sphinxcontrib-napoleon.readthedocs.io/en/latest/example_google.html>`_.
 
 In :doc:`./docs/src/api.rst file <../api>`, contributors should add a new documentation module that contains the new classes/functions implemented:

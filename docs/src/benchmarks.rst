@@ -51,7 +51,7 @@ important in the contextualisation of said perturbation
 
     
 .. note::
-    Methods producing result networks whose nodes have a low average EC50 (compared to nodes not included in the network) are better performers that those producing network 
+    Methods producing result networks whose nodes have a low average EC50 (compared to nodes not included in the network) are better performers than those producing networks 
     where this difference (EC50_in - EC50_out) is not that big.
 
 **Example:** :doc:`Vignette 3: Sensitive response to drug perturbation using phosphoproteomics <vignettes/3_evaluation_decryptm>`

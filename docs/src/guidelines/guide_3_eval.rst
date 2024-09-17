@@ -20,7 +20,7 @@ For example:
 
 .. literalinclude:: ../benchmarks.rst
    :language: rest
-   :lines: 82-104
+   :lines: 85-108
 
 
 ------
