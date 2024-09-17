@@ -20,5 +20,6 @@ Martin Garrido-Rodriguez, Olga Ivanova, Victor Paton, Denes Turei
 [link-cov]: https://codecov.io/github/saezlab/networkcommons
 [badge-tests]: https://img.shields.io/github/actions/workflow/status/saezlab/networkcommons/test.yaml?branch=main
 [link-tests]: https://github.com/saezlab/networkcommons/actions/workflows/test.yml
-[badge-docs]: https://img.shields.io/readthedocs/networkcommons
+[badge-docs]: https://readthedocs.org/projects/networkcommons/badge/?version=main
 [link-docs]: https://networkcommons.readthedocs.io
+  
