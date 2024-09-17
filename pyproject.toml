@@ -62,8 +62,8 @@ igraph = {version = "^0.11.6", optional = true}
 decoupler = "^1.8.0"
 omnipath = "^1.0.8"
 pygraphviz = "1.11"
-picos = "^2.4.17"
-cvxpy = { version = "^1.5.1", optional = true }
+picos = { version = "^2.4.17", optional = true }
+cvxpy = "^1.5.1"
 corneto = "1.0.0.dev0"
 seaborn = "^0.13.2"
 
@@ -93,7 +93,7 @@ nbsphinx = { git = "https://github.com/deeenes/nbsphinx.git", branch = "timings"
 
 [tool.poetry.extras]
 igraph = ["igraph"]
-corneto-backends = ["cvxpy"]
+corneto-backends = ["picos"]
 
 [tool.poetry.urls]
 "Bug Tracker" = "https://github.com/saezlab/networkcommons/issues"
