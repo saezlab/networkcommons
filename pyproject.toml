@@ -93,7 +93,7 @@ nbsphinx = { git = "https://github.com/deeenes/nbsphinx.git", branch = "timings"
 
 [tool.poetry.extras]
 igraph = ["igraph"]
-corneto-backends = ["cvxpy", "picos"]
+corneto-backends = ["cvxpy"]
 
 [tool.poetry.urls]
 "Bug Tracker" = "https://github.com/saezlab/networkcommons/issues"
