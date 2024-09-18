@@ -14,7 +14,13 @@ We welcome any contribution to this project! For more information, please check 
 
 ## Contributors
 
-Martin Garrido-Rodriguez, Olga Ivanova, Victor Paton, Denes Turei
+- Victor Paton
+- Denes Turei
+- Olga Ivanova
+- Pablo Rodriguez-Mier
+- Sophia Muller-Dot
+- Martin Garrido-Rodriguez
+- Julio Saez-Rodriguez
 
 [badge-cov]: https://codecov.io/github/saezlab/networkcommons/graph/badge.svg?token=RH438ALJC2
 [link-cov]: https://codecov.io/github/saezlab/networkcommons

@@ -41,7 +41,7 @@ collaborative advancements in network biology.
 
 Mission statement
 =================
-Thirty years ago, microarrays revolutionized the study of biological processes, making the computational analysis of vast molecular data essential for understanding phenotypes systematically. This shift gave rise to **network biology**, a field that has developed numerous approaches based on diverse networks, algorithmic assumptions, and omics data types.
+Thirty years ago, microarrays revolutionized the study of biological processes, making the computational analysis of vast molecular data essential for understanding phenotypes systematically. This shift increased usage of **network biology**, a field that has developed numerous approaches based on diverse networks, algorithmic assumptions, and omics data types.
 At SaezLab, our focus is on large-scale studies of signaling processes, typically represented as directed, and sometimes signed, networks. These networks encode the transmission of molecular activation states among proteins, enabling us to map cellular functions based on data and prior knowledge.
 
 In a  `recent review <https://www.embopress.org/doi/full/10.15252/msb.202211036>`_, we identified several challenges in large-scale modeling of signaling networks, including the **lack of benchmarks** and the need for a **unified technical implementation** comprising data, methods, and evaluation strategies.
