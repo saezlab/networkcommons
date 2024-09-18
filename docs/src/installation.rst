@@ -8,7 +8,7 @@ Installation
 Requirements
 -------------------
 
-NetworkCommons requires `graphviz https://graphviz.gitlab.io/download/`_ to visualize networks.
+NetworkCommons requires `graphviz <https://graphviz.gitlab.io/download/>`_ to visualize networks.
 
 In Ubuntu, it can be installed via using the APT package manager:
 
@@ -17,7 +17,7 @@ In Ubuntu, it can be installed via using the APT package manager:
    sudo apt-get update
    sudo apt-get install -y graphviz graphviz-dev
 
-In MacOS, it can be installed using `Homebrew https://brew.sh/`_. In our local tests, we also needed to set the following environment variables:
+In MacOS, it can be installed using `Homebrew <https://brew.sh/>`_. In our local tests, we also needed to set the following environment variables:
 
 .. code-block:: console
 
