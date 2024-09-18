@@ -8,27 +8,45 @@ Installation
 Requirements
 -------------------
 
+
 NetworkCommons requires `graphviz <https://graphviz.gitlab.io/download/>`_ to visualize networks.
 
-In Ubuntu, it can be installed via using the APT package manager:
+Conda
+-------------------
+
+If you are using ``conda``, it can be installed via:
 
 .. code-block:: console
 
-   sudo apt-get update
+   conda install graphviz
+
+``graphviz`` is also available via the APT package manager in Ubuntu:
+
+Ubuntu
+-------------------
+
+.. code-block:: console
+
    sudo apt-get install -y graphviz graphviz-dev
 
-In MacOS, it can be installed using `Homebrew <https://brew.sh/>`_. In our local tests, we also needed to set the following environment variables:
+MacOS
+-------------------
+
+In MacOS, it can be installed using `Homebrew <https://brew.sh/>`_. 
 
 .. code-block:: console
 
    brew install graphviz
 
+In some of our local MacOS tests, we also needed to set the following environment variables:
+
 .. code-block:: console
 
-   echo 'export PATH="$(brew --prefix graphviz)/bin:$PATH"' >> ~/.zshrc
-   echo 'export CFLAGS="-I$(brew --prefix graphviz)/include"' >> ~/.zshrc
-   echo 'export LDFLAGS="-L$(brew --prefix graphviz)/lib"' >> ~/.zshrc
+   export PATH="$(brew --prefix graphviz)/bin:$PATH"'
+   export CFLAGS="-I$(brew --prefix graphviz)/include"'
+   export LDFLAGS="-L$(brew --prefix graphviz)/lib"'
 
+Please note, if you are using a different architecture or operating system within a subsystem, you may need to make sure that the installed binaries of graphviz were compiled for the correct architecture and that they are visible to the Python interpreter.
 
 -------------------
 PIP
