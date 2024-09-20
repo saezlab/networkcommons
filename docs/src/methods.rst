@@ -172,6 +172,10 @@ CORNETO - CARNIVAL
 
 CORNETO (Constraint-based Optimization for the Reconstruction of NETworks from Omics) is a unified network inference method which combines a wide range of network methods including CARNIVAL which is currently implemented in NetworkCommons. CARNIVAL (CAusal Reasoning for Network identification using Integer VALue programming) connects a set of weighted target and source nodes using integer linear programming (ILP) and predicts the sign for the intermediate nodes (https://doi.org/10.1038/s41540-019-0118-z). Thereby, it optimizes a cost function that penalizes the inclusion of edges as well as the removal of target and source nodes. Additionally, it considers a set of constraints that among other things do not allow sign inconsistency.
 
+.. raw:: html
+
+   <object type="image/svg+xml" data="_static/nc_corneto.svg" width="1000px" alt="MOON"></object>
+
 **Input:** Set of weighted target and source nodes, network graph
 
 **Node weights:** w(v) ∈ ℝ
