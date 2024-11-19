@@ -18,7 +18,6 @@ SignalingProfiler: a multi-step pipeline integrating topological and causal infe
 """
 
 __all__ = [
-    'run_phosphoscore',
     'run_signalingprofiler',
 ]
 
