@@ -79,6 +79,21 @@ CORNETO
 
     methods.run_corneto_carnival
 
+
+.. _api-signalingprofiler:
+
+SignalingProfiler
+=================
+.. module::networkcommons.methods
+.. currentmodule:: networkcommons
+
+.. autosummary::
+    :toctree: api
+    :recursive:
+
+    methods.mf_classifier
+    methods.run_signalingprofiler
+
 .. _api-pk:
 
 Prior Knowledge
