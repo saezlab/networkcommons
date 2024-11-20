@@ -35,13 +35,13 @@ def phospho_egf_datatypes() -> pd.DataFrame:
     })
 
 
-def phospho_egf_tables(type='diffabundance'):
+def phospho_egf_tables(type='phosphosite'):
     """
     A table with the corresponding data type for the phospho EGF dataset. 
 
     Args:
         type:
-            Either 'diffabundance' or 'kinase_scores'.
+            Either 'phosphosite' or 'kinase'.
 
     Returns:
         A DataFrame with the corresponding data.
