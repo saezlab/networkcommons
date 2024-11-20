@@ -24,3 +24,4 @@ from ._panacea import *
 from ._scperturb import *
 from ._nci60 import *
 from ._cptac import *
+from ._phosphoegf import *

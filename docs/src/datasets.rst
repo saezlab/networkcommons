@@ -92,6 +92,25 @@ NCI60
 
 .. _details-pk:
 
+
+Phosphoproteomics in response to EGF
+-----
+
+**Alias:** PhosphoEGF
+
+**Description:** A meta-analysis of phosphoproteomics data in response to EGF stimulation
+
+**Publication Link:** `Garrido-Rodriguez et al. Evaluating signaling pathway inference from kinase-substrate interactions and phosphoproteomics data. bioRxiv (2024). <https://www.biorxiv.org/content/10.1101/2024.10.21.619348v1>`_
+
+**Data location:** `Supplementary Data files of the manuscript <https://www.biorxiv.org/content/10.1101/2024.10.21.619348v1.supplementary-material>`_
+
+**Detailed Description:** This dataset the results of a meta-analysis of phosphoproteomics data in response to EGF stimulation across different labs and stimulation times. The data is available at two different levels. First, the phosphosite differential abundance is provided for every combination of study and treatment time. In the table, 'This study' refers to the data generated in the manuscript. Second, we offer access to the kinase-level activities inerred using decoupleR and the different kinase-substrate networks described in the paper. Briefly, four different networks were employed: A first one based on literature (literature), one based on kinase-substrate interaction prediction via protein language models (phosformer), one based on positionl peptide array screening (kinlibrary) and a combination of all of them (combined).
+
+**Functions:** See API documentation for :ref:`Phospho-EGF meta-analysis<api-phosphoegf>`.
+
+.. _details-pk:
+
+
 ---------------
 Prior Knowledge
 ---------------
