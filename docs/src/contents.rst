@@ -44,3 +44,4 @@ NetworkCommons: Table of Contents
    :caption: Additional resources
 
    vignettes/A_moon
+   vignettes/B_pertpy
