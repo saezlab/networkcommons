@@ -20,3 +20,4 @@ Network based inference methods and network operations.
 from ._graph import *
 from ._causal import *
 from ._moon import *
+from ._signalingprofiler import *

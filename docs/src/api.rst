@@ -79,6 +79,20 @@ CORNETO
 
     methods.run_corneto_carnival
 
+
+.. _api-signalingprofiler:
+
+SignalingProfiler
+=================
+.. module::networkcommons.methods
+.. currentmodule:: networkcommons
+
+.. autosummary::
+    :toctree: api
+    :recursive:
+
+    methods.run_signalingprofiler
+
 .. _api-pk:
 
 Prior Knowledge
@@ -235,7 +249,7 @@ Evaluation and description
     eval.get_phosphorylation_status
     eval.perform_random_controls
     eval.shuffle_dict_keys
-    
+
 .. _api-vis:
 
 Visualization
@@ -281,7 +295,7 @@ Utilities
     :toctree: api
     :recursive:
 
-    
+
     utils.to_cornetograph
     utils.to_networkx
     utils.read_network_from_file

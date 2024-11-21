@@ -179,3 +179,32 @@ CORNETO (Constraint-based Optimization for the Reconstruction of NETworks from O
 **Edge weights:** w(e) ∈ {1, −1}
 
 **Functions:** See API documentation for :ref:`CORNETO <api-corneto>`.
+
+SignalingProfiler
+------------------
+
+SignalingProfiler (https://doi.org/10.1038/s41540-024-00417-6) Python implementation is a two-steps pipeline.
+In the first step, SignalingProfiler generates the Naïve Network, a hierarchical and multi-layered network between source and target nodes using networkcommons "All paths".
+Three different layouts can be chosen, defined as one-, two-, or three-layers networks, with an increasing level of deepness.
+
+Each layer is defined by a different set of molecular functions.
+The molecular function for each protein is obtained by parsing the UNIPROT database GO Molecular Function annotation according to relative GO Ancestor terms. 
+This molecular function annotation refers to signal trasduction context: K, kinase; PP, phosphatases; T, transcription factor; O, all the other molecular functions.
+
+In the one-layer network, the perturbed node is connected to every target and is molecular function agnostic.
+The two-layers network connects the perturbed node to kinases/phosphatases/others (first layer) and then connect the latters to transcription factors (second layer). 
+The three-layers network adds another layer between kinases/phosphatases and other signaling proteins.
+
+In the second step, SignalingProfiler calls "CORNETO - CARNIVAL" to retrieve only sign-consistent edges from the naïve network (removing grey dashed edges).
+
+.. raw:: html
+
+   <object type="image/svg+xml" data="_static/nc_signalingprofiler.svg" width="1000px" alt="SignalingProfiler"></object>
+
+**Input:** Set of weighted target and source nodes, network graph
+
+**Node weights:** w(v) ∈ ℝ
+
+**Edge weights:** w(e) ∈ {1, −1}
+
+**Functions:** See API documentation for :ref:`SignalingProfiler <api-signalingprofiler>`.
