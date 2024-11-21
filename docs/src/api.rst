@@ -209,6 +209,20 @@ NCI60
     data.omics.nci60_datatypes
     data.omics.nci60_table
 
+.. _api-phosphoegf:
+
+Phospho-EGF meta-analysis
+~~~~~
+.. module::networkcommons.data.omics
+.. currentmodule:: networkcommons
+
+.. autosummary::
+    :toctree: api
+    :recursive:
+
+    data.omics.phospho_egf_datatypes
+    data.omics.phospho_egf_tables
+
 .. _api-eval:
 
 Evaluation and description

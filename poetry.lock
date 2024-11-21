@@ -913,26 +913,26 @@ reference = "pypi-public"
 
 [[package]]
 name = "corneto"
-version = "1.0.0.dev0"
+version = "1.0.0a0"
 description = "CORNETO: A Unified Framework for Omics-Driven Network Inference"
 optional = false
-python-versions = "^3.9"
-files = []
-develop = false
+python-versions = ">=3.9"
+files = [
+    {file = "corneto-1.0.0a0-py3-none-any.whl", hash = "sha256:30375a7c5d121f488425cf71ef842ca13137e568ccd38a49569c2970cf5f19bf"},
+    {file = "corneto-1.0.0a0.tar.gz", hash = "sha256:966d50762f92047ea4e5d1a136607f20ae9ec1d585530a24ad5c95e700b24180"},
+]
 
 [package.dependencies]
-numpy = ">=1.15"
+numpy = ">=1.15,<2.0.0"
 
 [package.extras]
 highs = ["cvxpy-base (>=1.5.0,<2.0.0)"]
-os = ["cvxpy-base (>=1.5.0,<2.0.0)", "scipy (>=1.11.0)"]
-picos = ["picos (>=2.4.1,<3.0.0)"]
+os = ["cvxpy-base (>=1.5.0,<2.0.0)", "scipy (>=1.11.0,<2.0.0)"]
 
 [package.source]
-type = "git"
-url = "https://github.com/deeenes/corneto.git"
-reference = "main"
-resolved_reference = "cfa311a6d1463f94d94b5e6e5735b5267e69a8a4"
+type = "legacy"
+url = "https://pypi.org/simple"
+reference = "pypi-public"
 
 [[package]]
 name = "coverage"
@@ -7351,4 +7351,4 @@ igraph = ["igraph"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.9"
-content-hash = "d6baeb6a8129ff6502df82db848bd47d25346bc2c278deb1ed34f3a809eb6765"
+content-hash = "a962bad01f6adb39beb22a297ea79184ea1e32f762d436cc3377ef3a941faff9"

@@ -47,3 +47,9 @@ omics:
         It includes three files: TF activities from transcriptomics data,
         metabolite abundances and gene reads.
       path: NCI60/{cell_line}/{cell_line}__{data_type}.tsv
+    phosphoegf:
+      name: PhosphoEGF
+      description: Phosphoproteomics meta-analysis of the response to EGF stimulus
+      publication_link: https://www.biorxiv.org/content/10.1101/2024.10.21.619348v1
+      detailed_description: >-
+        This dataset contains phosphoproteomics data after EGF stimulus gathered and preprocessed from multiple studies.
