@@ -37,3 +37,4 @@ trace*
 work/
 test.ipynb
 flop.png
+*.h5ad
