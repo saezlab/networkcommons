@@ -195,7 +195,7 @@ In the one-layer network, the perturbed node is connected to every target and is
 The two-layers network connects the perturbed node to kinases/phosphatases/others (first layer) and then connect the latters to transcription factors (second layer). 
 The three-layers network adds another layer between kinases/phosphatases and other signaling proteins.
 
-In the second step, SignalingProfiler calls "CORNETO - CARNIVAL" to retrieve only sign-consistent edges from the naïve network (removing grey dashed edges).
+In the second step, SignalingProfiler calls "CORNETO - CARNIVAL" to retrieve only sign-consistent edges from the naïve network (removing white dashed edges).
 
 .. raw:: html
 
