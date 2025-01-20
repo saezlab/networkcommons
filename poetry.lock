@@ -4786,7 +4786,7 @@ description = "Python interface to Graphviz"
 optional = true
 python-versions = ">=3.10"
 groups = ["main"]
-markers = "python_version <= \"3.11\" or python_version >= \"3.12\""
+markers = "(extra == \"pygraphviz\" or extra == \"corneto-backends\") and (python_version <= \"3.11\" or python_version >= \"3.12\")"
 files = [
     {file = "pygraphviz-1.14.tar.gz", hash = "sha256:c10df02377f4e39b00ae17c862f4ee7e5767317f1c6b2dfd04cea6acc7fc2bea"},
 ]
@@ -7538,10 +7538,11 @@ url = "https://pypi.org/simple"
 reference = "pypi-public"
 
 [extras]
-corneto-backends = ["cvxpy-base", "pyscipopt"]
+corneto-backends = ["cvxpy-base", "pygraphviz", "pyscipopt"]
 igraph = ["igraph"]
+pygraphviz = ["pygraphviz"]
 
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.10,<4.0"
-content-hash = "61102d36aed59a5b507b452eb3ec463b7df94b345eadfdc7f07adbf34eee597a"
+content-hash = "baf43045cb3a675c9d05922b8a165bac1d862138331fbe342a6c2938f2604905"
