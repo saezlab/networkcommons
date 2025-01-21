@@ -95,7 +95,7 @@ nbsphinx = { git = "https://github.com/deeenes/nbsphinx.git", branch = "timings"
 [tool.poetry.extras]
 igraph = ["igraph"]
 pygraphviz = ["pygraphviz"]
-corneto-backends = ["cvxpy-base", "pyscipopt", "pygraphviz"]
+corneto-backends = ["pyscipopt", "pygraphviz"]
 
 [tool.poetry.urls]
 "Bug Tracker" = "https://github.com/saezlab/networkcommons/issues"
