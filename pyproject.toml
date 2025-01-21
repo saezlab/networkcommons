@@ -4,7 +4,7 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.poetry]
 name = "networkcommons"
-version = "0.4.3"
+version = "0.4.4"
 description = "Integrated framework for network inference and evaluation using prior knowledge and omics data"
 license = "gpl-3.0-only"
 authors = [

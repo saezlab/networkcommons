@@ -8,7 +8,7 @@ sys.path.insert(0, os.path.abspath('../..'))
 project = 'NetworkCommons'
 author = 'SaezLab'
 release = 'alpha'
-version = '0.4.3'
+version = '0.4.4'
 copyright = f"{datetime.now():%Y}, NetworkCommons developers"
 
 # -- General configuration
