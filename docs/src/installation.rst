@@ -2,7 +2,7 @@
 Installation
 ############
 
-``NetworkCommons`` requires ``Python`` version >= 3.10 to run.
+``NetworkCommons`` requires ``Python`` version >= 3.10 and < 3.13 to run.
 
 -------------------
 Requirements
