@@ -10,7 +10,7 @@
    xml:space="preserve"
    sodipodi:docname="nc_graphabs.svg"
    inkscape:version="1.2.1 (9c6d41e410, 2022-07-14)"
-   inkscape:export-filename="nc_graphabs_paper_v6.png"
+   inkscape:export-filename="nc_graphabs.svg"
    inkscape:export-xdpi="300"
    inkscape:export-ydpi="300"
    xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
@@ -19,11 +19,11 @@
    xmlns="http://www.w3.org/2000/svg"
    xmlns:svg="http://www.w3.org/2000/svg"><sodipodi:namedview
      id="namedview7"
-     pagecolor="#ffffff"
+     pagecolor="#fcfcfc"
      bordercolor="#000000"
      borderopacity="0.25"
      inkscape:showpageshadow="2"
-     inkscape:pageopacity="0"
+     inkscape:pageopacity="1"
      inkscape:pagecheckerboard="0"
      inkscape:deskcolor="#d1d1d1"
      inkscape:document-units="mm"
@@ -3173,7 +3173,13 @@
      id="path135-5" /></marker></defs><g
      inkscape:label="Capa 1"
      inkscape:groupmode="layer"
-     id="layer1"><text
+     id="layer1"><rect
+       style="fill:#fcfcfc;fill-opacity:1;stroke-width:2;stroke-linejoin:round;stop-color:#000000"
+       id="rect31102"
+       width="180"
+       height="130"
+       x="1.5543122e-15"
+       y="-3.3306691e-15" /><text
        xml:space="preserve"
        style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:2.82223px;line-height:normal;font-family:Lato;-inkscape-font-specification:'Lato, Normal';font-variant-ligatures:normal;font-variant-position:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-alternates:normal;font-variant-east-asian:normal;font-feature-settings:normal;font-variation-settings:normal;text-indent:0;text-align:start;text-decoration-line:none;text-decoration-style:solid;text-decoration-color:#000000;letter-spacing:normal;word-spacing:normal;text-transform:none;writing-mode:lr-tb;direction:ltr;text-orientation:mixed;dominant-baseline:auto;baseline-shift:baseline;text-anchor:middle;white-space:normal;opacity:1;vector-effect:none;fill:#686868;fill-opacity:1;stroke:none;stroke-width:0.1;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:0.972549;-inkscape-stroke:none;marker-end:url(#marker17186);stop-color:#000000;stop-opacity:1"
        x="16.618645"
