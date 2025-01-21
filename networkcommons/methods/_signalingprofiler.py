@@ -52,8 +52,7 @@ def _mf_classifier(
         proteins: A dictionary of protein names and exp values to classify.
         with_exp: If True, return a dictionary with exp value -1 or 1. If
             False, return a dictionary with sets.
-        only_proteins: A list of protein
-        names to use to subset proteins
+        only_proteins: A list of protein names to use to subset proteins.
 
     Returns:
         A dictionary where keys are MF categories and values are sets or
@@ -151,8 +150,8 @@ def _validate_inputs(
     if (
         isinstance(max_length, list) and
         any(
-            not isinstance(x, int) or
-            x <= 0 for x in max_length
+            not isinstance(x, int) or x <= 0
+            for x in max_length
         )
     ):
         err.append("'max_length' values must be positive integers.")
@@ -180,7 +179,7 @@ def _generate_naive_network(
     ) -> nx.Graph:
 
     """
-    Generates a hierarchical (multi)layersed network from source nodes defining
+    Generates a hierarchical (multi)layered network from source nodes defining
     layers by distinguishing measured nodes by molecular function.
 
     Args:
@@ -196,7 +195,7 @@ def _generate_naive_network(
             it should be a list of ints.
 
     Returns:
-        The constructed multi-layersed network.
+        The constructed multi-layered network.
     """
 
     _log('SignalingProfiler naive network building via all paths algorithm...')
@@ -217,7 +216,7 @@ def _generate_naive_network(
 
 
     # Define targets with molecular function classification
-    targets = _mf_classifier(measurements, with_exp=True)
+    targets = _mf_classifier(measurements, with_exp = True)
     max_length = _misc.to_list(max_length)
 
     stages = (
@@ -272,7 +271,7 @@ def run_signalingprofiler(
     """
     Contextualize networks by the SignalingProfiler algorithm.
 
-    Generates a hierarchical (multi)layersed network from source nodes defining
+    Generates a hierarchical (multi)layered network from source nodes defining
     layers by distinguishing measured nodes by molecular function and run the
     Vanilla Carnival algorithm via CORNETO to retrieve sign-coherent edges with
     nodes measured activity.
@@ -289,7 +288,7 @@ def run_signalingprofiler(
             ints.
 
     Returns:
-        The constructed multi-layersed network.
+        The constructed multi-layered network.
     """
 
     # Generate naive_network
@@ -298,7 +297,7 @@ def run_signalingprofiler(
         measurements = measurements,
         graph = graph,
         layers = layers,
-        max_length = max_length
+        max_length = max_length,
     )
 
     # Optimize network using CORNETO
@@ -308,7 +307,7 @@ def run_signalingprofiler(
         measurements,
         betaWeight = betaWeight,
         solver = solver,
-        verbose = verbose
+        verbose = verbose,
     )
 
     return opt_net
