@@ -1,0 +1,36 @@
+name: Test installation (& dependencies)
+
+on:
+  push:
+    branches:
+      - main
+      - dev
+
+jobs:
+  test-install-import:
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+        python-version: [3.10, 3.11, 3.12]
+
+    steps:
+
+      - name: Checkout
+        uses: actions/checkout@main
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install package
+        run: |
+          python -m ensurepip
+          pip install .
+
+      - name: Import package
+        run: |
+          python -c "import <your_package_name>"
