@@ -33,4 +33,4 @@ jobs:
 
       - name: Import package
         run: |
-          python -c "import <your_package_name>"
+          python -c "import networkcommons"
