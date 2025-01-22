@@ -59,9 +59,8 @@ License
 The data redistributed by OmniPath does not have a license, each original resource carries their own. 
 `Here <https://omnipathdb.org/info>`_ one can find the license information of all the resources in OmniPath.
 
-.. Citation
-.. -------
-.. Badia-i-Mompel P., Vélez Santiago J., Braunger J., Geiss C., Dimitrov D., Müller-Dott S., Taus P., Dugourd A., Holland C.H., 
-.. Ramirez Flores R.O. and Saez-Rodriguez J. 2022. decoupleR: ensemble of computational methods to infer biological activities 
-.. from omics data. Bioinformatics Advances. https://doi.org/10.1093/bioadv/vbac016
+Citation
+-------
+Victor Paton, Denes Türei, Olga Ivanova, Sophia Müller-Dott, Pablo Rodriguez-Mier, Veronica Venafra, Livia Perfetto, Martin Garrido-Rodriguez, Julio Saez-Rodriguez
+bioRxiv 2024.11.22.624823; doi: https://doi.org/10.1101/2024.11.22.624823
 

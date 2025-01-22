@@ -4,7 +4,7 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.poetry]
 name = "networkcommons"
-version = "0.4.3"
+version = "0.4.4"
 description = "Integrated framework for network inference and evaluation using prior knowledge and omics data"
 license = "gpl-3.0-only"
 authors = [
@@ -39,7 +39,7 @@ name = "pypi-public"
 url = "https://pypi.org/simple/"
 
 [tool.poetry.dependencies]
-python = "^3.9"
+python = ">=3.10,<4.0"
 toml = "*"
 networkx = "*"
 pandas = "*"
@@ -54,20 +54,21 @@ lazy-import = "^0.2.2"
 anndata = "<=0.10.8"
 pytest = "^8.2.2"
 yfiles-jupyter-graphs = "^1.7.2"
-gurobipy = "^11.0.2"
+pyscipopt = "^5.2.1"
+scipy = "^1.15.1"
 matplotlib = "^3.5.1"
 graphviz = "^0.17"
 biomart = "^0.9.2"
 igraph = {version = "^0.11.6", optional = true}
 decoupler = "^1.8.0"
 omnipath = "^1.0.8"
-pygraphviz = "1.11"
-picos = { version = "^2.4.17", optional = true }
-cvxpy = "^1.5.1"
-corneto = "1.0.0.dev0"
+pygraphviz = {version = "^1.11", optional = true}
+cvxpy-base = "^1.6.0"
+corneto = "1.0.0a0"
 seaborn = "^0.13.2"
+numpy = "^1.26.4"
 
-[tool.poetry.dev-dependencies]
+[tool.poetry.group.dev.dependencies]
 pytest = ">=6.0"
 pytest-timeout = "^2.3.1"
 pytest-cov = "^5.0.0"
@@ -93,7 +94,8 @@ nbsphinx = { git = "https://github.com/deeenes/nbsphinx.git", branch = "timings"
 
 [tool.poetry.extras]
 igraph = ["igraph"]
-corneto-backends = ["picos"]
+pygraphviz = ["pygraphviz"]
+corneto-backends = ["pyscipopt", "pygraphviz"]
 
 [tool.poetry.urls]
 "Bug Tracker" = "https://github.com/saezlab/networkcommons/issues"

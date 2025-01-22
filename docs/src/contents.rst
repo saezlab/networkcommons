@@ -23,6 +23,7 @@ NetworkCommons: Table of Contents
    :maxdepth: 2
    :caption: Contribution guidelines
 
+   guidelines/landing
    guidelines/guide_1_data
    guidelines/guide_2_methods
    guidelines/guide_3_eval
@@ -44,3 +45,4 @@ NetworkCommons: Table of Contents
    :caption: Additional resources
 
    vignettes/A_moon
+   vignettes/B_pertpy

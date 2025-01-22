@@ -6,21 +6,14 @@ NetworkCommons is a community-driven platform designed to simplify access to too
 [![Tests][badge-tests]][link-tests]
 [![Documentation][badge-docs]][link-docs]
 
-[![NetworkCommons API](https://raw.githubusercontent.com/saezlab/networkcommons/0d62d40ad0b3c7ab40b61f4f236af69ce9fa019f/docs/src/_static/nc_graphabs.svg)](https://networkcommons.readthedocs.io)
+[![NetworkCommons API](docs/src/_static/nc_graphabs.svg)](https://networkcommons.readthedocs.io)
 
 Addressing the complexity and fragmentation of data, methods, and tools across multiple repositories, NetworkCommons offers an API that provides access to raw and preprocessed omics data, directed and/or signed template graphs, and various network inference methods. By streamlining accessibility, we aim to support systematic benchmarking, enhance critical assessment, and foster collaborative advancements in network biology.
 
 We welcome any contribution to this project! For more information, please check [our documentation](https://networkcommons.readthedocs.io). 
 
-## Contributors
-
-- Victor Paton
-- Denes Turei
-- Olga Ivanova
-- Pablo Rodriguez-Mier
-- Sophia Muller-Dot
-- Martin Garrido-Rodriguez
-- Julio Saez-Rodriguez
+## Citation
+Victor Paton, Denes Türei, Olga Ivanova, Sophia Müller-Dott, Pablo Rodriguez-Mier, Veronica Venafra, Livia Perfetto, Martin Garrido-Rodriguez, Julio Saez-Rodriguez. bioRxiv 2024.11.22.624823; doi: https://doi.org/10.1101/2024.11.22.624823
 
 [badge-cov]: https://codecov.io/github/saezlab/networkcommons/graph/badge.svg?token=RH438ALJC2
 [link-cov]: https://codecov.io/github/saezlab/networkcommons
