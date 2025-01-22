@@ -1,4 +1,4 @@
-name: networkcommons_test
+name: networkcommons_env
 channels:
   - bioconda
   - conda-forge
