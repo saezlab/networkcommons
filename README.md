@@ -13,7 +13,9 @@ Addressing the complexity and fragmentation of data, methods, and tools across m
 We welcome any contribution to this project! For more information, please check [our documentation](https://networkcommons.readthedocs.io). 
 
 ## Citation
-Victor Paton, Denes Türei, Olga Ivanova, Sophia Müller-Dott, Pablo Rodriguez-Mier, Veronica Venafra, Livia Perfetto, Martin Garrido-Rodriguez, Julio Saez-Rodriguez. bioRxiv 2024.11.22.624823; doi: https://doi.org/10.1101/2024.11.22.624823
+Victor Paton, Denes Türei, Olga Ivanova, Sophia Müller-Dott, Pablo Rodriguez-Mier, Veronica Venafra, Livia Perfetto, Martin Garrido-Rodriguez, Julio Saez-Rodriguez. 
+[NetworkCommons: bridging data, knowledge, and methods to build and evaluate context-specific biological networks](https://doi.org/10.1093/bioinformatics/btaf048)
+Bioinformatics, 2025
 
 [badge-cov]: https://codecov.io/github/saezlab/networkcommons/graph/badge.svg?token=RH438ALJC2
 [link-cov]: https://codecov.io/github/saezlab/networkcommons
