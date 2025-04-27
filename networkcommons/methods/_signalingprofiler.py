@@ -6,7 +6,7 @@
 # Copyright 2024
 # Heidelberg University Hospital
 #
-# File author(s): Perfetto Lab (livia.perfetto@gmail.com)
+# File author(s): Perfetto Lab (livia.perfetto@uniroma1.com)
 #
 # Distributed under the GPLv3 license
 # See the file `LICENSE` or read a copy at
