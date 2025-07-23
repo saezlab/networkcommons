@@ -61,6 +61,7 @@ The data redistributed by OmniPath does not have a license, each original resour
 
 Citation
 -------
-Victor Paton, Denes Türei, Olga Ivanova, Sophia Müller-Dott, Pablo Rodriguez-Mier, Veronica Venafra, Livia Perfetto, Martin Garrido-Rodriguez, Julio Saez-Rodriguez
-bioRxiv 2024.11.22.624823; doi: https://doi.org/10.1101/2024.11.22.624823
+Victor Paton, Denes Türei, Olga Ivanova, Sophia Müller-Dott, Pablo Rodriguez-Mier, Veronica Venafra, Livia Perfetto, Martin Garrido-Rodriguez, Julio Saez-Rodriguez. 
+`NetworkCommons: bridging data, knowledge, and methods to build and evaluate context-specific biological networks <https://doi.org/10.1093/bioinformatics/btaf048>`_.
+Bioinformatics, 2025
 
