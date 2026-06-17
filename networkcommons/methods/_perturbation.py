@@ -204,17 +204,34 @@ def _pearson(x: np.ndarray, y: np.ndarray) -> float:
 def evaluate_predictions(
         readouts: pd.DataFrame,
         predictions: pd.DataFrame,
+        axis: t.Literal['readout', 'condition'] = 'readout',
     ) -> pd.DataFrame:
     """
     Calculate simple predictive metrics for perturbation-response models.
 
     Args:
-        readouts: Observed response matrix.
-        predictions: Predicted response matrix.
+        readouts: Observed response matrix (conditions × readouts).
+        predictions: Predicted response matrix (conditions × readouts).
+        axis: Dimension along which to compute per-element metrics.
+            ``'readout'`` (default) returns one row per TF/readout, measuring
+            how well each output node is predicted across all conditions.
+            ``'condition'`` returns one row per sample, measuring how well each
+            experimental condition is predicted across all readouts.
+            Both modes append an ``__all__`` summary row computed over all
+            elements jointly.
 
     Returns:
-        DataFrame indexed by readout with MSE, MAE and Pearson correlation.
+        DataFrame with columns ``mse``, ``mae``, ``pearson``, indexed by
+        readout name (``axis='readout'``) or condition name
+        (``axis='condition'``).
+
+    Raises:
+        ValueError: If ``axis`` is not ``'readout'`` or ``'condition'``, or if
+            readouts and predictions share no rows/columns.
     """
+
+    if axis not in ('readout', 'condition'):
+        raise ValueError(f"`axis` must be 'readout' or 'condition', got {axis!r}")
 
     readouts = _as_dataframe(readouts, 'readouts')
     predictions = _as_dataframe(predictions, 'predictions')
@@ -229,32 +246,36 @@ def evaluate_predictions(
     y_pred = predictions.loc[shared_rows, shared_cols]
 
     records = []
+    index_name = axis  # 'readout' or 'condition'
 
-    for column in shared_cols:
-        err = y_pred[column].to_numpy() - y_true[column].to_numpy()
-        records.append(
-            {
-                'readout': column,
+    if axis == 'readout':
+        for label in shared_cols:
+            err = y_pred[label].to_numpy() - y_true[label].to_numpy()
+            records.append({
+                index_name: label,
                 'mse': float(np.mean(err ** 2)),
                 'mae': float(np.mean(np.abs(err))),
-                'pearson': _pearson(
-                    y_true[column].to_numpy(),
-                    y_pred[column].to_numpy(),
-                ),
-            }
-        )
+                'pearson': _pearson(y_true[label].to_numpy(), y_pred[label].to_numpy()),
+            })
+    else:
+        for label in shared_rows:
+            err = y_pred.loc[label].to_numpy() - y_true.loc[label].to_numpy()
+            records.append({
+                index_name: label,
+                'mse': float(np.mean(err ** 2)),
+                'mae': float(np.mean(np.abs(err))),
+                'pearson': _pearson(y_true.loc[label].to_numpy(), y_pred.loc[label].to_numpy()),
+            })
 
     flat_err = y_pred.to_numpy().ravel() - y_true.to_numpy().ravel()
-    records.append(
-        {
-            'readout': '__all__',
-            'mse': float(np.mean(flat_err ** 2)),
-            'mae': float(np.mean(np.abs(flat_err))),
-            'pearson': _pearson(y_true.to_numpy().ravel(), y_pred.to_numpy().ravel()),
-        }
-    )
+    records.append({
+        index_name: '__all__',
+        'mse': float(np.mean(flat_err ** 2)),
+        'mae': float(np.mean(np.abs(flat_err))),
+        'pearson': _pearson(y_true.to_numpy().ravel(), y_pred.to_numpy().ravel()),
+    })
 
-    return pd.DataFrame.from_records(records).set_index('readout')
+    return pd.DataFrame.from_records(records).set_index(index_name)
 
 
 def run_mean_response_baseline(

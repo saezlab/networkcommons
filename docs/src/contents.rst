@@ -46,3 +46,4 @@ NetworkCommons: Table of Contents
 
    vignettes/A_moon
    vignettes/B_pertpy
+   vignettes/C_lembas

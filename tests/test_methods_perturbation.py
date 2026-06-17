@@ -106,6 +106,52 @@ def test_ridge_baseline_fits_linear_response():
     assert set(result['coefficients'].index) == {'LigandA', 'LigandB'}
 
 
+def test_evaluate_predictions_axis_readout():
+
+    y_true = pd.DataFrame(
+        {'TF1': [0.0, 1.0], 'TF2': [2.0, 3.0]},
+        index=['s1', 's2'],
+    )
+    y_pred = pd.DataFrame(
+        {'TF1': [0.5, 1.5], 'TF2': [2.0, 3.0]},
+        index=['s1', 's2'],
+    )
+
+    metrics = _perturbation.evaluate_predictions(y_true, y_pred, axis='readout')
+
+    assert metrics.index.name == 'readout'
+    assert set(metrics.index) == {'TF1', 'TF2', '__all__'}
+    assert metrics.loc['TF2', 'mse'] == pytest.approx(0.0)
+    assert metrics.loc['TF1', 'mse'] == pytest.approx(0.25)
+
+
+def test_evaluate_predictions_axis_condition():
+
+    y_true = pd.DataFrame(
+        {'TF1': [0.0, 1.0], 'TF2': [2.0, 3.0]},
+        index=['s1', 's2'],
+    )
+    y_pred = pd.DataFrame(
+        {'TF1': [0.0, 1.0], 'TF2': [2.5, 3.0]},
+        index=['s1', 's2'],
+    )
+
+    metrics = _perturbation.evaluate_predictions(y_true, y_pred, axis='condition')
+
+    assert metrics.index.name == 'condition'
+    assert set(metrics.index) == {'s1', 's2', '__all__'}
+    assert metrics.loc['s2', 'mse'] == pytest.approx(0.0)
+    assert metrics.loc['s1', 'mse'] == pytest.approx(0.25 / 2)  # one TF off by 0.5
+
+
+def test_evaluate_predictions_bad_axis():
+
+    y = pd.DataFrame({'TF1': [1.0]}, index=['s1'])
+
+    with pytest.raises(ValueError, match='axis'):
+        _perturbation.evaluate_predictions(y, y, axis='feature')
+
+
 def test_lembas_rnn_smoke():
 
     pytest.importorskip('torch')
