@@ -223,6 +223,23 @@ Phospho-EGF meta-analysis
     data.omics.phospho_egf_datatypes
     data.omics.phospho_egf_tables
 
+.. _api-lembas:
+
+LEMBAS
+~~~~~~
+.. module::networkcommons.data.omics
+.. currentmodule:: networkcommons
+
+.. autosummary::
+    :toctree: api
+    :recursive:
+
+    data.omics.lembas_datasets
+    data.omics.lembas_network
+    data.omics.lembas_ligands
+    data.omics.lembas_tfs
+    data.omics.lembas_annotation
+
 .. _api-eval:
 
 Evaluation and description

@@ -53,3 +53,27 @@ omics:
       publication_link: https://www.biorxiv.org/content/10.1101/2024.10.21.619348v1
       detailed_description: >-
         This dataset contains phosphoproteomics data after EGF stimulus gathered and preprocessed from multiple studies.
+    lembas_macrophage:
+      name: LEMBAS Macrophage
+      description: Macrophage signaling dataset (low-coverage) for LEMBAS
+      publication_link: https://doi.org/10.1038/s41467-022-30684-y
+      detailed_description: >-
+        Macrophage stimulation dataset used in the LEMBAS paper (Nilsson et al. 2022).
+        Contains ~10 extracellular ligands across ~170 experimental conditions.
+        Includes the prior knowledge signaling network, binary ligand input matrix,
+        and TF activity scores (DoRothEA/VIPER) normalised to [0, 1].
+        Load with lembas_network(), lembas_ligands(), lembas_tfs(), lembas_annotation()
+        using dataset='macrophage'.
+      path: ''
+    lembas_ligand_screen:
+      name: LEMBAS Ligand Screen
+      description: High-throughput ligand screen dataset (high-coverage) for LEMBAS
+      publication_link: https://doi.org/10.1038/s41467-022-30684-y
+      detailed_description: >-
+        High-throughput ligand screen dataset used in the LEMBAS paper (Nilsson et al. 2022).
+        Contains ~60 extracellular ligands across ~500 experimental conditions.
+        Includes the prior knowledge signaling network, binary ligand input matrix,
+        and TF activity scores (DoRothEA/VIPER) normalised to [0, 1].
+        Load with lembas_network(), lembas_ligands(), lembas_tfs(), lembas_annotation()
+        using dataset='ligand_screen'.
+      path: ''

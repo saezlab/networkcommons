@@ -108,6 +108,28 @@ Phosphoproteomics in response to EGF
 
 **Functions:** See API documentation for :ref:`Phospho-EGF meta-analysis<api-phosphoegf>`.
 
+.. _details-lembas:
+
+LEMBAS
+------
+
+**Alias:** lembas_macrophage, lembas_ligand_screen
+
+**Description:** Signaling network, ligand concentration and TF activity data from the LEMBAS resource
+
+**Publication Link:** `Nilsson, A. et al. Artificial neural networks enable genome-scale simulations of intracellular signaling. Nat Commun 13, 3069 (2022). <https://doi.org/10.1038/s41467-022-30684-y>`_
+
+**Data location:** `Zenodo (macrophage) <https://zenodo.org/records/10815391>`_ / `GitHub — Lauffenburger-Lab/LEMBAS (ligand screen) <https://github.com/Lauffenburger-Lab/LEMBAS>`_
+
+**Detailed Description:** Two experimental datasets used in the LEMBAS paper to train and evaluate the signaling network RNN model.
+The **macrophage dataset** (low-coverage) contains ~10 extracellular ligands across ~170 stimulation conditions in macrophages.
+The **ligand screen dataset** (high-coverage) contains ~60 extracellular ligands across ~500 conditions.
+Each dataset includes three components: a prior knowledge signaling network (protein–protein interactions with stimulating/inhibiting annotations),
+a ligand input matrix (binary presence/absence per condition), and a TF activity matrix (DoRothEA/VIPER scores normalised to [0, 1]).
+Node identifiers are UniProt IDs throughout.
+
+**Functions:** See API documentation for :ref:`LEMBAS <api-lembas>`.
+
 .. _details-pk:
 
 

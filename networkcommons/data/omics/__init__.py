@@ -25,3 +25,4 @@ from ._scperturb import *
 from ._nci60 import *
 from ._cptac import *
 from ._phosphoegf import *
+from ._lembas import *
