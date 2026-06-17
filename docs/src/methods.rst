@@ -163,6 +163,30 @@ Network decompression and solution network obtention
 To finish, the compressed nodes are restored to their original state, and the solution network is obtained by establishing a threshold for the MOON scores of the nodes.
 In addition, users can rename the nodes to human-readable names.
 
+------------------------------
+Perturbation-response methods
+------------------------------
+
+Perturbation-response methods combine a prior knowledge network with matched
+perturbation and readout matrices. They are designed for predictive benchmark
+tasks such as held-out perturbation response prediction, TF activity prediction,
+or downstream omics prediction.
+
+The lightweight LEMBAS-RNN implementation constrains recurrent neural network
+edges to the prior knowledge network and learns edge weights from perturbation
+inputs and readout outputs. PyTorch is an optional dependency for this method.
+The ridge and mean-response baselines provide simple controls for checking
+whether a perturbation dataset can be handled by the NetworkCommons interface.
+
+**Input:** Samples-by-perturbation matrix, samples-by-readout matrix, directed
+prior knowledge network.
+
+**Node weights:** learned state values.
+
+**Edge weights:** prior signs and learned recurrent edge weights.
+
+**Functions:** See API documentation for :ref:`Perturbation response <api-perturbation>`.
+
 -----------------
 ILP-based methods
 -----------------

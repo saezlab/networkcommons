@@ -93,6 +93,24 @@ SignalingProfiler
 
     methods.run_signalingprofiler
 
+.. _api-perturbation:
+
+Perturbation response
+=====================
+.. module::networkcommons.methods
+.. currentmodule:: networkcommons
+
+.. autosummary::
+    :toctree: api
+    :recursive:
+
+    methods.network_to_perturbation_table
+    methods.split_perturbation_data
+    methods.evaluate_predictions
+    methods.run_mean_response_baseline
+    methods.run_ridge_baseline
+    methods.run_lembas_rnn
+
 .. _api-pk:
 
 Prior Knowledge
@@ -317,6 +335,7 @@ Utilities
     utils.to_networkx
     utils.read_network_from_file
     utils.network_from_df
+    utils.lembas_format_network
     utils.get_subnetwork
     utils.decoupler_formatter
     utils.targetlayer_formatter
