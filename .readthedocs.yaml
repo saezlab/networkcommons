@@ -1,13 +1,17 @@
 version: 2
 
-sphinx:
-    configuration: docs/src/conf.py
-
 build:
     os: ubuntu-24.04
     tools:
-        python: "3.10"
+        python: "3.12"
         uv: "latest"
-    jobs:
-        install:
-            - uv sync --group docs
+
+python:
+    install:
+        - method: uv
+          command: sync
+          groups:
+              - docs
+
+sphinx:
+    configuration: docs/src/conf.py
