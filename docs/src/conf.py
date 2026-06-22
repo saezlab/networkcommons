@@ -23,7 +23,6 @@ extensions = [
     'sphinx_autodoc_typehints',
     'sphinx.ext.autosectionlabel',
     'sphinx_copybutton',
-    'numpydoc',
     'nbsphinx',
     'IPython.sphinxext.ipython_console_highlighting'
 ]

@@ -49,10 +49,10 @@ def get_metadata():
             pyproject = toml.load(toml_path)
 
             meta = {
-                'name': pyproject['tool']['poetry']['name'],
-                'version': pyproject['tool']['poetry']['version'],
-                'author': pyproject['tool']['poetry']['authors'],
-                'license': pyproject['tool']['poetry']['license'],
+                'name': pyproject['project']['name'],
+                'version': pyproject['project']['version'],
+                'author': pyproject['project'].get('authors', []),
+                'license': pyproject['project'].get('license', ''),
                 'full_metadata': pyproject,
             }
 

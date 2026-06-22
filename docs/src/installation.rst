@@ -2,7 +2,7 @@
 Installation
 ############
 
-``NetworkCommons`` requires ``Python`` version >= 3.10 and < 3.13 to run.
+``NetworkCommons`` requires ``Python`` version >= 3.10 to run.
 
 -------------------
 Requirements
@@ -14,18 +14,7 @@ NetworkCommons requires `graphviz <https://graphviz.gitlab.io/download/>`_ to vi
 Conda
 -------------------
 
-If you are using ``conda``, we have created an environment file that can be used to create a new environment with all the dependencies needed to run NetworkCommons. 
-To create a new environment, please clone the repository and create a conda environment:
-
-.. code-block:: console
-
-   git clone https://github.com/saezlab/networkcommons.git
-   cd networkcommons
-
-   conda env create -f environment.yml
-   conda activate networkcommons_env
-
-If you will only use conda to handle the graphviz installation, please run:
+If you are using ``conda``, you can install the system-level graphviz dependency with:
 
 .. code-block:: console
 
