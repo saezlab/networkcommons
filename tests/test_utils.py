@@ -14,7 +14,7 @@ def test_to_cornetograph():
 
     corneto_graph = utils.to_cornetograph(nx_graph)
 
-    assert isinstance(corneto_graph, cn._graph.Graph)
+    assert isinstance(corneto_graph, cn.Graph)
 
     for data in corneto_graph.get_attr_edges():
         assert 'interaction' in data.keys()
@@ -22,14 +22,14 @@ def test_to_cornetograph():
 
     corneto_graph = cn.Graph.from_sif_tuples([('node1', 1, 'node2')])
     result = utils.to_cornetograph(corneto_graph)
-    assert isinstance(result, cn._graph.Graph)
+    assert isinstance(result, cn.Graph)
 
 
 def test_to_cornetograph_when_cornetograph():
     corneto_graph = cn.Graph.from_sif_tuples([('node1', 1, 'node2')])
 
     result = utils.to_cornetograph(corneto_graph)
-    assert isinstance(result, cn._graph.Graph)
+    assert isinstance(result, cn.Graph)
 
 
 def test_to_cornetograph_when_not_supported():

@@ -50,6 +50,35 @@ from . import _graph
 from networkcommons._session import _log
 
 
+def _moon_score_layer(mat: pd.DataFrame, net: pd.DataFrame, statistic: str) -> pd.DataFrame:
+    """Score one MOON layer via decoupler, falling back to weighted mean on failure.
+
+    Decoupler 2.x raises when the input matrix has a single observation (which
+    is the common MOON case), because FDR correction fails on NaN p-values
+    produced by degenerate t-statistics. Since MOON only uses the activity
+    *estimates* (not p-values), a simple weighted-mean fallback is equivalent.
+    """
+    try:
+        if 'wmean' in statistic:
+            estimate, _ = dc.mt.waggr(data=mat, net=net, tmin=1)
+        else:
+            estimate, _ = dc.mt.ulm(data=mat, net=net, tmin=1)
+        return estimate
+    except (ValueError, AssertionError):
+        sources = net['source'].unique()
+        records = {}
+        for source in sources:
+            t = net[net['source'] == source]
+            shared = t[t['target'].isin(mat.columns)]
+            if shared.empty:
+                continue
+            scores = mat[shared['target'].values].values.flatten()
+            weights = shared['weight'].values
+            denom = float(np.sum(np.abs(weights)))
+            records[source] = float(np.dot(scores, weights) / denom) if denom > 0 else 0.0
+        return pd.DataFrame([records], index=mat.index)
+
+
 def meta_network_cleanup(graph):
     """
     This function cleans up a meta network graph by removing self-interactions,
@@ -405,29 +434,16 @@ def run_moon_core(
     """
     regulons = nx.to_pandas_edgelist(graph)
     regulons = regulons[~regulons["source"].isin(downstream_input.keys())]
+    regulons = regulons.rename(columns={'sign': 'weight'})
 
     decoupler_mat = pd.DataFrame(
         list(downstream_input.values()), index=downstream_input.keys()
     ).T
 
-    if "wmean" in statistic:
-        estimate, norm, corr, pvals = dc.run_wmean(
-            mat=decoupler_mat,
-            net=regulons,
-            times=n_perm,
-            weight='sign',
-            min_n=1
-        )
-        if statistic == "norm_wmean":
-            estimate = norm
-
-    elif statistic == "ulm":
-        estimate, pvals = dc.run_ulm(
-            mat=decoupler_mat, net=regulons, weight='sign', min_n=1
-        )
-
-    else:
+    if statistic not in ('ulm', 'wmean', 'norm_wmean'):
         raise ValueError("Invalid method. Currently supported: 'ulm' or 'wmean'.")
+
+    estimate = _moon_score_layer(decoupler_mat, regulons, statistic)
 
     n_plus_one = estimate.T
     n_plus_one.columns = ["score"]
@@ -442,23 +458,7 @@ def run_moon_core(
         regulons = regulons[~regulons["source"].isin(res_list[i - 1].index.values)] # noqa E501
         previous_n_plus_one = res_list[i - 1].drop(columns="level").T
 
-        if "wmean" in statistic:
-            estimate, norm, corr, pvals = dc.run_wmean(
-                mat=previous_n_plus_one,
-                net=regulons,
-                times=n_perm,
-                weight='sign',
-                min_n=1
-            )
-            if statistic == "norm_wmean":
-                estimate = norm
-        else:
-            estimate, pvals = dc.run_ulm(
-                mat=previous_n_plus_one,
-                net=regulons,
-                weight='sign',
-                min_n=1
-            )
+        estimate = _moon_score_layer(previous_n_plus_one, regulons, statistic)
 
         n_plus_one = estimate.T
         regulons = regulons[~regulons["source"].isin(n_plus_one.index.values)]

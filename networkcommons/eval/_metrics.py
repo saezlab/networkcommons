@@ -398,7 +398,7 @@ def get_ec50_evaluation(network, ec50_dict):
     }, index=[0])
 
 
-def run_ora(graph, net, metric='ora_Combined score', ascending=False, **kwargs):
+def run_ora(graph, net, metric='ora_stat', ascending=False, tmin=1, **kwargs):
     """
     Run over-representation analysis on a custom set of genes.
 
@@ -407,17 +407,21 @@ def run_ora(graph, net, metric='ora_Combined score', ascending=False, **kwargs):
         net (pd.DataFrame): A DataFrame containing source (gene set name) and
         target columns (elements which will be mapped to the network nodes),
         and containing the gene sets of interest.
-        **kwargs: Additional keyword arguments to pass to the function
-        decoupler.get_ora_df().
+        tmin: Minimum number of targets per source required for inclusion.
+        **kwargs: Additional keyword arguments to pass to
+        decoupler.mt.query_set().
 
     Returns:
         pd.DataFrame: The results of the over-representation analysis.
+        Columns: ``source`` (gene set), ``stat`` (log odds ratio),
+        ``pval``, ``padj``, all prefixed with ``ora_``.
     """
     custom_set = list(graph.nodes())
 
-    ora_results = dc.get_ora_df(
-        df=custom_set,
+    ora_results = dc.mt.query_set(
+        features=custom_set,
         net=net,
+        tmin=tmin,
         **kwargs)
 
     # append ora_ to colnames

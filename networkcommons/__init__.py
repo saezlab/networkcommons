@@ -18,6 +18,10 @@ Integrated framework for network inference and evaluation
 using prior knowledge and omics data.
 """
 
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
 __all__ = [
     '__version__',
     '__author__',
@@ -51,3 +55,7 @@ _MODULES = [
 for _mod in _MODULES:
 
     globals()[_mod] = lazy_import.lazy_module(f'{__name__}.{_mod}')
+
+if TYPE_CHECKING:
+    from . import data, methods, visual
+    from . import eval  # noqa: A004

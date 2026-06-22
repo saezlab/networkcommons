@@ -36,6 +36,11 @@ import pandas as pd
 
 from networkcommons._session import _log
 
+try:
+    import torch
+except ImportError:
+    torch = None
+
 
 def _as_dataframe(data, name: str) -> pd.DataFrame:
 
@@ -400,20 +405,7 @@ def run_ridge_baseline(
     }
 
 
-def _import_torch():
-
-    try:
-        import torch
-    except ImportError as exc:
-        raise ImportError(
-            '`run_lembas_rnn` requires PyTorch. Install PyTorch in the active '
-            'environment or install NetworkCommons with the `lembas` extra.'
-        ) from exc
-
-    return torch
-
-
-def _torch_dtype(torch, dtype):
+def _torch_dtype(dtype):
 
     if isinstance(dtype, str):
         try:
@@ -424,7 +416,7 @@ def _torch_dtype(torch, dtype):
     return dtype
 
 
-def _torch_device(torch, device: str):
+def _torch_device(device: str):
 
     if device == 'auto':
         return torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -446,7 +438,7 @@ def _mml_activation(x, leak: float = 0.01):
     return mask * (fx - right) + right
 
 
-def _make_lembas_model(torch):
+def _make_lembas_model():
 
     class LembasRNN(torch.nn.Module):
 
@@ -720,9 +712,14 @@ def run_lembas_rnn(
     if batch_size is not None and batch_size <= 0:
         raise ValueError('`batch_size` must be positive when provided.')
 
-    torch = _import_torch()
-    torch_dtype = _torch_dtype(torch, dtype)
-    torch_device = _torch_device(torch, device)
+    if torch is None:
+        raise ImportError(
+            '`run_lembas_rnn` requires PyTorch. Install NetworkCommons with '
+            'the `torch` extra: pip install networkcommons[torch]'
+        )
+
+    torch_dtype = _torch_dtype(dtype)
+    torch_device = _torch_device(device)
 
     if seed is not None:
         np.random.seed(seed)
@@ -774,7 +771,7 @@ def run_lembas_rnn(
         dtype=int,
     )
 
-    model_class = _make_lembas_model(torch)
+    model_class = _make_lembas_model()
     model = model_class(
         n_nodes=len(nodes),
         source_idx=source_idx,
