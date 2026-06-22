@@ -23,7 +23,10 @@ import os
 import pathlib
 import importlib.metadata
 
-import toml
+try:
+    import tomllib
+except ImportError:
+    import tomli as tomllib
 
 _VERSION = '0.5.0'
 
@@ -46,7 +49,8 @@ def get_metadata():
 
         if os.path.exists(toml_path):
 
-            pyproject = toml.load(toml_path)
+            with open(toml_path, 'rb') as f:
+                pyproject = tomllib.load(f)
 
             meta = {
                 'name': pyproject['project']['name'],
