@@ -17,7 +17,7 @@
 Prior knowledge network used by MOON.
 """
 
-__all__ = ['get_cosmos_pkn']
+__all__ = ['get_cosmos_pkn', 'get_hmdb_mapper']
 
 import lazy_import
 import numpy as np
@@ -68,5 +68,55 @@ def get_cosmos_pkn(update: bool = False):
 
     _log(f'COSMOS: Done. Network has {len(file_legend)} interactions.')
 
-
     return file_legend
+
+
+def get_hmdb_mapper(update: bool = False) -> dict:
+    """
+    Retrieves the HMDB ID to metabolite name mapping from cosmosR.
+
+    Downloads ``HMDB_mapper_vec.RData`` from the cosmosR GitHub repository
+    and converts it to a Python dict mapping HMDB IDs to human-readable
+    metabolite names.
+
+    Args:
+        update: Force re-download even if cached.
+
+    Returns:
+        dict: Mapping of HMDB IDs (e.g. ``'HMDB0000122'``) to metabolite
+        names (e.g. ``'Glucose'``).
+    """
+    import rdata as _rdata
+
+    path = os.path.join(_conf.get('pickle_dir'), 'hmdb_mapper.pickle')
+
+    _log('MOON: Retrieving HMDB mapper...')
+
+    if update or not os.path.exists(path):
+        _log('MOON: HMDB mapper not found in cache. Downloading...')
+
+        url = (
+            'https://raw.githubusercontent.com/saezlab/cosmosR/'
+            'master/data/HMDB_mapper_vec.RData'
+        )
+        rdata_path = _common._maybe_download(url)
+
+        parsed = _rdata.parser.parse_file(rdata_path)
+        obj = parsed.object.value[0]
+        values = obj.value
+        names = obj.attributes.value[0].value
+
+        hmdb_ids = [x.value.decode() for x in names]
+        metab_names = [values[i].value.decode() for i in range(len(values))]
+
+        mapper = dict(zip(hmdb_ids, metab_names))
+
+        pd.to_pickle(mapper, path)
+
+    else:
+        _log('MOON: HMDB mapper found in cache. Loading...')
+        mapper = pd.read_pickle(path)
+
+    _log(f'MOON: Done. HMDB mapper has {len(mapper)} entries.')
+
+    return mapper
