@@ -53,6 +53,7 @@ dependencies = [
   "pydeseq2>=0.4.9",
   "pypath-common>=0.2.5",
   "pypath-omnipath[curl]>=0.16.16",
+  "rdata>=0.10",
   "requests>=2.32.3,<3",
   "scipy>=1.15.1,<2",
   "seaborn>=0.13.2",
@@ -65,8 +66,10 @@ optional-dependencies.corneto-backends = [
   "pyscipopt>=5.2.1,<6",
 ]
 optional-dependencies.igraph = [ "igraph>=0.11.6" ]
+optional-dependencies.pertpy = [ "pertpy" ]
 optional-dependencies.pygraphviz = [ "pygraphviz>=1.11,<2" ]
 optional-dependencies.torch = [ "torch>=2.1" ]
+optional-dependencies.torch-cu128 = [ "torch>=2.1" ]
 urls."Bug Tracker" = "https://github.com/saezlab/networkcommons/issues"
 urls.Documentation = "https://networkcommons.readthedocs.io/"
 urls.Homepage = "https://github.com/saezlab/networkcommons"
@@ -116,21 +119,66 @@ build.targets.wheel.packages = [ "networkcommons" ]
 [tool.pixi]
 workspace.channels = [ "conda-forge" ]
 workspace.platforms = [ "linux-64", "osx-arm64", "win-64" ]
-pypi-dependencies.networkcommons = { path = ".", editable = true }
+feature.base.pypi-dependencies.networkcommons = { path = ".", editable = true }
+feature.base.pypi-dependencies.numba = ">=0.56"
 feature.corneto-backends.dependencies.graphviz = ">=2.50"
 feature.corneto-backends.pypi-dependencies.networkcommons = { path = ".", extras = [ "corneto-backends" ], editable = true }
+feature.flop.channels = [ "conda-forge", "bioconda" ]
+feature.flop.dependencies."bioconductor-org.hs.eg.db" = ">=3.16"
+feature.flop.dependencies.bioconductor-deseq2 = ">=1.38"
+feature.flop.dependencies.bioconductor-edger = ">=3.40"
+feature.flop.dependencies.bioconductor-limma = ">=3.54"
+feature.flop.dependencies.bioconductor-vsn = ">=3.66"
+feature.flop.dependencies.nextflow = ">=23.10,<24"
+feature.flop.dependencies.numpy = ">=1.21,<1.24"
+feature.flop.dependencies.openjdk = ">=17"
+feature.flop.dependencies.python = "3.10.*"
+feature.flop.dependencies.r-base = ">=4.2"
+feature.flop.dependencies.r-bayesbio = ">=1.0"
+feature.flop.dependencies.r-cowplot = ">=1.1"
+feature.flop.dependencies.r-egg = ">=0.4"
+feature.flop.dependencies.r-fossil = ">=0.4"
+feature.flop.dependencies.r-ggdendro = ">=0.1"
+feature.flop.dependencies.r-ggdist = ">=3.2"
+feature.flop.dependencies.r-ggforce = ">=0.4"
+feature.flop.dependencies.r-ggpp = ">=0.5"
+feature.flop.dependencies.r-ggpubr = ">=0.6"
+feature.flop.dependencies.r-ggrepel = ">=0.9"
+feature.flop.dependencies.r-qs = ">=0.25"
+feature.flop.dependencies.r-rocr = ">=1.0"
+feature.flop.dependencies.r-tidyverse = ">=2.0"
+# osx-64 instead of osx-arm64: r-fossil (and several other R/Bioconductor packages) are not yet published for osx-arm64 on conda-forge; osx-64 runs via Rosetta 2 on Apple Silicon
+feature.flop.platforms = [ "linux-64", "osx-64" ]
+feature.flop.pypi-dependencies.decoupler = "==1.6.0"
+feature.flop.pypi-dependencies.numba = ">=0.56,<0.57"
+feature.flop.pypi-dependencies.omnipath = "==1.0.8"
+feature.flop.pypi-dependencies.pandas = "==1.5.3"
 feature.igraph.pypi-dependencies.networkcommons = { path = ".", extras = [ "igraph" ], editable = true }
+feature.pertpy.pypi-dependencies.networkcommons = { path = ".", extras = [ "pertpy" ], editable = true }
 feature.pygraphviz.dependencies.graphviz = ">=2.50"
 feature.pygraphviz.pypi-dependencies.networkcommons = { path = ".", extras = [ "pygraphviz" ], editable = true }
+# CUDA 12.8: index selection is driven by the torch-cu128 extra in [tool.uv.sources]; no version pin needed here
+feature.torch-cu128.platforms = [ "linux-64" ]
+feature.torch-cu128.pypi-dependencies.networkcommons = { path = ".", extras = [ "torch-cu128" ], editable = true }
 feature.torch.pypi-dependencies.networkcommons = { path = ".", extras = [ "torch" ], editable = true }
 environments.corneto-backends = { features = [ "corneto-backends" ], solve-group = "default" }
-environments.default = { solve-group = "default" }
-environments.dev = { features = [ "dev", "igraph", "torch", "corneto-backends", "pygraphviz" ], solve-group = "default" }
-environments.docs = { features = [ "docs" ], solve-group = "default" }
+environments.default = { features = [ "base" ], solve-group = "default" }
+environments.dev = { features = [ "base", "dev", "igraph", "pertpy", "torch", "corneto-backends", "pygraphviz" ], solve-group = "default" }
+environments.dev-cu128 = { features = [
+  "base",
+  "dev",
+  "igraph",
+  "pertpy",
+  "torch-cu128",
+  "corneto-backends",
+  "pygraphviz"
+], solve-group = "dev-cu128" }
+environments.docs = { features = [ "base", "docs" ], solve-group = "default" }
+environments.flop = { features = [ "flop" ], solve-group = "flop", no-default-feature = true }
 environments.igraph = { features = [ "igraph" ], solve-group = "default" }
-environments.lint = { features = [ "lint" ], solve-group = "default" }
+environments.lint = { features = [ "base", "lint" ], solve-group = "default" }
 environments.pygraphviz = { features = [ "pygraphviz" ], solve-group = "default" }
-environments.test = { features = [ "test" ], solve-group = "default" }
+environments.test = { features = [ "base", "test" ], solve-group = "default" }
 environments.torch = { features = [ "torch" ], solve-group = "default" }
 
 [tool.uv]
@@ -138,7 +186,12 @@ default-groups = "all"
 sources.jupyter-contrib-nbextensions = { git = "https://github.com/deeenes/jupyter_contrib_nbextensions.git", branch = "master" }
 sources.nbsphinx = { git = "https://github.com/deeenes/nbsphinx.git", branch = "timings" }
 sources.pypath-omnipath = { git = "https://github.com/saezlab/pypath.git", branch = "master" }
-index = [ { name = "pypi-public", url = "https://pypi.org/simple/", default = true } ]
+sources.torch = [ { index = "pytorch-cu128", extra = "torch-cu128" } ]
+index = [
+  { name = "pypi-public", url = "https://pypi.org/simple/", default = true },
+  { name = "pytorch-cu128", url = "https://download.pytorch.org/whl/cu128", explicit = true },
+]
+conflicts = [ [ { extra = "torch" }, { extra = "torch-cu128" } ] ]
 
 [tool.ruff]
 target-version = "py310"
@@ -163,8 +216,8 @@ lint.select = [
   "W",   # pycodestyle warnings
 ]
 lint.ignore = [
-  "D203", # one blank line before class docstring (incompatible with D211)
-  "D213", # multi-line summary second line (incompatible with D212)
+  "D202", # No blank lines allowed after function docstring (found {num_lines})
+  "D212", # multi-line summary first line
   "D401", # first line imperative mood
   "E501", # line too long — formatter enforces line-length
   "E731", # lambda assignment

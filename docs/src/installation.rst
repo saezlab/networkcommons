@@ -79,15 +79,22 @@ NetworkCommons ships several optional extras for additional functionality:
 GPU / CUDA support (PyTorch)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-By default ``networkcommons[torch]`` installs the CPU-only PyTorch wheel from
-PyPI. To enable GPU acceleration, install the matching CUDA wheel **after**
-the main install by pointing pip at the PyTorch CUDA index.
-Replace ``cu128`` with your local CUDA version (``cu118``, ``cu124``, ``cu126``, …):
+``networkcommons[torch]`` installs the CPU-only PyTorch wheel from PyPI.
+For GPU support, follow `PyTorch's official installation guide
+<https://pytorch.org/get-started/locally/>`_ to find the right command for
+your driver. The general pattern (replace ``cuXYZ`` with your CUDA version):
 
 .. code-block:: console
 
-   pip install --extra-index-url https://download.pytorch.org/whl/cu128 \
-       "torch>=2.1+cu128"
+   pip install networkcommons[torch]
+   pip install --extra-index-url https://download.pytorch.org/whl/cuXYZ torch
+
+As a convenience, CUDA 12.8 is available as a first-class extra with the
+index already wired up:
+
+.. code-block:: console
+
+   pip install "networkcommons[torch-cu128]"
 
 Development version
 ~~~~~~~~~~~~~~~~~~~
@@ -121,20 +128,15 @@ corneto-backends, pygraphviz).
 GPU / CUDA support with Pixi
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Pixi resolves PyPI packages via `uv <https://docs.astral.sh/uv/>`_ internally.
-Because the correct CUDA variant of PyTorch depends on your local driver, it is
-not pinned in the shared ``pyproject.toml``. Instead, create a personal
-``requirements-local.txt`` (already in ``.gitignore``) with your CUDA version:
-
-.. code-block:: text
-
-   --extra-index-url https://download.pytorch.org/whl/cu128
-   torch>=2.1+cu128
-
-Then install it into the pixi environment using pixi's bundled uv:
+A dedicated ``dev-cu128`` environment is provided for CUDA 12.8. It sources
+PyTorch from the correct wheel index automatically and persists across kernel
+restarts like any other pixi environment:
 
 .. code-block:: console
 
-   pixi run -e dev uv pip install -r requirements-local.txt
+   pixi install -e dev-cu128
 
-This needs to be re-run after any ``pixi install -e dev`` that upgrades torch.
+For other CUDA versions, the recommended approach is to add your own
+``dev-cuXYZ`` environment to ``pyproject.toml`` following the
+``torch-cu128`` feature as a template — this ensures torch is managed by
+pixi and never silently reverted on environment sync.
