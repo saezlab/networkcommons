@@ -36,10 +36,15 @@ import pandas as pd
 
 from networkcommons._session import _log
 
-try:
+from typing import TYPE_CHECKING
+if TYPE_CHECKING:
+    # Pylance reads this, but Python ignores it at runtime
     import torch
-except ImportError:
-    torch = None
+else:
+    try:
+        import torch
+    except ImportError:
+        torch = None
 
 
 def _as_dataframe(data, name: str) -> pd.DataFrame:
@@ -438,6 +443,26 @@ def _mml_activation(x, leak: float = 0.01):
     return mask * (fx - right) + right
 
 
+def _one_cycle_lr(
+        epoch: int,
+        max_epochs: int,
+        max_height: float = 2e-3,
+        start_height: float = 1e-5,
+        end_height: float = 1e-5,
+        peak: int = 1000,
+) -> float:
+    """Cosine one-cycle LR schedule matching the original LEMBAS paper (bionetwork.oneCycle)."""
+    phase_length = 0.95 * max_epochs
+    if epoch <= peak:
+        t = epoch / peak
+        return (max_height - start_height) * 0.5 * (np.cos(np.pi * (t + 1)) + 1) + start_height
+    elif epoch <= phase_length:
+        t = (epoch - peak) / (phase_length - peak)
+        return (max_height - end_height) * 0.5 * (np.cos(np.pi * (t + 2)) + 1) + end_height
+    else:
+        return end_height
+
+
 def _make_lembas_model():
 
     class LembasRNN(torch.nn.Module):
@@ -456,8 +481,8 @@ def _make_lembas_model():
                 leak: float,
                 dtype,
                 device,
-                learn_input_scale: bool,
                 input_scale_init: float,
+                projection_amplitude: float,
             ):
 
             super().__init__()
@@ -466,6 +491,7 @@ def _make_lembas_model():
             self.tolerance = tolerance
             self.activation = activation
             self.leak = leak
+            self.projection_amplitude = projection_amplitude
 
             self.register_buffer(
                 'source_idx',
@@ -484,43 +510,41 @@ def _make_lembas_model():
                 torch.as_tensor(output_idx, dtype=torch.long, device=device),
             )
 
-            edge_signs_tensor = torch.as_tensor(
-                edge_signs,
-                dtype=dtype,
-                device=device,
+            # Weight init: 0.1 + 0.1*rand, negated for inhibitory edges
+            # Matches bionet.initializeWeights
+            initial_edges = 0.1 + 0.1 * torch.rand(len(edge_signs), dtype=dtype, device=device)
+            inhibitory = torch.as_tensor(edge_signs < 0, dtype=torch.bool, device=device)
+            initial_edges[inhibitory] = -initial_edges[inhibitory]
+            self.edge_weights = torch.nn.Parameter(initial_edges)
+
+            # Bias: 1e-3 everywhere; nodes that only receive inhibition get bias=1
+            # Matches bionet.initializeWeights inhibitory-only correction
+            bias_np = 1e-3 * np.ones(n_nodes)
+            for i in range(n_nodes):
+                incoming = np.where(target_idx == i)[0]
+                if len(incoming) > 0 and np.all(edge_signs[incoming] < 0):
+                    bias_np[i] = 1.0
+            self.bias = torch.nn.Parameter(
+                torch.as_tensor(bias_np, dtype=dtype, device=device),
             )
+
+            # Output projection: per-output scale init to projection_amplitude
+            # Matches projectOutput (no bias in original projectOutput)
+            self.output_scale = torch.nn.Parameter(
+                torch.full((len(output_idx),), projection_amplitude, dtype=dtype, device=device),
+            )
+
+            # Fixed input scale (inputAmplitude in original, requires_grad=False)
+            self.register_buffer(
+                'input_scale',
+                torch.full((len(input_idx),), input_scale_init, dtype=dtype, device=device),
+            )
+
+            edge_signs_tensor = torch.as_tensor(edge_signs, dtype=dtype, device=device)
             known = torch.isin(
                 edge_signs_tensor,
                 torch.as_tensor([-1.0, 1.0], dtype=dtype, device=device),
             )
-
-            initial_edges = torch.where(
-                known,
-                0.1 * edge_signs_tensor,
-                torch.full_like(edge_signs_tensor, 0.1),
-            )
-            initial_edges = initial_edges + 0.01 * torch.randn_like(initial_edges)
-
-            self.edge_weights = torch.nn.Parameter(initial_edges)
-            self.bias = torch.nn.Parameter(
-                torch.zeros(n_nodes, dtype=dtype, device=device),
-            )
-            self.output_scale = torch.nn.Parameter(
-                torch.ones(len(output_idx), dtype=dtype, device=device),
-            )
-            self.output_bias = torch.nn.Parameter(
-                torch.zeros(len(output_idx), dtype=dtype, device=device),
-            )
-
-            input_scale = torch.full(
-                (len(input_idx),), input_scale_init, dtype=dtype, device=device,
-            )
-
-            if learn_input_scale:
-                self.input_scale = torch.nn.Parameter(input_scale)
-            else:
-                self.register_buffer('input_scale', input_scale)
-
             self.register_buffer('edge_signs', edge_signs_tensor)
             self.register_buffer('known_signs', known)
 
@@ -556,7 +580,7 @@ def _make_lembas_model():
                 '`activation` must be one of mml, tanh, sigmoid or leaky_relu.'
             )
 
-        def forward(self, x):
+        def forward(self, x, noise_level: float = 0.0, cur_lr: float = 0.0):
 
             drive = torch.zeros(
                 (x.shape[0], self.n_nodes),
@@ -564,6 +588,13 @@ def _make_lembas_model():
                 device=x.device,
             )
             drive[:, self.input_idx] = x * self.input_scale
+
+            # Input noise: Yin += noiseLevel * curLr * randn (matches original)
+            if self.training and noise_level > 0.0 and cur_lr > 0.0:
+                drive[:, self.input_idx] = (
+                    drive[:, self.input_idx]
+                    + noise_level * cur_lr * torch.randn_like(drive[:, self.input_idx])
+                )
 
             state = torch.zeros_like(drive)
             weights = self.edge_matrix()
@@ -576,42 +607,97 @@ def _make_lembas_model():
                     if torch.max(torch.abs(state - prev)).item() < self.tolerance:
                         break
 
-            prediction = (
-                state[:, self.output_idx] * self.output_scale +
-                self.output_bias
-            )
+            prediction = state[:, self.output_idx] * self.output_scale
 
             return prediction, state
+
+        def preScaleWeights(self, target_radius: float = 0.8) -> None:
+            """Scale weights so spectral radius ≈ target_radius (matches bionet.preScaleWeights)."""
+            with torch.no_grad():
+                sr = self._spectral_radius_power(n_iter=100)
+                if sr > 1e-10:
+                    self.edge_weights.data *= target_radius / sr
+
+        def _spectral_radius_power(self, n_iter: int = 100) -> float:
+            """Non-differentiable power iteration used by preScaleWeights."""
+            with torch.no_grad():
+                w = self.edge_weights.detach()
+                v = torch.randn(self.n_nodes, dtype=w.dtype, device=w.device)
+                v = v / v.norm()
+                for _ in range(n_iter):
+                    Wv = torch.zeros(self.n_nodes, dtype=w.dtype, device=w.device)
+                    Wv.scatter_add_(0, self.target_idx, w * v[self.source_idx])
+                    norm = Wv.norm().item()
+                    if norm < 1e-10:
+                        return 0.0
+                    v = Wv / norm
+                Wv = torch.zeros(self.n_nodes, dtype=w.dtype, device=w.device)
+                Wv.scatter_add_(0, self.target_idx, w * v[self.source_idx])
+                return Wv.norm().item()
+
+        def _spectral_radius_diff(self, n_iter: int = 21):
+            """Differentiable power iteration for use in spectral_radius_loss."""
+            v = torch.randn(
+                self.n_nodes,
+                dtype=self.edge_weights.dtype,
+                device=self.edge_weights.device,
+            )
+            v = (v / v.norm()).detach()
+            for _ in range(n_iter):
+                Wv = torch.zeros_like(v)
+                Wv.scatter_add_(0, self.target_idx, self.edge_weights * v[self.source_idx])
+                norm = Wv.norm().detach().item()
+                if norm < 1e-10:
+                    break
+                v = (Wv / norm).detach()
+            Wv = torch.zeros_like(v)
+            Wv.scatter_add_(0, self.target_idx, self.edge_weights * v[self.source_idx])
+            denom = torch.tensor(
+                max(v.norm().item(), 1e-10),
+                dtype=Wv.dtype,
+                device=Wv.device,
+            )
+            return Wv.norm() / denom
+
+        def spectral_radius_loss(
+                self,
+                spectral_target: float,
+                exp_factor: int = 21,
+                lower_bound: float = 0.5,
+        ):
+            """Soft exponential spectral radius penalty (matches bionetwork.spectralLoss)."""
+            sr = self._spectral_radius_diff(n_iter=exp_factor)
+            zero = torch.zeros((), dtype=sr.dtype, device=sr.device)
+            if sr.item() <= lower_bound:
+                return zero, sr
+            scale_factor = 1.0 / np.exp(exp_factor * spectral_target)
+            loss = scale_factor * (torch.exp(exp_factor * sr) - 1.0)
+            return loss, sr
 
         def uniform_regularization(
                 self,
                 state: 'torch.Tensor',
                 target_min: float = 0.0,
-                target_max: float = 1.0,
-            ) -> 'torch.Tensor':
-            """Penalize deviation of node states from a uniform distribution.
+                target_max: float = 0.99,
+                max_constraint_factor: float = 50.0,
+        ) -> 'torch.Tensor':
+            """Mean/var/min/max uniform loss (matches bionetwork.uniformLossBatch)."""
+            target_mean = (target_max - target_min) / 2.0
+            target_var = (target_max - target_min) ** 2 / 12.0
 
-            Matches the LEMBAS uniform loss: pushes the distribution of node
-            activations across samples to be roughly uniform in
-            [target_min, target_max], which keeps states biologically
-            interpretable and prevents saturation.
-            """
-            n = state.shape[0]
-            sorted_state, _ = torch.sort(state, dim=0)
-            target = torch.linspace(
-                target_min, target_max, n,
-                dtype=state.dtype, device=state.device,
-            ).unsqueeze(1)
+            node_mean = torch.mean(state, dim=0)
+            node_var = torch.mean((state - node_mean) ** 2, dim=0)
+            max_val, _ = torch.max(state, dim=0)
+            min_val, _ = torch.min(state, dim=0)
 
-            dist_loss = torch.sum((sorted_state - target) ** 2)
-            below = torch.sum(
-                state.lt(target_min) * (state - target_min) ** 2
-            )
-            above = torch.sum(
-                state.gt(target_max) * (state - target_max) ** 2
-            )
+            mean_loss = torch.sum((node_mean - target_mean) ** 2)
+            var_loss = torch.sum((node_var - target_var) ** 2)
+            max_loss = torch.sum((max_val - target_max) ** 2)
+            min_loss = torch.sum((min_val - target_min) ** 2)
+            neg_mask = max_val.detach() <= 0
+            max_constraint = -max_constraint_factor * torch.sum(max_val[neg_mask])
 
-            return dist_loss + below + above
+            return mean_loss + var_loss + min_loss + max_loss + max_constraint
 
         def sign_regularization(self):
 
@@ -652,41 +738,41 @@ def run_lembas_rnn(
         perturbations_train: pd.DataFrame,
         readouts_train: pd.DataFrame,
         perturbations_eval: pd.DataFrame | None = None,
-        epochs: int = 1000,
+        epochs: int = 5000,
         learning_rate: float = 2e-3,
+        lr_peak: int = 1000,
         n_steps: int = 100,
-        tolerance: float = 1e-5,
+        tolerance: float = 1e-6,
         alpha: float = 1e-6,
         sign_penalty: float = 0.1,
-        uniform_penalty: float = 1e-4,
-        batch_size: int | None = None,
+        uniform_penalty: float = 1e-5,
+        spectral_factor: float = 1e-3,
+        noise_level: float = 10.0,
+        batch_size: int = 5,
         activation: str = 'mml',
         leak: float = 0.01,
         input_scale_init: float = 3.0,
+        projection_amplitude: float = 1.2,
         device: str = 'auto',
-        dtype: str = 'float32',
+        dtype: str = 'float64',
         seed: int | None = 888,
-        learn_input_scale: bool = False,
         min_abs_edge_weight: float = 0.0,
         verbose: bool = False,
     ) -> dict[str, t.Any]:
     """
-    Train a LEMBAS-like recurrent model on perturbation-response data.
+    Train a LEMBAS recurrent model on perturbation-response data.
 
-    Constrains recurrent edges to the supplied prior knowledge network,
-    iterates node states until steady state (or ``n_steps`` max), and
-    learns edge weights plus output projection parameters by minimizing
-    readout MSE.
+    Faithfully reimplements the architecture from Nilsson et al. 2022
+    (Nat Commun) including:
 
-    Matches the core architecture of Nilsson et al. 2022 (Nat Commun):
-
-    * Default MML (Michaelis-Menten-like) activation maps states to [0, 1].
-    * Steady-state convergence check (``tolerance``) mirrors the original
-      RNN stopping criterion.
-    * Sign regularization penalizes edges whose learned sign contradicts
-      the known mechanism of action.
-    * Uniform regularization pushes node-state distributions toward uniform,
-      keeping activations biologically interpretable.
+    * MML activation mapping node states to [0, 1].
+    * Cosine one-cycle learning rate schedule (peak at ``lr_peak``).
+    * Mini-batch training (default batch_size=5) with per-batch input noise.
+    * Spectral radius regularization keeping the weight matrix stable.
+    * Sign regularization penalizing sign violations vs. prior knowledge.
+    * Uniform state-distribution regularization.
+    * Adam optimizer momentum reset every 200 epochs.
+    * Weight pre-scaling to spectral radius 0.8 before training.
 
     Use :func:`networkcommons.utils.lembas_format_network` to add the
     ``mode_of_action`` edge attribute before calling this function, and
@@ -706,11 +792,11 @@ def run_lembas_rnn(
     if tolerance < 0:
         raise ValueError('`tolerance` must be non-negative.')
 
-    if alpha < 0 or sign_penalty < 0 or uniform_penalty < 0:
+    if alpha < 0 or sign_penalty < 0 or uniform_penalty < 0 or spectral_factor < 0:
         raise ValueError('Regularization strengths must be non-negative.')
 
-    if batch_size is not None and batch_size <= 0:
-        raise ValueError('`batch_size` must be positive when provided.')
+    if batch_size <= 0:
+        raise ValueError('`batch_size` must be positive.')
 
     if torch is None:
         raise ImportError(
@@ -785,8 +871,8 @@ def run_lembas_rnn(
         leak=leak,
         dtype=torch_dtype,
         device=torch_device,
-        learn_input_scale=learn_input_scale,
         input_scale_init=input_scale_init,
+        projection_amplitude=projection_amplitude,
     )
 
     x_train = torch.as_tensor(
@@ -805,32 +891,83 @@ def run_lembas_rnn(
         device=torch_device,
     )
 
-    optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
-    loss_history = []
-    n_samples = x_train.shape[0]
-    batch_size = n_samples if batch_size is None else min(batch_size, n_samples)
+    # Pre-scale weights so spectral radius ≈ 0.8 before training (matches bionet.preScaleWeights)
+    model.preScaleWeights(target_radius=0.8)
 
-    _log(f'LEMBAS-RNN: training on {n_samples} samples using {torch_device}.')
+    # Adam with lr=1.0; actual lr is overridden each epoch by one-cycle schedule
+    optimizer = torch.optim.Adam(model.parameters(), lr=1.0, weight_decay=0)
+
+    # State buffer: random init across all training conditions (matches original curState)
+    n_train = x_train.shape[0]
+    cur_state = torch.rand(
+        (n_train, len(nodes)),
+        dtype=torch_dtype,
+        device=torch_device,
+    )
+
+    # spectralTarget = exp(log(1e-2) / n_steps), matching bionetwork.trainingParameters
+    spectral_target = float(np.exp(np.log(1e-2) / n_steps))
+
+    loss_history = []
+    _log(f'LEMBAS-RNN: training on {n_train} samples for {epochs} epochs using {torch_device}.')
 
     for epoch in range(epochs):
-        model.train()
-        order = torch.randperm(n_samples, device=torch_device)
-        epoch_losses = []
+        cur_lr = _one_cycle_lr(epoch, epochs, max_height=learning_rate, peak=lr_peak)
+        optimizer.param_groups[0]['lr'] = cur_lr
 
-        for start in range(0, n_samples, batch_size):
-            idx = order[start:start + batch_size]
+        order = np.random.permutation(n_train)
+        batches = [order[i:i + batch_size] for i in range(0, n_train, batch_size)]
+
+        epoch_losses = []
+        for batch_np in batches:
+            model.train()
+
+            # Break weight symmetry each batch (matches original 1e-8 noise on weights)
+            with torch.no_grad():
+                model.edge_weights.data += 1e-8 * torch.randn_like(model.edge_weights)
+
             optimizer.zero_grad()
-            prediction, full_state = model(x_train[idx])
+
+            idx = torch.as_tensor(batch_np, dtype=torch.long, device=torch_device)
+            prediction, full_state = model(x_train[idx], noise_level=noise_level, cur_lr=cur_lr)
+
+            # Update state buffer; build differentiable view for uniform loss
+            cur_state[idx] = full_state.detach()
+            state_for_loss = cur_state.detach().clone()
+            state_for_loss[idx] = full_state
+
             fit_loss = torch.mean((prediction - y_train[idx]) ** 2)
-            l2_loss = sum(torch.sum(param ** 2) for param in model.parameters())
-            sign_loss = model.sign_regularization()
-            uniform_loss = model.uniform_regularization(full_state)
+
+            sign_loss = sign_penalty * model.sign_regularization()
+
+            # Penalise bias on input nodes (matches original ligandConstraint = 1e-3)
+            ligand_loss = 1e-3 * torch.sum(model.bias[model.input_idx] ** 2)
+
+            # Uniform state distribution over all conditions
+            state_loss = uniform_penalty * model.uniform_regularization(state_for_loss)
+
+            # L2 + inverse barrier on edge weights (prevents collapse to zero)
+            w = model.edge_weights
+            weight_loss = alpha * (torch.sum(w ** 2) + torch.sum(1.0 / (w ** 2 + 0.5)))
+            bias_loss = alpha * torch.sum(model.bias ** 2)
+
+            # Keep output projection near its initialisation value
+            proj_loss = 1e-6 * torch.sum((model.output_scale - projection_amplitude) ** 2)
+
+            # Spectral radius regularisation
+            sr_loss, _ = model.spectral_radius_loss(spectral_target)
+
             loss = (
                 fit_loss
-                + alpha * l2_loss
-                + sign_penalty * sign_loss
-                + uniform_penalty * uniform_loss
+                + sign_loss
+                + ligand_loss
+                + weight_loss
+                + bias_loss
+                + spectral_factor * sr_loss
+                + state_loss
+                + proj_loss
             )
+
             loss.backward()
             optimizer.step()
             epoch_losses.append(float(fit_loss.detach().cpu()))
@@ -838,8 +975,12 @@ def run_lembas_rnn(
         mean_epoch_loss = float(np.mean(epoch_losses))
         loss_history.append(mean_epoch_loss)
 
+        # Reset Adam momentum every 200 epochs (matches original optimizer reset)
+        if epoch > 0 and epoch % 200 == 0:
+            optimizer.state.clear()
+
         if verbose and (epoch == 0 or (epoch + 1) % 100 == 0):
-            _log(f'LEMBAS-RNN: epoch {epoch + 1}; mse={mean_epoch_loss:.6g}')
+            _log(f'LEMBAS-RNN: epoch {epoch + 1}/{epochs}; mse={mean_epoch_loss:.6g}')
 
     model.eval()
 
