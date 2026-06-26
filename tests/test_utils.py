@@ -5,7 +5,6 @@ import corneto as cn
 from unittest.mock import patch
 import pytest
 import networkcommons.utils as utils
-import pygraphviz as pgv
 
 
 def test_to_cornetograph():
@@ -33,6 +32,7 @@ def test_to_cornetograph_when_cornetograph():
 
 
 def test_to_cornetograph_when_not_supported():
+    pgv = pytest.importorskip('pygraphviz')
     multi_graph = nx.MultiDiGraph()
     with pytest.raises(NotImplementedError, match="Only nx.DiGraph graphs and corneto graphs are supported."):
         utils.to_cornetograph(multi_graph)
@@ -93,6 +93,7 @@ def test_to_networkx_when_networkx_graph():
 
 
 def test_to_networkx_when_not_supported():
+    pgv = pytest.importorskip('pygraphviz')
     multi_graph = nx.MultiDiGraph()
     with pytest.raises(NotImplementedError, match="Only nx.DiGraph graphs and corneto graphs are supported."):
         utils.to_networkx(multi_graph)
@@ -201,10 +202,8 @@ def test_handle_missing_values_non_numeric_column():
 
 def test_handle_missing_values_more_than_one_non_numeric_column():
     df = pd.DataFrame({'id1': ['a', 'b', 'c'], 'id2': ['x', 'y', 'z'], 'A': [1, 2, np.nan], 'B': [3, 2, np.nan]})
-    try:
+    with pytest.raises(ValueError, match="More than one non-numeric column found"):
         utils.handle_missing_values(df, 0.5)
-    except ValueError as e:
-        assert str(e) == "More than one non-numeric column found: Index(['id1', 'id2'], dtype='object')"
 
 
 def test_handle_missing_values_no_missing_values():

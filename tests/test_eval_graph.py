@@ -227,7 +227,7 @@ def test_run_ora():
     })
 
     expected_results = pd.DataFrame({
-        'ora_source': ["gene_set_2", "gene_set_1"],
+        'ora_Term': ["gene_set_2", "gene_set_1"],
         'ora_stat': [10.596360, 10.008573],
         'ora_pval': [1.500225e-11, 7.500375e-08],
         'ora_padj': [3.000450e-11, 7.500375e-08],
