@@ -96,9 +96,9 @@ def run_corneto_carnival(network,
         network_nx = utils.to_networkx(network_sol, skip_unsupported_edges=True)
         network_nx.remove_nodes_from(['_s', '_pert_c0', '_meas_c0'])
     
-    except Exception:
+    except Exception as e:
         network_nx = nx.Graph()
-        _log('WARNING: Network is empty. No solution found.')
+        _log(f'WARNING: Network is empty. No solution found. Reason: {type(e).__name__}: {e}')
 
     finally:
         # Restore original stdout and stderr

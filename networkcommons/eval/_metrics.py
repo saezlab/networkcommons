@@ -424,6 +424,10 @@ def run_ora(graph, net, metric='ora_stat', ascending=False, tmin=1, **kwargs):
         tmin=tmin,
         **kwargs)
 
+    # decoupler 2.x returns 'source'; rename to 'Term' for backward compat
+    if 'source' in ora_results.columns:
+        ora_results = ora_results.rename(columns={'source': 'Term'})
+
     # append ora_ to colnames
     ora_results.columns = ['ora_' + col for col in ora_results.columns]
 

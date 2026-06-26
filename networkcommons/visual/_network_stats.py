@@ -185,7 +185,7 @@ def plot_scatter(df: pd.DataFrame,
                  ylabel: str = 'Coverage',
                  title: str = 'Coverage vs Difference in Activity scores',
                  figsize: tuple = (10, 6),
-                 filepath: str = "scatter_plot.png",
+                 filepath: str | None = "scatter_plot.png",
                  render: bool = False) -> plt.Figure:
     """
     Plot a scatter plot with customizable column labels.
@@ -637,7 +637,7 @@ def create_heatmap(results: pd.DataFrame,
                    x_label: str = 'Network',
                    y_label: str = 'ORA Term',
                    cmap="coolwarm_r",
-                   filepath="rank_heatmap.png",
+                   filepath: str | None = "rank_heatmap.png",
                    render=False):
     """
     Create a heatmap. By default, creates a heatmap with rows as ora_terms and columns as networks,

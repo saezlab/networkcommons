@@ -137,7 +137,10 @@ def lembas_ligands(dataset: str = 'macrophage') -> pd.DataFrame:
         condition names; columns are UniProt IDs of extracellular
         ligands; values are ligand concentrations or binary presence (0/1).
     """
-    return _lembas_table(dataset, 'ligands')
+    df = _lembas_table(dataset, 'ligands')
+    df = df.set_index(df.columns[0])
+    df.index.name = 'condition'
+    return df
 
 
 def lembas_tfs(dataset: str = 'macrophage') -> pd.DataFrame:
@@ -157,7 +160,10 @@ def lembas_tfs(dataset: str = 'macrophage') -> pd.DataFrame:
         names; columns are UniProt IDs of transcription factors; values
         are TF activity scores in [0, 1].
     """
-    return _lembas_table(dataset, 'tfs')
+    df = _lembas_table(dataset, 'tfs')
+    df = df.set_index(df.columns[0])
+    df.index.name = 'condition'
+    return df
 
 
 def lembas_annotation(dataset: str = 'macrophage') -> pd.DataFrame:
