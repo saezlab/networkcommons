@@ -79,6 +79,13 @@ def get_hmdb_mapper(update: bool = False) -> dict:
     and converts it to a Python dict mapping HMDB IDs to human-readable
     metabolite names.
 
+    Note: long-term this should use ``omnipath_client.utils.translate`` once
+    the ``utils.omnipathdb.org`` server exposes metabolite name mapping
+    (currently ``oc.utils.translate('hmdb', 'traditional_iupac')`` returns
+    HTTP 500 — only cross-database ID translation is supported). A working
+    workaround using ``OmniPath()._fetch('entities/resolve')`` from the
+    metabo service is available on branch ``hmdb-mapper-omnipath-workaround``.
+
     Args:
         update: Force re-download even if cached.
 

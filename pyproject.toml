@@ -49,6 +49,7 @@ dependencies = [
   "networkx>=2.8",
   "numpy>=1.26.4",
   "omnipath>=1.0.12,<2",
+  "omnipath-client>=0.2.3",
   "pandas>=1.4",
   "pydeseq2>=0.4.9",
   "pypath-common>=0.2.5",
