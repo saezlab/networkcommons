@@ -3127,6 +3127,15 @@ wheels = [
 ]
 
 [[package]]
+name = "narwhals"
+version = "2.22.1"
+source = { registry = "https://pypi.org/simple/" }
+sdist = { url = "https://files.pythonhosted.org/packages/62/3c/c4ef2164a71c1a63d7f1ae411c4082c5fa872405106db60a4b7114989ad7/narwhals-2.22.1.tar.gz", hash = "sha256:d62920805a0a43b7ff8b54b0c0d3142d796f8a9301836ada37e573d6a33cbcd9", size = 647493, upload-time = "2026-06-05T12:34:34.051Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/48/ca/36339329c4604adbcc99c899b7eb1ce1a555c499b6a6860757dc9bfed36d/narwhals-2.22.1-py3-none-any.whl", hash = "sha256:60567d774edf77db53906f89d9fbd164e66e56d66d388e1e6990f17ac33cfb53", size = 454815, upload-time = "2026-06-05T12:34:32.289Z" },
+]
+
+[[package]]
 name = "natsort"
 version = "8.4.0"
 source = { registry = "https://pypi.org/simple/" }
@@ -3232,11 +3241,11 @@ dependencies = [
     { name = "networkx" },
     { name = "numpy" },
     { name = "omnipath" },
+    { name = "omnipath-client" },
     { name = "pandas" },
     { name = "pydeseq2" },
     { name = "pypath-common" },
     { name = "pypath-omnipath", extra = ["curl"] },
-    { name = "rdata" },
     { name = "requests" },
     { name = "scipy" },
     { name = "seaborn" },
@@ -3342,6 +3351,7 @@ requires-dist = [
     { name = "networkx", specifier = ">=2.8" },
     { name = "numpy", specifier = ">=1.26.4" },
     { name = "omnipath", specifier = ">=1.0.12,<2" },
+    { name = "omnipath-client", specifier = ">=0.2.3" },
     { name = "pandas", specifier = ">=1.4" },
     { name = "pertpy", marker = "extra == 'pertpy'" },
     { name = "pydeseq2", specifier = ">=0.4.9" },
@@ -3350,7 +3360,6 @@ requires-dist = [
     { name = "pypath-common", specifier = ">=0.2.5" },
     { name = "pypath-omnipath", extras = ["curl"], git = "https://github.com/saezlab/pypath.git?branch=master" },
     { name = "pyscipopt", marker = "extra == 'corneto-backends'", specifier = ">=5.2.1,<6" },
-    { name = "rdata", specifier = ">=0.10" },
     { name = "requests", specifier = ">=2.32.3,<3" },
     { name = "scipy", specifier = ">=1.15.1,<2" },
     { name = "seaborn", specifier = ">=0.13.2" },
@@ -3929,6 +3938,21 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/04/b8/f504706093c149092925c1679aa96aced48af4bde1f73620cc2a6edc7f79/omnipath-1.0.12.tar.gz", hash = "sha256:37e33fd0ab4924a5345deab46868fdc472955c2be136c97ccc8dc5b5ea0ecfb8", size = 2058935, upload-time = "2025-06-26T22:00:09.513Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/d7/ba/704f9e56ae80ef66cf0534e23dac22ada34845f86b5e5b8b3294649d96b6/omnipath-1.0.12-py3-none-any.whl", hash = "sha256:28b85360f2f566e3c1e146560f8d3a5c133e221ce93c63ef62b3c71be9a6b003", size = 51621, upload-time = "2025-06-26T22:00:07.452Z" },
+]
+
+[[package]]
+name = "omnipath-client"
+version = "0.2.3"
+source = { registry = "https://pypi.org/simple/" }
+dependencies = [
+    { name = "dlmachine" },
+    { name = "narwhals" },
+    { name = "pkg-infra" },
+    { name = "requests" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/40/2b/18bd66b0a1d547aed8cb349fb50a0ae94a40ac4720fe7a4b2bf2beb7c5ba/omnipath_client-0.2.3.tar.gz", hash = "sha256:6c1d75b73a4bf93b513fe71bf9b0a261d4a56efad66d61017e04865f4f97fc2f", size = 247975, upload-time = "2026-04-09T14:13:43.239Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/6e/a6/f4524ea3affcfe61a7e607af7cfa3452230b80e85052fa47821d23ab9470/omnipath_client-0.2.3-py3-none-any.whl", hash = "sha256:cb410a0f470f63a7b5cd02633e179a75429e28e026e5505d1948d3537e263f1f", size = 26094, upload-time = "2026-04-09T14:13:41.647Z" },
 ]
 
 [[package]]

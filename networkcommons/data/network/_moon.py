@@ -19,21 +19,13 @@ Prior knowledge network used by MOON.
 
 __all__ = ['get_cosmos_pkn', 'get_hmdb_mapper']
 
-import lazy_import
-import numpy as np
-import pandas as pd
-
-from networkcommons import utils
-from . import _omnipath
-from . import _liana
-
 import os
 import urllib
+
+import pandas as pd
+
 from networkcommons import _conf
 from networkcommons.data.omics import _common
-
-# dc = lazy_import.lazy_module('decoupler')
-import decoupler as dc
 from networkcommons._session import _log
 
 def get_cosmos_pkn(update: bool = False):
@@ -73,43 +65,72 @@ def get_cosmos_pkn(update: bool = False):
 
 def get_hmdb_mapper(update: bool = False) -> dict:
     """
-    Retrieves the HMDB ID to metabolite name mapping from cosmosR.
+    Retrieves HMDB ID to metabolite name mapping via omnipath-client.
 
-    Downloads ``HMDB_mapper_vec.RData`` from the cosmosR GitHub repository
-    and converts it to a Python dict mapping HMDB IDs to human-readable
-    metabolite names.
+    Extracts HMDB identifiers from the COSMOS PKN and resolves them to
+    human-readable metabolite names using the OmniPath entity resolution
+    service (metabo.omnipathdb.org).
+
+    Note: this implementation uses ``omnipath_client.OmniPath()._fetch``
+    (a private method) because ``omnipath_client.utils.translate`` does not
+    yet support HMDB → name translation — the ``utils.omnipathdb.org``
+    service only covers cross-database ID mapping (e.g. HMDB → ChEBI).
+    Once ``oc.utils.translate('hmdb', 'traditional_iupac')`` is supported
+    server-side this function should be updated to use the public API.
 
     Args:
-        update: Force re-download even if cached.
+        update: Force re-resolution even if cached.
 
     Returns:
         dict: Mapping of HMDB IDs (e.g. ``'HMDB0000122'``) to metabolite
-        names (e.g. ``'Glucose'``).
+        names (e.g. ``'glucose'``).
     """
-    import rdata as _rdata
+    import re
+    import omnipath_client as oc
 
     path = os.path.join(_conf.get('pickle_dir'), 'hmdb_mapper.pickle')
 
     _log('MOON: Retrieving HMDB mapper...')
 
     if update or not os.path.exists(path):
-        _log('MOON: HMDB mapper not found in cache. Downloading...')
+        _log('MOON: HMDB mapper not found in cache. Resolving via OmniPath...')
 
-        url = (
-            'https://raw.githubusercontent.com/saezlab/cosmosR/'
-            'master/data/HMDB_mapper_vec.RData'
-        )
-        rdata_path = _common._maybe_download(url)
+        pkn = get_cosmos_pkn()
+        all_nodes = set(pkn['source']).union(pkn['target'])
+        hmdb_ids = list({
+            m.group(1)
+            for n in all_nodes
+            for m in [re.search(r'(HMDB\d+)', str(n))]
+            if m
+        })
 
-        parsed = _rdata.parser.parse_file(rdata_path)
-        obj = parsed.object.value[0]
-        values = obj.value
-        names = obj.attributes.value[0].value
+        # _fetch hits the entities/resolve endpoint on metabo.omnipathdb.org,
+        # which aggregates names from ChEBI, HMDB, RefMet, etc.
+        client = oc.OmniPath()
+        mapper = {}
+        batch_size = 200
 
-        hmdb_ids = [x.value.decode() for x in names]
-        metab_names = [values[i].value.decode() for i in range(len(values))]
+        for i in range(0, len(hmdb_ids), batch_size):
+            batch = hmdb_ids[i:i + batch_size]
+            result = client._fetch('entities/resolve', identifiers=batch)
 
-        mapper = dict(zip(hmdb_ids, metab_names))
+            for match in result.get('matches', []):
+                hmdb_id = match.get('identifier')
+                candidates = match.get('candidates', [])
+                if not candidates or not hmdb_id:
+                    continue
+                idents = candidates[0].get('identifiers', [])
+                names = [
+                    x['identifier'] for x in idents
+                    if x.get('identifierType') == 'Iupac Traditional Name:OM:0211'
+                ]
+                if not names:
+                    names = [
+                        x['identifier'] for x in idents
+                        if x.get('identifierType') == 'Name:OM:0202'
+                    ]
+                if names:
+                    mapper[hmdb_id] = names[0]
 
         pd.to_pickle(mapper, path)
 
