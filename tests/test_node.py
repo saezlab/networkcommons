@@ -1,3 +1,6 @@
+import subprocess
+import sys
+
 import pytest
 
 from networkcommons.noi import _node
@@ -45,6 +48,31 @@ SAMPLE_MOUSE_PROTEINS = {
         'original_id_type': 'genesymbol',
     },
 }
+
+
+def test_node_module_does_not_eagerly_import_pypath():
+
+    code = '''
+import builtins
+
+original_import = builtins.__import__
+
+def offline_import(name, *args, **kwargs):
+    if name == 'pypath' or name.startswith('pypath.'):
+        raise AssertionError(f'eager pypath import: {name}')
+    return original_import(name, *args, **kwargs)
+
+builtins.__import__ = offline_import
+import networkcommons.noi._node
+'''
+    result = subprocess.run(
+        [sys.executable, '-c', code],
+        capture_output = True,
+        text = True,
+        check = False,
+    )
+
+    assert result.returncode == 0, result.stderr
 
 
 @pytest.fixture
