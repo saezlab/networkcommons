@@ -23,7 +23,6 @@ extensions = [
     'sphinx_autodoc_typehints',
     'sphinx.ext.autosectionlabel',
     'sphinx_copybutton',
-    'numpydoc',
     'nbsphinx',
     'IPython.sphinxext.ipython_console_highlighting'
 ]
@@ -38,6 +37,8 @@ templates_path = ['_templates']
 
 # -- Options for HTML output
 master_doc = 'contents'
+
+nbsphinx_execute = 'never'
 
 autosummary_generate = True
 autosummary_imported_members = False

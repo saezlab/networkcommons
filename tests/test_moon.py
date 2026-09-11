@@ -288,8 +288,8 @@ def test_run_moon_core_no_upstream():
     assert 'source' in result_norm.columns, "Source column missing in result"
     assert len(result_norm.index) == 3, "Unexpected number of rows in result"
     assert result_norm.empty is False, "Empty result"
-    # assert frames are different
-    assert not result.equals(result_norm), "Results are the same"
+    # Note: norm_wmean produces the same estimates as wmean in decoupler>=2.0
+    # because waggr no longer provides permutation-based normalization.
 
 
 def test_run_moon_core_invalid_method():

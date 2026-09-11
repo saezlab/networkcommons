@@ -305,7 +305,7 @@ class Network:
             self.universe = self.universe()
 
         type_dict = {
-            cn._graph.Graph: 'corneto',
+            cn.Graph: 'corneto',
             nx.Graph: 'networkx',
             nx.DiGraph: 'networkx',
             pd.DataFrame: 'pandas',

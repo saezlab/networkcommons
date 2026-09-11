@@ -23,7 +23,10 @@ import os
 import pathlib
 import importlib.metadata
 
-import toml
+try:
+    import tomllib
+except ImportError:
+    import tomli as tomllib
 
 _VERSION = '0.5.0'
 
@@ -46,13 +49,14 @@ def get_metadata():
 
         if os.path.exists(toml_path):
 
-            pyproject = toml.load(toml_path)
+            with open(toml_path, 'rb') as f:
+                pyproject = tomllib.load(f)
 
             meta = {
-                'name': pyproject['tool']['poetry']['name'],
-                'version': pyproject['tool']['poetry']['version'],
-                'author': pyproject['tool']['poetry']['authors'],
-                'license': pyproject['tool']['poetry']['license'],
+                'name': pyproject['project']['name'],
+                'version': pyproject['project']['version'],
+                'author': pyproject['project'].get('authors', []),
+                'license': pyproject['project'].get('license', ''),
                 'full_metadata': pyproject,
             }
 

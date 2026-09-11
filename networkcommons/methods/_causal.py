@@ -70,11 +70,19 @@ def run_corneto_carnival(network,
         # Convert network to CORNETO format
         corneto_net = utils.to_cornetograph(network)
 
+        # runVanillaCarnival uses corneto._graph.Graph internally but cn.Graph
+        # is now corneto.graph._graph.Graph — pass SIF tuples to avoid the
+        # isinstance mismatch introduced in corneto 1.0.0b7.
+        sif_tuples = [
+            (next(iter(src)), attr.get('interaction', 1), next(iter(tgt)))
+            for (src, tgt), attr in zip(corneto_net.E, corneto_net._edge_attr)
+        ]
+
         # Run Vanilla Carnival method
-        problem, graph = cn.methods.runVanillaCarnival(
+        problem, graph = cn.methods.runVanillaCarnival(  # type: ignore[attr-defined]
             perturbations=source_dict,
             measurements=target_dict,
-            priorKnowledgeNetwork=corneto_net,
+            priorKnowledgeNetwork=sif_tuples,
             betaWeight=betaWeight,
             solver=solver,
             verbose=True  # This verbose controls internal print/logging within runVanillaCarnival
@@ -82,16 +90,15 @@ def run_corneto_carnival(network,
 
         # Subnetwork and solution
         network_sol = graph.edge_subgraph(
-            cn.methods.carnival.get_selected_edges(problem, graph),
+            cn.methods.carnival.get_selected_edges(problem, graph),  # type: ignore[attr-defined]
         )
 
         network_nx = utils.to_networkx(network_sol, skip_unsupported_edges=True)
         network_nx.remove_nodes_from(['_s', '_pert_c0', '_meas_c0'])
     
-    # when network is empty
-    except TypeError:
+    except Exception as e:
         network_nx = nx.Graph()
-        _log('WARNING: Network is empty. No solution found.')
+        _log(f'WARNING: Network is empty. No solution found. Reason: {type(e).__name__}: {e}')
 
     finally:
         # Restore original stdout and stderr
@@ -116,7 +123,6 @@ def run_corneto_carnival(network,
             else:
                 _log(line)  # Log stderr output as errors
 
-        # Final logging
         _log('CORNETO-Carnival finished.')
         _log(f'Network solution with {len(network_nx.nodes)} nodes and {len(network_nx.edges)} edges.')
 

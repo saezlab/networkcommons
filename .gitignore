@@ -39,3 +39,6 @@ test.ipynb
 flop.png
 *.h5ad
 .venv
+.envrc
+requirements-local.txt
+flop_repo/

@@ -227,20 +227,21 @@ def test_run_ora():
     })
 
     expected_results = pd.DataFrame({
-        'ora_Term': ["gene_set_1", "gene_set_2"],
-        'ora_Set size': [2, 3],
-        'ora_Overlap ratio': [1.0, 1.0],
-        'ora_p-value': [7.500375e-08, 1.500225e-11],
-        'ora_FDR p-value': [7.500375e-08, 3.000450e-11],
-        'ora_Odds ratio': [4444.111111, 5713.571429],
-        'ora_Combined score': [72908.876856, 142398.317463],
-        'ora_Features': ["geneA;geneB", "geneC;geneD;geneE"],
-        'ora_rank': [2.0, 1.0]
+        'ora_Term': ["gene_set_2", "gene_set_1"],
+        'ora_stat': [10.596360, 10.008573],
+        'ora_pval': [1.500225e-11, 7.500375e-08],
+        'ora_padj': [3.000450e-11, 7.500375e-08],
+        'ora_rank': [1.0, 2.0]
     })
 
-    ora_results = _metrics.run_ora(graph, net, metric='ora_Combined score', ascending=False)
+    ora_results = _metrics.run_ora(graph, net)
 
-    pd.testing.assert_frame_equal(ora_results, expected_results)
+    pd.testing.assert_frame_equal(
+        ora_results.reset_index(drop=True),
+        expected_results,
+        check_exact=False,
+        rtol=1e-4,
+    )
 
 
 def test_get_phosphorylation_status():

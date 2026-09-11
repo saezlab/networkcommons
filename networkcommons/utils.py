@@ -3,7 +3,10 @@ import networkx as nx
 import numpy as np
 import corneto as cn
 import corneto.contrib.networkx as cn_nx
+from corneto._graph import BaseGraph as _CnLegacyGraph
 from networkcommons._session import _log
+
+_CN_GRAPH_TYPES = (cn.Graph, _CnLegacyGraph)
 
 
 def node_attrs_from_corneto(graph: cn.Graph) -> pd.DataFrame:
@@ -81,7 +84,7 @@ def to_networkx(graph, skip_unsupported_edges=True):
         raise NotImplementedError("Only nx.DiGraph graphs and corneto graphs are supported.")
     elif isinstance(graph, nx.DiGraph):
         networkx_graph = graph
-    elif isinstance(graph, cn.Graph):
+    elif isinstance(graph, _CN_GRAPH_TYPES):
         networkx_graph = cn_nx.corneto_graph_to_networkx(
             graph,
             skip_unsupported_edges=skip_unsupported_edges)
@@ -162,6 +165,60 @@ def network_from_df(network_df,
                 data['weight'] = abs(weight)
 
     return network
+
+
+def lembas_format_network(
+        net: pd.DataFrame,
+        stimulation_col: str = 'stimulation',
+        inhibition_col: str = 'inhibition',
+        moa_col: str = 'mode_of_action',
+        unknown_value: float = 0.1,
+    ) -> pd.DataFrame:
+    """
+    Add a signed ``mode_of_action`` column to a LEMBAS network edge table.
+
+    Converts the separate ``stimulation`` / ``inhibition`` binary columns
+    (as returned by :func:`networkcommons.data.omics.lembas_network`) into
+    the single numeric ``mode_of_action`` column expected by
+    :func:`networkcommons.methods.run_lembas_rnn`:
+
+    * stimulating interaction  →  +1
+    * inhibiting interaction   →  -1
+    * unknown / neither        →  ``unknown_value`` (default 0.1, matching
+      the LEMBAS convention of keeping unknown edges active but weak)
+
+    Args:
+        net: Edge-list DataFrame as returned by
+            :func:`~networkcommons.data.omics.lembas_network`.
+        stimulation_col: Binary column marking activating interactions.
+        inhibition_col: Binary column marking inhibiting interactions.
+        moa_col: Name of the output column to create.
+        unknown_value: Value assigned to interactions with no known sign.
+
+    Returns:
+        Copy of ``net`` with an additional ``moa_col`` column.
+
+    Raises:
+        ValueError: If any edge is simultaneously marked stimulating and
+            inhibiting.
+    """
+
+    conflict = (net[stimulation_col] == 1) & (net[inhibition_col] == 1)
+
+    if conflict.any():
+        raise ValueError(
+            f'Edges found that are simultaneously stimulating and inhibiting '
+            f'(rows: {net.index[conflict].tolist()[:5]}). '
+            'An interaction must be stimulating (1, 0), inhibiting (0, 1) '
+            'or unknown (0, 0).'
+        )
+
+    result = net.copy()
+    result[moa_col] = unknown_value
+    result.loc[result[stimulation_col] == 1, moa_col] = 1.0
+    result.loc[result[inhibition_col] == 1, moa_col] = -1.0
+
+    return result
 
 
 def get_subnetwork(network, paths):

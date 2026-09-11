@@ -1,225 +1,279 @@
 [build-system]
-requires = ["poetry_core>=1.0.0"]
-build-backend = "poetry.core.masonry.api"
+build-backend = "hatchling.build"
+requires = [ "hatchling" ]
 
-[tool.poetry]
+[project]
 name = "networkcommons"
 version = "0.5.0"
 description = "Integrated framework for network inference and evaluation using prior knowledge and omics data"
-license = "gpl-3.0-only"
-authors = [
-    "Saez Lab <omnipathdb@gmail.com>"
-]
-packages = [
-    { include = "networkcommons" }
-]
-classifiers = [
-    "Development Status :: 2 - Pre-Alpha",
-    "Intended Audience :: Developers",
-    "Intended Audience :: Science/Research",
-    "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
-    "Operating System :: OS Independent",
-    "Programming Language :: Python",
-    "Natural Language :: English",
-    "Topic :: Scientific/Engineering :: Bio-Informatics"
-]
-keywords = [
-    "systems biology", "molecular biology", "signaling network",
-    "transcriptomics", "modeling", "mechanistic modeling",
-    "network inference", "molecular network", "omics",
-    "biomedicine"
-]
-repository = "https://github.com/saezlab/networkcommons"
-homepage = "https://github.com/saezlab/networkcommons"
-documentation = "https://networkcommons.readthedocs.io/"
 readme = "README.md"
+keywords = [
+  "biomedicine",
+  "mechanistic modeling",
+  "modeling",
+  "molecular biology",
+  "molecular network",
+  "network inference",
+  "omics",
+  "signaling network",
+  "systems biology",
+  "transcriptomics",
+]
+license = "GPL-3.0-only"
+authors = [ { name = "Saez Lab", email = "omnipathdb@gmail.com" } ]
+requires-python = ">=3.10,<3.13"
+classifiers = [
+  "Development Status :: 2 - Pre-Alpha",
+  "Intended Audience :: Developers",
+  "Intended Audience :: Science/Research",
+  "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
+  "Natural Language :: English",
+  "Operating System :: OS Independent",
+  "Programming Language :: Python",
+  "Programming Language :: Python :: 3 :: Only",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Topic :: Scientific/Engineering :: Bio-Informatics",
+]
+dependencies = [
+  "anndata>=0.9,<0.11",
+  "beautifulsoup4>=4.12.3,<5",
+  "biomart>=0.9.2",
+  "corneto>=1.0.0b7",
+  "cvxpy-base>=1.6,<2",
+  "decoupler>=2,<3",
+  "graphviz>=0.17",
+  "lazy-import>=0.2.2",
+  "matplotlib>=3.5.1,<4",
+  "networkx>=2.8",
+  "numpy>=1.26.4",
+  "omnipath>=1.0.12,<2",
+  "omnipath-client>=0.2.3",
+  "pandas>=1.4",
+  "pydeseq2>=0.4.9",
+  "pypath-common>=0.2.5",
+  "pypath-omnipath[curl]>=0.16.16",
+  "rdata>=0.10",
+  "requests>=2.32.3,<3",
+  "scipy>=1.15.1,<2",
+  "seaborn>=0.13.2",
+  "tomli>=2; python_version<'3.11'",
+  "yfiles-jupyter-graphs>=1.7.2,<2",
+]
+optional-dependencies.corneto-backends = [
+  "gurobipy>=11",
+  "pygraphviz>=1.11,<2",
+  "pyscipopt>=5.2.1,<6",
+]
+optional-dependencies.igraph = [ "igraph>=0.11.6" ]
+optional-dependencies.pertpy = [ "pertpy" ]
+optional-dependencies.pygraphviz = [ "pygraphviz>=1.11,<2" ]
+optional-dependencies.torch = [ "torch>=2.1" ]
+optional-dependencies.torch-cu128 = [ "torch>=2.1" ]
+urls."Bug Tracker" = "https://github.com/saezlab/networkcommons/issues"
+urls.Documentation = "https://networkcommons.readthedocs.io/"
+urls.Homepage = "https://github.com/saezlab/networkcommons"
+urls.Repository = "https://github.com/saezlab/networkcommons"
 
-[[tool.poetry.source]]
-name = "pypi-public"
-url = "https://pypi.org/simple/"
+[dependency-groups]
+dev = [
+  "bump2version",
+  "distlib",
+  { include-group = "docs" },
+  { include-group = "lint" },
+  { include-group = "test" },
+]
+test = [
+  "codecov-cli>=0.7.2,<0.8",
+  "coverage>=6",
+  "pytest>=6",
+  "pytest-cov>=5,<6",
+  "pytest-timeout>=2.3.1,<3",
+  "tox>=4",
+  "tox-uv>=1",
+]
+docs = [
+  "ipython",
+  "jupyter-contrib-nbextensions",
+  "jupyterlab",
+  "myst-nb",
+  "myst-parser",
+  "nbsphinx",
+  "pydata-sphinx-theme",
+  "sphinx>=7,<8",
+  "sphinx-autodoc-typehints>=1.18",
+  "sphinx-copybutton",
+  "sphinx-last-updated-by-git>=0.3",
+  "sphinx-remove-toctrees",
+  "sphinx-rtd-theme>=2,<3",
+  "sphinxcontrib-bibtex",
+  "sphinxcontrib-fulltoc>=1.2",
+]
+lint = [
+  "pre-commit>=2.17",
+]
 
-[tool.poetry.dependencies]
-python = ">=3.10,<4.0"
-toml = "*"
-networkx = "*"
-pandas = "*"
-pypath-common = "^0.2.5"
-pydeseq2 = "^0.4.9"
-requests = "^2.32.3"
-beautifulsoup4 = "^4.12.3"
-pypath-omnipath = "^0.16.16"
-numpydoc = "^1.7.0"
-sphinx-rtd-theme = "^2.0.0"
-lazy-import = "^0.2.2"
-anndata = "<=0.10.8"
-pytest = "^8.2.2"
-yfiles-jupyter-graphs = "^1.7.2"
-pyscipopt = "^5.2.1"
-scipy = "^1.15.1"
-matplotlib = "^3.5.1"
-graphviz = "^0.17"
-biomart = "^0.9.2"
-igraph = {version = "^0.11.6", optional = true}
-decoupler = "^1.8.0"
-omnipath = "^1.0.8"
-pygraphviz = {version = "^1.11", optional = true}
-cvxpy-base = "^1.6.0"
-corneto = "1.0.0a0"
-seaborn = "^0.13.2"
-numpy = "^1.26.4"
+[tool.hatch]
+build.targets.wheel.packages = [ "networkcommons" ]
 
-[tool.poetry.group.dev.dependencies]
-pytest = ">=6.0"
-pytest-timeout = "^2.3.1"
-pytest-cov = "^5.0.0"
-codecov-cli = "^0.7.2"
-tox = ">=3.20.1"
-pre-commit = ">=2.17.0"
-bump2version = "*"
-coverage = ">=6.0"
-distlib = "*"
-sphinx = "^7.0.0"
-sphinx-last-updated-by-git = ">=0.3"
-sphinx-autodoc-typehints = ">=1.18.0"
-sphinxcontrib-fulltoc = ">=1.2.0"
-sphinxcontrib-bibtex = "*"
-sphinx-copybutton = "*"
-myst-parser = "*"
-myst-nb = "*"
-jupyterlab = "*"
-pydata-sphinx-theme = "*"
-sphinx-remove-toctrees = "*"
-jupyter-contrib-nbextensions = { git = "https://github.com/deeenes/jupyter_contrib_nbextensions.git", branch = "master" }
-nbsphinx = { git = "https://github.com/deeenes/nbsphinx.git", branch = "timings" }
+[tool.pixi]
+workspace.channels = [ "conda-forge" ]
+workspace.platforms = [ "linux-64", "osx-arm64", "win-64" ]
+feature.base.pypi-dependencies.networkcommons = { path = ".", editable = true }
+feature.base.pypi-dependencies.numba = ">=0.56"
+feature.corneto-backends.dependencies.graphviz = ">=2.50"
+feature.corneto-backends.pypi-dependencies.networkcommons = { path = ".", extras = [ "corneto-backends" ], editable = true }
+feature.flop.channels = [ "conda-forge", "bioconda" ]
+feature.flop.dependencies."bioconductor-org.hs.eg.db" = ">=3.16"
+feature.flop.dependencies.bioconductor-deseq2 = ">=1.38"
+feature.flop.dependencies.bioconductor-edger = ">=3.40"
+feature.flop.dependencies.bioconductor-limma = ">=3.54"
+feature.flop.dependencies.bioconductor-vsn = ">=3.66"
+feature.flop.dependencies.nextflow = ">=23.10,<24"
+feature.flop.dependencies.numpy = ">=1.21,<1.24"
+feature.flop.dependencies.openjdk = ">=17"
+feature.flop.dependencies.python = "3.10.*"
+feature.flop.dependencies.r-base = ">=4.2"
+feature.flop.dependencies.r-bayesbio = ">=1.0"
+feature.flop.dependencies.r-cowplot = ">=1.1"
+feature.flop.dependencies.r-egg = ">=0.4"
+feature.flop.dependencies.r-fossil = ">=0.4"
+feature.flop.dependencies.r-ggdendro = ">=0.1"
+feature.flop.dependencies.r-ggdist = ">=3.2"
+feature.flop.dependencies.r-ggforce = ">=0.4"
+feature.flop.dependencies.r-ggpp = ">=0.5"
+feature.flop.dependencies.r-ggpubr = ">=0.6"
+feature.flop.dependencies.r-ggrepel = ">=0.9"
+feature.flop.dependencies.r-qs = ">=0.25"
+feature.flop.dependencies.r-rocr = ">=1.0"
+feature.flop.dependencies.r-tidyverse = ">=2.0"
+# osx-64 instead of osx-arm64: r-fossil (and several other R/Bioconductor packages) are not yet published for osx-arm64 on conda-forge; osx-64 runs via Rosetta 2 on Apple Silicon
+feature.flop.platforms = [ "linux-64", "osx-64" ]
+feature.flop.pypi-dependencies.decoupler = "==1.6.0"
+feature.flop.pypi-dependencies.numba = ">=0.56,<0.57"
+feature.flop.pypi-dependencies.omnipath = "==1.0.8"
+feature.flop.pypi-dependencies.pandas = "==1.5.3"
+feature.igraph.pypi-dependencies.networkcommons = { path = ".", extras = [ "igraph" ], editable = true }
+feature.pertpy.pypi-dependencies.networkcommons = { path = ".", extras = [ "pertpy" ], editable = true }
+feature.pygraphviz.dependencies.graphviz = ">=2.50"
+feature.pygraphviz.pypi-dependencies.networkcommons = { path = ".", extras = [ "pygraphviz" ], editable = true }
+# CUDA 12.8: index selection is driven by the torch-cu128 extra in [tool.uv.sources]; no version pin needed here
+feature.torch-cu128.platforms = [ "linux-64" ]
+feature.torch-cu128.pypi-dependencies.networkcommons = { path = ".", extras = [ "torch-cu128" ], editable = true }
+feature.torch.pypi-dependencies.networkcommons = { path = ".", extras = [ "torch" ], editable = true }
+environments.corneto-backends = { features = [ "corneto-backends" ], solve-group = "default" }
+environments.default = { features = [ "base" ], solve-group = "default" }
+environments.dev = { features = [ "base", "dev", "igraph", "pertpy", "torch", "corneto-backends", "pygraphviz" ], solve-group = "default" }
+environments.dev-cu128 = { features = [
+  "base",
+  "dev",
+  "igraph",
+  "pertpy",
+  "torch-cu128",
+  "corneto-backends",
+  "pygraphviz"
+], solve-group = "dev-cu128" }
+environments.docs = { features = [ "base", "docs" ], solve-group = "default" }
+environments.flop = { features = [ "flop" ], solve-group = "flop", no-default-feature = true }
+environments.igraph = { features = [ "igraph" ], solve-group = "default" }
+environments.lint = { features = [ "base", "lint" ], solve-group = "default" }
+environments.pygraphviz = { features = [ "pygraphviz" ], solve-group = "default" }
+environments.test = { features = [ "base", "test" ], solve-group = "default" }
+environments.torch = { features = [ "torch" ], solve-group = "default" }
 
-[tool.poetry.extras]
-igraph = ["igraph"]
-pygraphviz = ["pygraphviz"]
-corneto-backends = ["pyscipopt", "pygraphviz"]
+[tool.uv]
+default-groups = "all"
+sources.jupyter-contrib-nbextensions = { git = "https://github.com/deeenes/jupyter_contrib_nbextensions.git", branch = "master" }
+sources.nbsphinx = { git = "https://github.com/deeenes/nbsphinx.git", branch = "timings" }
+sources.pypath-omnipath = { git = "https://github.com/saezlab/pypath.git", branch = "master" }
+sources.torch = [ { index = "pytorch-cu128", extra = "torch-cu128" } ]
+index = [
+  { name = "pypi-public", url = "https://pypi.org/simple/", default = true },
+  { name = "pytorch-cu128", url = "https://download.pytorch.org/whl/cu128", explicit = true },
+]
+conflicts = [ [ { extra = "torch" }, { extra = "torch-cu128" } ] ]
 
-[tool.poetry.urls]
-"Bug Tracker" = "https://github.com/saezlab/networkcommons/issues"
-
-[tool.black]
+[tool.ruff]
+target-version = "py310"
 line-length = 80
-target-version = ['py31*']
-include = '\.pyi?$'
-exclude = '''
-(
-  /(
-      \.eggs
-    | \.git
-    | \.hg
-    | \.mypy_cache
-    | \.tox
-    | \.venv
-    | _build
-    | buck-out
-    | build
-    | dist
-  )/
-)
-'''
-
-[tool.isort]
-from_first = true
-line_length = 80
-multi_line_output = 3
-include_trailing_comma = true
-use_parentheses = true
-known_num="numpy,pandas"
-sections = "FUTURE,STDLIB,THIRDPARTY,NUM,FIRSTPARTY,LOCALFOLDER"
-no_lines_before="LOCALFOLDER"
-balanced_wrapping = true
-force_grid_wrap = 0
-length_sort = "1"
-indent = "    "
-skip = []
-
-[tool.flake8]
-extend-select = ["CE101"]
-ignore = [
-  "D200", "D202", "D401", "D105",
-  "W503", "W504",
-  "E731", "E131", "E251", "E303"
+extend-include = [ "*.ipynb" ]
+format.quote-style = "single"
+format.docstring-code-format = true
+lint.select = [
+  "B",   # flake8-bugbear
+  "BLE", # flake8-blind-except
+  "C4",  # flake8-comprehensions
+  "COM", # flake8-commas
+  "D",   # pydocstyle
+  "E",   # pycodestyle errors
+  "F",   # pyflakes
+  "I",   # isort
+  "PGH", # pygrep-hooks
+  "PTH", # flake8-use-pathlib
+  "RUF", # ruff-specific
+  "SIM", # flake8-simplify
+  "UP",  # pyupgrade
+  "W",   # pycodestyle warnings
 ]
-per-file-ignores = [
-    "docs/src/conf.py:D100",
-    "tests/*:D100,D101,D102",
-    "*/__init__.py:F401"
+lint.ignore = [
+  "D202", # No blank lines allowed after function docstring (found {num_lines})
+  "D212", # multi-line summary first line
+  "D401", # first line imperative mood
+  "E501", # line too long — formatter enforces line-length
+  "E731", # lambda assignment
 ]
-max-line-length = 80
-count = true
-exclude = [
-    ".git",
-    "__pycache__",
-    "build",
-    "docs/_build",
-    "dist"
+lint.per-file-ignores."*/__init__.py" = [ "F401" ]
+lint.per-file-ignores."docs/src/conf.py" = [ "D100" ]
+lint.per-file-ignores."tests/*" = [ "D" ]
+lint.isort.known-third-party = [ "numpy", "pandas" ]
+lint.pydocstyle.convention = "google"
+
+[tool.pytest]
+ini_options.testpaths = [
+  "tests",
+]
+ini_options.addopts = [
+  # "-Werror",  # if 3rd party libs raise DeprecationWarnings, just use filterwarnings below
+  "--import-mode=importlib", # allow using test files with same name
+  "-m not slow",
+]
+ini_options.markers = [ "slow: marks tests as slow (deselect with '-m \"not slow\"')" ]
+ini_options.xfail_strict = true
+ini_options.filterwarnings = [
+  "ignore: .*especially asymmetric.*:UserWarning",
+  "ignore: .*fitting did not converge.*:UserWarning",
+  "ignore: .*invalid escape sequence.*:DeprecationWarning",
+  "ignore: .*machine precision times.*:FutureWarning",
 ]
 
-[tool.yapf]
-based_on_style = "facebook"
-split_penalty_before_if_expr = 0
-split_penalty_import_names = 0
-split_penalty_comprehension = 0
-split_penalty_for_added_line_split = 0
-split_penalty_after_opening_bracket = 0
-split_before_first_argument = true
-split_before_named_assigns = true
-split_complex_comprehension = true
+[tool.coverage]
+run.branch = true
+run.omit = [
+  "**/noi/*",
+  "**/test_*.py",
+]
+run.parallel = true
+run.source = [ "networkcommons" ]
+paths.source = [ "networkcommons", "**/site-packages/networkcommons" ]
+report.exclude_also = [
+  ".*pragma:\\s*no.?cover",
+  "\\s*raise AssertionError",
+  "\\s*raise NotImplementedError",
+  "\\s*return NotImplemented",
+  "if __name__ == .?__main__.?",
+]
+report.precision = 2
+report.show_missing = true
 
 [tool.rstcheck]
 report_level = "INFO"
 ignore_directives = [
-    "automodule",
-    "toctree",
+  "automodule",
+  "toctree",
 ]
-ignore_roles = ["ref"]
-ignore_messages = '(Unknown target name:.*|No (directive|role) entry for "(auto)?(class|method|property|function|func|mod|attr)" in module "docutils\.parsers\.rst\.languages\.en"\.)'
-
-[tool.coverage.paths]
-source = [
-    "networkcommons",
-    "**/site-packages/networkcommons"
-]
-
-[tool.coverage.run]
-branch = true
-parallel = true
-source = ["networkcommons"]
-omit = [
-	"**/test_*.py",
-    "**/noi/*",
-]
-
-[tool.coverage.report]
-show_missing = true
-precision = 2
-exclude_also = [
-    ".*pragma:\\s*no.?cover",
-    "if __name__ == .?__main__.?",
-    "\\s*raise NotImplementedError",
-    "\\s*raise AssertionError",
-    "\\s*return NotImplemented",
-]
-
-[tool.pytest.ini_options]
-testpaths = [
-  "tests",
-]
-xfail_strict = true
-markers = [
-    "slow: marks tests as slow (deselect with '-m \"not slow\"')"
-]
-addopts = [
-    # "-Werror",  # if 3rd party libs raise DeprecationWarnings, just use filterwarnings below
-    "--import-mode=importlib",  # allow using test files with same name
-    "-m not slow",
-]
-filterwarnings = [
-    "ignore: .*fitting did not converge.*:UserWarning",
-    "ignore: .*especially asymmetric.*:UserWarning",
-    "ignore: .*machine precision times.*:FutureWarning",
-    "ignore: .*invalid escape sequence.*:DeprecationWarning",
-]
+ignore_roles = [ "ref" ]
+ignore_messages = """\
+  (Unknown target name:.*|No (directive|role) entry for \"(auto)?(class|method|property|function|func|mod|attr)\" in \
+  module \"docutils\\.parsers\\.rst\\.languages\\.en\"\\.)\
+  """
