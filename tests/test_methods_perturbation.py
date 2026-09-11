@@ -11,8 +11,8 @@ def _toy_network():
     network = nx.DiGraph()
     network.add_edge('Ligand', 'Kinase', sign=1)
     network.add_edge('Kinase', 'TF1', sign=-1)
-    network.add_edge('Ligand', 'TF2', weight=2.0)
-    network.add_edge('Unknown', 'TF2')
+    network.add_edge('Ligand', 'TF2', mode_of_action=1.0)
+    network.add_edge('Unknown', 'TF2', mode_of_action=0.1)
 
     return network
 
@@ -27,6 +27,14 @@ def test_network_to_perturbation_table_infers_signs():
         {'source': 'Kinase', 'target': 'TF1', 'mode_of_action': -1.0},
         {'source': 'Unknown', 'target': 'TF2', 'mode_of_action': 0.1},
     ]
+
+
+def test_network_to_perturbation_table_strict_requires_signs():
+
+    network = nx.DiGraph([('Ligand', 'TF1')])
+
+    with pytest.raises(ValueError, match='must define'):
+        _perturbation.network_to_perturbation_table(network, strict=True)
 
 
 def test_split_perturbation_data_aligns_and_splits_samples():
@@ -182,3 +190,59 @@ def test_lembas_rnn_smoke():
     assert list(result['predictions'].columns) == ['TF1', 'TF2']
     assert len(result['loss_history']) == 2
     assert result['subnetwork'].number_of_edges() == _toy_network().number_of_edges()
+
+
+def test_lembas_rnn_fails_for_missing_network_node():
+
+    pytest.importorskip('torch')
+
+    perturbations = pd.DataFrame({'Missing': [0.0, 1.0]}, index=['s1', 's2'])
+    readouts = pd.DataFrame({'TF1': [0.1, 0.2]}, index=['s1', 's2'])
+
+    with pytest.raises(ValueError, match='missing training input/output nodes'):
+        _perturbation.run_lembas_rnn(
+            _toy_network(),
+            perturbations,
+            readouts,
+            epochs=1,
+            n_steps=1,
+        )
+
+
+def test_lembas_rnn_fails_for_non_finite_input():
+
+    pytest.importorskip('torch')
+
+    perturbations = pd.DataFrame(
+        {'Ligand': [0.0, np.nan]},
+        index=['s1', 's2'],
+    )
+    readouts = pd.DataFrame({'TF1': [0.1, 0.2]}, index=['s1', 's2'])
+
+    with pytest.raises(ValueError, match='finite'):
+        _perturbation.run_lembas_rnn(
+            _toy_network(),
+            perturbations,
+            readouts,
+            epochs=1,
+            n_steps=1,
+        )
+
+
+def test_lembas_rnn_fails_for_missing_eval_column():
+
+    pytest.importorskip('torch')
+
+    perturbations = pd.DataFrame({'Ligand': [0.0, 1.0]}, index=['s1', 's2'])
+    readouts = pd.DataFrame({'TF1': [0.1, 0.2]}, index=['s1', 's2'])
+    eval_data = pd.DataFrame({'Other': [0.5]}, index=['s3'])
+
+    with pytest.raises(ValueError, match='missing training input columns'):
+        _perturbation.run_lembas_rnn(
+            _toy_network(),
+            perturbations,
+            readouts,
+            perturbations_eval=eval_data,
+            epochs=1,
+            n_steps=1,
+        )

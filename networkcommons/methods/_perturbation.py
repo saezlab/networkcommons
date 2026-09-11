@@ -55,6 +55,26 @@ def _as_dataframe(data, name: str) -> pd.DataFrame:
     raise TypeError(f'`{name}` must be a pandas DataFrame.')
 
 
+def _validate_numeric_table(data: pd.DataFrame, name: str) -> None:
+
+    if data.empty:
+        raise ValueError(f'`{name}` must contain at least one row and column.')
+
+    if not data.index.is_unique:
+        raise ValueError(f'`{name}` must have a unique sample index.')
+
+    if not data.columns.is_unique:
+        raise ValueError(f'`{name}` must have unique feature names.')
+
+    try:
+        values = data.to_numpy(dtype=float)
+    except (TypeError, ValueError) as exc:
+        raise TypeError(f'`{name}` must contain numeric values.') from exc
+
+    if not np.isfinite(values).all():
+        raise ValueError(f'`{name}` must contain only finite values.')
+
+
 def _align_samples(
         perturbations: pd.DataFrame,
         readouts: pd.DataFrame,
@@ -68,9 +88,15 @@ def _align_samples(
     return perturbations.loc[shared], readouts.loc[shared]
 
 
-def _edge_sign(value, unknown_value: float = 0.1) -> float:
+def _edge_sign(
+        value,
+        unknown_value: float = 0.1,
+        strict: bool = False,
+    ) -> float:
 
     if value is None or pd.isna(value):
+        if strict:
+            raise ValueError('Edge sign values cannot be missing.')
         return unknown_value
 
     if isinstance(value, str):
@@ -82,6 +108,26 @@ def _edge_sign(value, unknown_value: float = 0.1) -> float:
         if value_lower in {'-', '-1', 'inhibition', 'inhibiting'}:
             return -1.0
 
+        if strict:
+            raise ValueError(f'Unrecognised edge sign value: {value!r}.')
+
+        return unknown_value
+
+    try:
+        value = float(value)
+    except (TypeError, ValueError) as exc:
+        if strict:
+            raise ValueError(f'Invalid edge sign value: {value!r}.') from exc
+
+        return unknown_value
+
+    if not np.isfinite(value):
+        if strict:
+            raise ValueError(f'Edge sign value must be finite: {value!r}.')
+
+        return unknown_value
+
+    if value == unknown_value:
         return unknown_value
 
     if value > 0:
@@ -93,11 +139,22 @@ def _edge_sign(value, unknown_value: float = 0.1) -> float:
     return unknown_value
 
 
-def _infer_edge_sign(data: dict, sign_attr: str, unknown_value: float) -> float:
+def _infer_edge_sign(
+        data: dict,
+        sign_attr: str,
+        unknown_value: float,
+        strict: bool = False,
+    ) -> float:
 
-    for attr in (sign_attr, 'mode_of_action', 'interaction', 'weight'):
+    for attr in dict.fromkeys((sign_attr, 'mode_of_action', 'interaction')):
         if attr in data:
-            return _edge_sign(data[attr], unknown_value)
+            return _edge_sign(data[attr], unknown_value, strict=strict)
+
+    if strict:
+        raise ValueError(
+            'Each network edge must define one of: '
+            f'{sign_attr!r}, "mode_of_action", or "interaction".',
+        )
 
     return unknown_value
 
@@ -109,6 +166,7 @@ def network_to_perturbation_table(
         target_col: str = 'target',
         moa_col: str = 'mode_of_action',
         unknown_value: float = 0.1,
+        strict: bool = False,
     ) -> pd.DataFrame:
     """
     Convert a NetworkX graph to the edge table expected by LEMBAS-like models.
@@ -120,6 +178,7 @@ def network_to_perturbation_table(
         target_col: Output target column name.
         moa_col: Output mode-of-action column name.
         unknown_value: Numeric value used for unknown mode of action.
+        strict: Require every edge to provide a recognised sign attribute.
 
     Returns:
         Edge table with source, target and mode-of-action columns.
@@ -132,7 +191,12 @@ def network_to_perturbation_table(
         {
             source_col: source,
             target_col: target,
-            moa_col: _infer_edge_sign(data, sign_attr, unknown_value),
+            moa_col: _infer_edge_sign(
+                data,
+                sign_attr,
+                unknown_value,
+                strict=strict,
+            ),
         }
         for source, target, data in network.edges(data=True)
     ]
@@ -783,8 +847,31 @@ def run_lembas_rnn(
     if epochs <= 0:
         raise ValueError('`epochs` must be positive.')
 
+    for name, value in (
+            ('epochs', epochs),
+            ('learning_rate', learning_rate),
+            ('lr_peak', lr_peak),
+            ('n_steps', n_steps),
+            ('tolerance', tolerance),
+            ('alpha', alpha),
+            ('sign_penalty', sign_penalty),
+            ('uniform_penalty', uniform_penalty),
+            ('spectral_factor', spectral_factor),
+            ('noise_level', noise_level),
+            ('batch_size', batch_size),
+            ('leak', leak),
+            ('input_scale_init', input_scale_init),
+            ('projection_amplitude', projection_amplitude),
+            ('min_abs_edge_weight', min_abs_edge_weight),
+        ):
+        if not np.isfinite(value):
+            raise ValueError(f'`{name}` must be finite.')
+
     if learning_rate <= 0:
         raise ValueError('`learning_rate` must be positive.')
+
+    if lr_peak <= 0:
+        raise ValueError('`lr_peak` must be positive.')
 
     if n_steps <= 0:
         raise ValueError('`n_steps` must be positive.')
@@ -798,10 +885,21 @@ def run_lembas_rnn(
     if batch_size <= 0:
         raise ValueError('`batch_size` must be positive.')
 
+    if noise_level < 0 or leak < 0 or min_abs_edge_weight < 0:
+        raise ValueError(
+            'Noise, leak, and edge-weight thresholds must be non-negative.'
+        )
+
+    if activation not in {'mml', 'tanh', 'sigmoid', 'leaky_relu'}:
+        raise ValueError(
+            '`activation` must be one of mml, tanh, sigmoid or leaky_relu.',
+        )
+
     if torch is None:
         raise ImportError(
             '`run_lembas_rnn` requires PyTorch. Install NetworkCommons with '
-            'the `torch` extra: pip install networkcommons[torch]'
+            'the `torch` extra: uv sync --extra torch '
+            '(or pip install networkcommons[torch]).',
         )
 
     torch_dtype = _torch_dtype(dtype)
@@ -819,10 +917,29 @@ def run_lembas_rnn(
         'perturbations_train',
     )
     readouts_train = _as_dataframe(readouts_train, 'readouts_train')
+    _validate_numeric_table(perturbations_train, 'perturbations_train')
+    _validate_numeric_table(readouts_train, 'readouts_train')
     perturbations_train, readouts_train = _align_samples(
         perturbations_train,
         readouts_train,
     )
+
+    if not isinstance(network, nx.DiGraph):
+        raise TypeError('`network` must be a networkx.DiGraph.')
+
+    if network.number_of_edges() == 0:
+        raise ValueError('`network` must contain at least one edge.')
+
+    required_nodes = (
+        set(perturbations_train.columns) | set(readouts_train.columns)
+    )
+    missing_nodes = required_nodes.difference(network.nodes)
+    if missing_nodes:
+        missing = sorted(map(str, missing_nodes))
+        raise ValueError(
+            'The network is missing training input/output nodes: '
+            f'{missing[:5]}.',
+        )
 
     if perturbations_eval is None:
         perturbations_eval = perturbations_train
@@ -831,17 +948,26 @@ def run_lembas_rnn(
             perturbations_eval,
             'perturbations_eval',
         )
+        _validate_numeric_table(perturbations_eval, 'perturbations_eval')
+        missing_eval = perturbations_train.columns.difference(
+            perturbations_eval.columns,
+        )
+        if not missing_eval.empty:
+            raise ValueError(
+                '`perturbations_eval` is missing training input columns: '
+                f'{list(missing_eval[:5])}.',
+            )
         perturbations_eval = perturbations_eval.loc[
             :,
             perturbations_train.columns,
         ]
 
-    pkn = network_to_perturbation_table(network)
+    pkn = network_to_perturbation_table(network, strict=True)
     nodes = sorted(
         set(pkn['source']) |
         set(pkn['target']) |
         set(perturbations_train.columns) |
-        set(readouts_train.columns)
+        set(readouts_train.columns),
     )
     node_idx = {node: idx for idx, node in enumerate(nodes)}
 
@@ -968,6 +1094,12 @@ def run_lembas_rnn(
                 + proj_loss
             )
 
+            if not torch.isfinite(loss).all().item():
+                raise FloatingPointError(
+                    'LEMBAS-RNN produced a non-finite loss at '
+                    f'epoch {epoch + 1}.',
+                )
+
             loss.backward()
             optimizer.step()
             epoch_losses.append(float(fit_loss.detach().cpu()))
@@ -986,6 +1118,9 @@ def run_lembas_rnn(
 
     with torch.no_grad():
         y_pred, states = model(x_eval)
+
+    if not torch.isfinite(y_pred).all().item():
+        raise FloatingPointError('LEMBAS-RNN produced non-finite predictions.')
 
     predictions = pd.DataFrame(
         y_pred.detach().cpu().numpy(),
