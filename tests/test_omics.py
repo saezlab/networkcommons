@@ -159,6 +159,29 @@ def test_maybe_download_not_exists(mock_md5, mock_exists, mock_conf_get, mock_lo
     assert path == '/mock/cache/dir/dummyhash-file.txt'
 
 
+@patch('networkcommons.data.omics._common.pooch.retrieve')
+@patch('networkcommons.data.omics._common._conf.get', return_value='/mock/cache')
+def test_pooch_retrieve(mock_conf_get, mock_retrieve):
+    mock_retrieve.return_value = '/mock/cache/scperturb/dataset.h5ad'
+
+    path = _common._pooch_retrieve(
+        'https://example.com/dataset.h5ad',
+        fname = 'dataset.h5ad',
+        known_hash = 'md5:abc123',
+        subdir = 'scperturb',
+    )
+
+    assert path == '/mock/cache/scperturb/dataset.h5ad'
+    mock_conf_get.assert_called_once_with('cachedir')
+    mock_retrieve.assert_called_once_with(
+        url = 'https://example.com/dataset.h5ad',
+        known_hash = 'md5:abc123',
+        fname = 'dataset.h5ad',
+        path = '/mock/cache/scperturb',
+        progressbar = False,
+    )
+
+
 @patch('networkcommons.data.omics._common._requests_session')
 @patch('networkcommons.data.omics._common._log')
 @patch('networkcommons.data.omics._common._conf.get')
@@ -635,15 +658,24 @@ def mock_ann_data():
     return MagicMock(spec=ad.AnnData)
 
 
-@patch('networkcommons.data.omics._scperturb._common._open')
+@patch('networkcommons.data.omics._scperturb._common._pooch_retrieve')
 @patch('networkcommons.data.omics._scperturb.json.loads')
-def test_scperturb_metadata(mock_json_loads, mock_open, mock_metadata):
-    mock_open.return_value = MagicMock()
+def test_scperturb_metadata(mock_json_loads, mock_retrieve, mock_metadata):
+    mock_retrieve.return_value = 'record.html'
     mock_json_loads.return_value = mock_metadata
 
-    metadata = _scperturb.scperturb_metadata()
+    html = '<div id="recordCitation" data-record="{}"></div>'
+
+    with patch('builtins.open', mock_open(read_data = html)):
+
+        metadata = _scperturb.scperturb_metadata()
+
     assert metadata == mock_metadata
-    mock_open.assert_called_once_with('https://zenodo.org/record/10044268', ftype='html')
+    mock_retrieve.assert_called_once_with(
+        'https://zenodo.org/records/10044268',
+        fname = 'scperturb-record-10044268.html',
+        subdir = 'scperturb',
+    )
     mock_json_loads.assert_called_once()
 
 
@@ -660,20 +692,32 @@ def test_scperturb_datasets(mock_scperturb_metadata, mock_metadata):
     mock_scperturb_metadata.assert_called_once()
 
 
-@patch('networkcommons.data.omics._scperturb.scperturb_datasets')
-@patch('networkcommons.data.omics._scperturb._common._maybe_download')
+@patch('networkcommons.data.omics._scperturb._common._pooch_retrieve')
 @patch('anndata.read_h5ad')
-def test_scperturb(mock_read_h5ad, mock_maybe_download, mock_scperturb_datasets, mock_ann_data):
-    mock_scperturb_datasets.return_value = {
-        'dataset1.h5ad': 'https://example.com/dataset1.h5ad'
-    }
-    mock_maybe_download.return_value = 'path/to/dataset1.h5ad'
+def test_scperturb(mock_read_h5ad, mock_retrieve, mock_ann_data):
+    mock_retrieve.return_value = 'path/to/dataset1.h5ad'
     mock_read_h5ad.return_value = mock_ann_data
 
-    result = _scperturb.scperturb('dataset1.h5ad')
+    with patch.object(
+            _scperturb,
+            '_scperturb_artifacts',
+            return_value = {
+                'dataset1.h5ad': {
+                    'url': 'https://example.com/dataset1.h5ad',
+                    'known_hash': 'md5:abc123',
+                },
+            },
+        ):
+
+        result = _scperturb.scperturb('dataset1.h5ad')
+
     assert result is mock_ann_data
-    mock_scperturb_datasets.assert_called_once()
-    mock_maybe_download.assert_called_once_with('https://example.com/dataset1.h5ad')
+    mock_retrieve.assert_called_once_with(
+        'https://example.com/dataset1.h5ad',
+        fname = 'dataset1.h5ad',
+        known_hash = 'md5:abc123',
+        subdir = 'scperturb',
+    )
     mock_read_h5ad.assert_called_once_with('path/to/dataset1.h5ad')
 
 

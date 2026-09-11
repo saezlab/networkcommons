@@ -25,11 +25,26 @@ from typing import Any
 import json
 
 import anndata as ad
+import bs4
 
 from . import _common
 from networkcommons._session import _log
 
-_URL = 'https://zenodo.org/record/10044268'
+_URL = 'https://zenodo.org/records/10044268'
+_METADATA_FNAME = 'scperturb-record-10044268.html'
+
+
+def _scperturb_artifacts() -> dict[str, dict[str, str | None]]:
+
+    meta = scperturb_metadata()
+
+    return {
+        name: {
+            'url': entry['links']['content'],
+            'known_hash': entry.get('checksum'),
+        }
+        for name, entry in meta['files']['entries'].items()
+    }
 
 
 def scperturb_datasets() -> dict[str, Any]:
@@ -40,11 +55,9 @@ def scperturb_datasets() -> dict[str, Any]:
     https://zenodo.org/records/10044268.
     """
 
-    meta = scperturb_metadata()
-
     return {
-        k: v['links']['content']
-        for k, v in meta['files']['entries'].items()
+        name: artifact['url']
+        for name, artifact in _scperturb_artifacts().items()
     }
 
 
@@ -56,7 +69,16 @@ def scperturb_metadata() -> dict[str, Any]:
     record is https://zenodo.org/records/10044268.
     """
 
-    soup = _common._open(_URL, ftype = 'html')
+    path = _common._pooch_retrieve(
+        _URL,
+        fname = _METADATA_FNAME,
+        subdir = 'scperturb',
+    )
+
+    with open(path, encoding = 'utf-8') as fp:
+
+        soup = bs4.BeautifulSoup(fp.read(), 'html.parser')
+
     data = soup.find(id = 'recordCitation').attrs['data-record']
 
     return json.loads(data)
@@ -78,7 +100,12 @@ def scperturb(dataset: str) -> ad.AnnData:
     """
     _log(f"DATA: Retrieving scPerturb dataset {dataset}...")
 
-    urls = scperturb_datasets()
-    path = _common._maybe_download(urls[dataset])
+    artifact = _scperturb_artifacts()[dataset]
+    path = _common._pooch_retrieve(
+        artifact['url'],
+        fname = dataset,
+        known_hash = artifact['known_hash'],
+        subdir = 'scperturb',
+    )
 
     return ad.read_h5ad(path)

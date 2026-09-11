@@ -31,6 +31,7 @@ import urllib.parse
 
 import requests
 import bs4
+import pooch
 import pandas as pd
 
 from networkcommons import _conf
@@ -122,6 +123,52 @@ def _maybe_download(url: str, **kwargs) -> str:
         _download(url, path)
 
     return path
+
+
+def _pooch_retrieve(
+        url: str,
+        *,
+        fname: str | None = None,
+        known_hash: str | None = None,
+        subdir: str | None = None,
+    ) -> str:
+    """Retrieve a file with Pooch using the configured cache directory.
+
+    Args:
+        url:
+            URL of the file to retrieve.
+        fname:
+            Filename to use in the cache. If omitted, use the URL basename.
+        known_hash:
+            Optional Pooch checksum specification, for example
+            ``'md5:...'`` or ``'sha256:...'``.
+        subdir:
+            Optional resource-specific directory below the configured cache.
+    """
+
+    cache_dir = _conf.get('cachedir')
+
+    if subdir:
+
+        cache_dir = os.path.join(cache_dir, subdir)
+
+    if fname is None:
+
+        fname = os.path.basename(urllib.parse.urlparse(url).path)
+
+    if not fname:
+
+        raise ValueError(f'Cannot determine a cache filename for `{url}`.')
+
+    _log(f'Utils: Retrieving `{url}` with Pooch.')
+
+    return pooch.retrieve(
+        url = url,
+        known_hash = known_hash,
+        fname = fname,
+        path = cache_dir,
+        progressbar = False,
+    )
 
 
 def _open(

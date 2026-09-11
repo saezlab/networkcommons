@@ -23,7 +23,6 @@ licensetools11.0.1_linux64/
 *.pye
 *.pyc
 *.kate-swp
-/.tox/
 /.idea/
 /.pytest_cache/
 /.cache/

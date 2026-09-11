@@ -47,12 +47,19 @@ def get_metadata():
         if os.path.exists(toml_path):
 
             pyproject = toml.load(toml_path)
+            project = pyproject['project']
+
+            license_ = project.get('license')
+
+            if isinstance(license_, dict):
+
+                license_ = license_.get('text') or license_.get('file')
 
             meta = {
-                'name': pyproject['tool']['poetry']['name'],
-                'version': pyproject['tool']['poetry']['version'],
-                'author': pyproject['tool']['poetry']['authors'],
-                'license': pyproject['tool']['poetry']['license'],
+                'name': project['name'],
+                'version': project.get('version'),
+                'author': project.get('authors'),
+                'license': license_,
                 'full_metadata': pyproject,
             }
 

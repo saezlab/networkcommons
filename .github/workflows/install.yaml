@@ -26,11 +26,16 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
 
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+          cache-dependency-glob: uv.lock
+
       - name: Install package
         run: |
-          python -m ensurepip
-          pip install .
+          uv sync --locked --no-dev
 
       - name: Import package
         run: |
-          python -c "import networkcommons"
+          uv run --locked python -c "import networkcommons"
