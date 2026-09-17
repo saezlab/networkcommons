@@ -1,0 +1,22 @@
+# PANACEA — original raw data.
+#
+# Douglass et al., A community challenge for a pancancer drug mechanism of
+# action inference from perturbational profile data.
+# Cell Reports Medicine (2022). DOI: 10.1016/j.xcrm.2021.100492
+# Challenge data DOI: 10.7303/syn20968331
+# Raw data: NCBI GEO accession GSE186341
+#
+# Format: <cache-relative filename> <checksum> <download URL>
+
+panacea/counts/GSE186341_ASPC_dream_counts.csv.gz sha256:5d80c855521f57c1da003512b8ecf8f863449b67fe7a528166e45aa36a8ea155 https://ftp.ncbi.nlm.nih.gov/geo/series/GSE186nnn/GSE186341/suppl/GSE186341_ASPC_dream_counts.csv.gz
+panacea/counts/GSE186341_DU145_dream_counts.csv.gz sha256:b39f220bf6decc7829fb0fab4d9f6b859a37fae4208f82b58ba5abf96a88b6a6 https://ftp.ncbi.nlm.nih.gov/geo/series/GSE186nnn/GSE186341/suppl/GSE186341_DU145_dream_counts.csv.gz
+panacea/counts/GSE186341_EFO21_dream_counts.csv.gz sha256:2e9baec19df78423891dfc0ec9cc45c24eb12039ffd98d384a5817735720c71a https://ftp.ncbi.nlm.nih.gov/geo/series/GSE186nnn/GSE186341/suppl/GSE186341_EFO21_dream_counts.csv.gz
+panacea/counts/GSE186341_H1793_dream_counts.csv.gz sha256:aa11d1239636bebac759e6df7d58ac8d121217b8145c922097112dba357a9cc2 https://ftp.ncbi.nlm.nih.gov/geo/series/GSE186nnn/GSE186341/suppl/GSE186341_H1793_dream_counts.csv.gz
+panacea/counts/GSE186341_HCC1143_dream_counts.csv.gz sha256:604b4c970ea15710b7bf8205df8803e3c165f83d4599fe84c8a15929e9f47e57 https://ftp.ncbi.nlm.nih.gov/geo/series/GSE186nnn/GSE186341/suppl/GSE186341_HCC1143_dream_counts.csv.gz
+panacea/counts/GSE186341_HF2597_dream_counts.csv.gz sha256:1011cbee5941eb803c81fa094791342a2eff5282dd6aedef9d9cbd088c987b52 https://ftp.ncbi.nlm.nih.gov/geo/series/GSE186nnn/GSE186341/suppl/GSE186341_HF2597_dream_counts.csv.gz
+panacea/counts/GSE186341_HSTS_dream_counts.csv.gz sha256:5492b4fe92ad8234a1b122edae12e67385b8acaa52b39f5f8a31a9586ec25ba2 https://ftp.ncbi.nlm.nih.gov/geo/series/GSE186nnn/GSE186341/suppl/GSE186341_HSTS_dream_counts.csv.gz
+panacea/counts/GSE186341_KRJ1_dream_counts.csv.gz sha256:4f919f728cca28e976f86a8821b2ba59d43fffec97e1bc0c436ad7c97f7b22fa https://ftp.ncbi.nlm.nih.gov/geo/series/GSE186nnn/GSE186341/suppl/GSE186341_KRJ1_dream_counts.csv.gz
+panacea/counts/GSE186341_LNCAP_dream_counts.csv.gz sha256:ea58ec33a0e09bf30c20876b06c17574a3634c96b47d843d634bcba5a3dd13fb https://ftp.ncbi.nlm.nih.gov/geo/series/GSE186nnn/GSE186341/suppl/GSE186341_LNCAP_dream_counts.csv.gz
+panacea/counts/GSE186341_PANC1_dream_counts.csv.gz sha256:8fda2c278862c155ba6bc4469df97c07ec138f98c5a94ee98dfbfe6aa7765a8f https://ftp.ncbi.nlm.nih.gov/geo/series/GSE186nnn/GSE186341/suppl/GSE186341_PANC1_dream_counts.csv.gz
+panacea/counts/GSE186341_U87_dream_counts.csv.gz sha256:b1155c35bdabb4b03fc55b47ffad1f54f4172c1e30d61423feb72598339ba986 https://ftp.ncbi.nlm.nih.gov/geo/series/GSE186nnn/GSE186341/suppl/GSE186341_U87_dream_counts.csv.gz
+panacea/matrix/GSE186341_series_matrix.txt.gz sha256:226117df7b6171c178ac687d38925278dc7fe7b989c26e2a541e29181e4320cf https://ftp.ncbi.nlm.nih.gov/geo/series/GSE186nnn/GSE186341/matrix/GSE186341_series_matrix.txt.gz
