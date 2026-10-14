@@ -24,15 +24,22 @@ MOON
 
     methods.prepare_metab_inputs
     methods.is_expressed
+    methods.meta_network_cleanup
     methods.filter_pkn_expressed_genes
+    methods.filter_pkn_expressed_genes_fast
     methods.filter_input_nodes_not_in_pkn
     methods.keep_controllable_neighbours
     methods.keep_observable_neighbours
     methods.compress_same_children
     methods.run_moon_core
+    methods.run_moon
     methods.filter_incoherent_TF_target
+    methods.filter_incohrent_TF_target
     methods.decompress_moon_result
     methods.reduce_solution_network
+    methods.reduce_solution_network_double_thresh
+    methods.get_moon_scoring_network
+    methods.translate_column_HMDB
     methods.translate_res
 
 .. _api-topological:
@@ -307,4 +314,3 @@ Utilities
     utils.subset_df_with_nodes
     utils.node_attrs_from_corneto
     utils.edge_attrs_from_corneto
-

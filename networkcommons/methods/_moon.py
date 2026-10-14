@@ -24,6 +24,7 @@ __all__ = [
     'prepare_metab_inputs',
     'is_expressed',
     'filter_pkn_expressed_genes',
+    'filter_pkn_expressed_genes_fast',
     'filter_input_nodes_not_in_pkn',
     'keep_controllable_neighbours',
     'keep_observable_neighbours',
@@ -31,52 +32,267 @@ __all__ = [
     'run_moon_core',
     'run_moon',
     'filter_incoherent_TF_target',
+    'filter_incohrent_TF_target',
     'decompress_moon_result',
     'reduce_solution_network',
+    'reduce_solution_network_double_thresh',
+    'get_moon_scoring_network',
+    'translate_column_HMDB',
     'translate_res',
 ]
 
 import collections
+import numbers
 import re
+from collections.abc import Mapping
 
-import lazy_import
 import networkx as nx
 import pandas as pd
-# dc = lazy_import.lazy_module('decoupler')
 import decoupler as dc
 import numpy as np
 
-from . import _graph
 from networkcommons._session import _log
 
 
+_SIGN_COLUMNS = ('sign', 'interaction', 'mor', 'weight')
+
+
+def _iter_edges_with_data(graph):
+    """Yield graph edges while hiding the MultiDiGraph key convention."""
+    if not isinstance(graph, nx.Graph):
+        raise TypeError('meta_network must be a NetworkX graph.')
+    if not graph.is_directed():
+        raise TypeError('MOON requires a directed prior-knowledge network.')
+
+    if graph.is_multigraph():
+        for source, target, _, attributes in graph.edges(data=True, keys=True):
+            yield source, target, attributes
+    else:
+        yield from graph.edges(data=True)
+
+
+def _canonical_sign(attributes, context='edge'):
+    """Read one signed interaction from supported R/Python field names."""
+    values = []
+    for column in _SIGN_COLUMNS:
+        if column not in attributes or attributes[column] is None:
+            continue
+        try:
+            value = float(attributes[column])
+        except (TypeError, ValueError) as exc:
+            raise ValueError(
+                f'{context} has a non-numeric {column!r} value: '
+                f'{attributes[column]!r}.'
+            ) from exc
+        if np.isnan(value):
+            continue
+        if not np.isfinite(value):
+            raise ValueError(f'{context} has a non-finite {column!r} value.')
+        values.append((column, value))
+
+    if not values:
+        raise ValueError(
+            f'{context} must define one of {", ".join(_SIGN_COLUMNS)}.'
+        )
+
+    sign = values[0][1]
+    if any(not np.isclose(value, sign) for _, value in values[1:]):
+        aliases = ', '.join(f'{column}={value}' for column, value in values)
+        raise ValueError(f'{context} has conflicting sign aliases: {aliases}.')
+    return sign
+
+
+def _pkn_to_regulons(graph):
+    """Return a decoupler-ready edge table with a canonical ``sign`` column."""
+    records = []
+    for source, target, attributes in _iter_edges_with_data(graph):
+        records.append({
+            'source': source,
+            'target': target,
+            'sign': _canonical_sign(attributes, f'edge {source!r}->{target!r}'),
+        })
+    return pd.DataFrame(records, columns=['source', 'target', 'sign'])
+
+
+def _signed_digraph(graph):
+    """Copy a PKN to a simple graph with a canonical ``sign`` attribute."""
+    result = nx.DiGraph()
+    result.add_nodes_from(graph.nodes(data=True))
+    for source, target, attributes in _iter_edges_with_data(graph):
+        copied_attributes = dict(attributes)
+        copied_attributes['sign'] = _canonical_sign(
+            attributes, f'edge {source!r}->{target!r}'
+        )
+        result.add_edge(source, target, **copied_attributes)
+    return result
+
+
+def _as_named_scores(values, name):
+    """Normalize the named-vector convention shared by R and Python MOON."""
+    if isinstance(values, pd.Series):
+        return values.to_dict()
+    if isinstance(values, Mapping):
+        return dict(values)
+    raise TypeError(f'{name} must be a mapping or pandas Series keyed by node.')
+
+
+def _input_nodes(values, name):
+    if isinstance(values, Mapping):
+        return list(values)
+    if isinstance(values, (str, bytes)):
+        raise TypeError(f'{name} must be a collection of node names.')
+    try:
+        return list(values)
+    except TypeError as exc:
+        raise TypeError(
+            f'{name} must be a mapping or collection of nodes.'
+        ) from exc
+
+
+def _validated_n_steps(n_steps):
+    if n_steps is None:
+        return None
+    if isinstance(n_steps, bool) or not isinstance(n_steps, numbers.Integral):
+        raise ValueError('n_steps must be a non-negative integer or None.')
+    if n_steps < 0:
+        raise ValueError('n_steps must be a non-negative integer or None.')
+    return int(n_steps)
+
+
+def _reachable_nodes(graph, seeds, n_steps):
+    """Return all directed descendants at most ``n_steps`` from any seed."""
+    seeds = list(seeds)
+    missing = [seed for seed in seeds if seed not in graph]
+    if missing:
+        raise ValueError(f'Input nodes are not in the PKN: {missing}.')
+
+    n_steps = _validated_n_steps(n_steps)
+    reached = set()
+    for seed in seeds:
+        if n_steps is None:
+            reached.add(seed)
+            reached.update(nx.descendants(graph, seed))
+        else:
+            reached.update(nx.single_source_shortest_path_length(
+                graph, seed, cutoff=n_steps
+            ))
+    return reached
+
+
+def _edge_only_subgraph(graph, nodes=None):
+    """Return an induced graph containing only nodes represented by an edge.
+
+    R's edge-table helpers discard isolated vertices after each filtering
+    operation. NetworkX's ``subgraph`` retains them, so this small adapter
+    makes the graph-native implementation follow the same contract where it
+    matters (notably ``get_moon_scoring_network``).
+    """
+    nodes = None if nodes is None else set(nodes)
+    result = nx.DiGraph()
+    for source, target, attributes in graph.edges(data=True):
+        if nodes is None or (source in nodes and target in nodes):
+            result.add_edge(source, target, **dict(attributes))
+    return result
+
+
+def _empty_att(columns):
+    """Return a stable empty attribute table for graph-native result helpers."""
+    return pd.DataFrame({
+        column: pd.Series(dtype='object') for column in columns
+    })
+
+
+def _attach_rna(att, rna_input, node_column):
+    result = att.copy()
+    if rna_input is None:
+        result['RNA_input'] = np.nan
+    else:
+        result['RNA_input'] = result[node_column].map(
+            _as_named_scores(rna_input, 'rna_input')
+        )
+    return result
+
+
+def _score_table(moon_res, graph=None, require_level=False):
+    """Select scores in the identifier domain of ``graph`` when possible."""
+    if not isinstance(moon_res, pd.DataFrame):
+        raise TypeError('moon_res must be a pandas DataFrame.')
+    if 'score' not in moon_res.columns:
+        raise ValueError("moon_res must contain a 'score' column.")
+
+    source_column = 'source' if 'source' in moon_res.columns else None
+    if 'source_original' in moon_res.columns:
+        if source_column is None:
+            source_column = 'source_original'
+        elif graph is not None:
+            original_hits = moon_res['source_original'].isin(graph.nodes).sum()
+            source_hits = moon_res['source'].isin(graph.nodes).sum()
+            if original_hits > source_hits:
+                source_column = 'source_original'
+    if source_column is None:
+        raise ValueError(
+            "moon_res must contain 'source' or 'source_original'."
+        )
+
+    result = moon_res.copy()
+    result['source'] = result[source_column]
+    if 'level' not in result.columns:
+        if require_level:
+            raise ValueError("moon_res must contain a 'level' column.")
+        result['level'] = 0
+        _log(
+            'MOON: moon_res has no level column; using level 0 for '
+            'legacy compatibility.'
+        )
+
+    if result['source'].isna().any():
+        raise ValueError('moon_res contains missing source nodes.')
+    result['score'] = pd.to_numeric(result['score'], errors='raise')
+    result['level'] = pd.to_numeric(result['level'], errors='raise')
+    # decoupler's normalized weighted mean can legitimately return infinite
+    # scores for a small regulon. cosmosR retains those values, and they work
+    # naturally with the absolute-score and sign tests below. Missing scores,
+    # by contrast, cannot be assigned a consistent edge direction.
+    if result['score'].isna().any():
+        raise ValueError('moon_res contains missing scores.')
+    if not np.isfinite(result['level']).all():
+        raise ValueError('moon_res contains non-finite levels.')
+    if not np.all(np.equal(result['level'], np.floor(result['level']))):
+        raise ValueError('moon_res levels must be integers.')
+    result['level'] = result['level'].astype(int)
+    return result.drop_duplicates(subset='source', keep='first')
+
+
 def meta_network_cleanup(graph):
+    """Clean a signed PKN using the current ``cosmosR`` edge semantics.
+
+    Self loops are removed. Parallel source-target edges are averaged when a
+    ``MultiDiGraph`` is supplied, and only pairs with a resulting sign of
+    exactly ``1`` or ``-1`` are kept. A simple ``DiGraph`` has already
+    collapsed duplicate edges before this function receives it.
     """
-    This function cleans up a meta network graph by removing self-interactions,
-    calculating the mean interaction values for duplicated source-target pairs,
-    and keeping only interactions with values of 1 or -1.
+    grouped_edges = collections.defaultdict(list)
+    for source, target, attributes in _iter_edges_with_data(graph):
+        if source == target:
+            continue
+        grouped_edges[(source, target)].append((
+            _canonical_sign(attributes, f'edge {source!r}->{target!r}'),
+            dict(attributes),
+        ))
 
-    Parameters:
-    - graph: A NetworkX graph.
-
-    Returns:
-    - A cleaned up meta network graph.
-    """
-    # Clean up the meta network
-    # Remove self-interactions
-    pre_graph = graph.copy()
-    pre_graph.remove_edges_from(nx.selfloop_edges(pre_graph))
-
-    # Keep only interactions with values of 1 or -1
-    post_graph = nx.DiGraph(
-        [
-            (u, v, d)
-            for u, v, d in pre_graph.edges(data=True)
-            if d['sign'] in [1, -1]
-        ]
-    )
-
-    return post_graph
+    cleaned = nx.DiGraph()
+    for (source, target), values in grouped_edges.items():
+        sign = float(np.mean([value[0] for value in values]))
+        if sign not in (1.0, -1.0):
+            continue
+        attributes = {
+            key: value
+            for key, value in values[0][1].items()
+            if key not in _SIGN_COLUMNS
+        }
+        attributes['sign'] = sign
+        cleaned.add_edge(source, target, **attributes)
+    return cleaned
 
 
 def prepare_metab_inputs(metab_input, compartment_codes):
@@ -98,8 +314,10 @@ def prepare_metab_inputs(metab_input, compartment_codes):
 
     ignored = [code for code in compartment_codes if code not in comps]
     if ignored:
-        _log("MOON: The following compartment codes are not found in the PKN and "
-              "will be ignored:")
+        _log(
+            'MOON: The following compartment codes are not found in the '
+            'PKN and will be ignored:'
+        )
         _log(ignored)
 
     compartment_codes = [code for code in compartment_codes if code in comps]
@@ -139,63 +357,48 @@ def prepare_metab_inputs(metab_input, compartment_codes):
         return metab_input
 
 
+def _is_expressed(x, expressed_genes):
+    if re.search('Metab|orphanReac', x):
+        return x
+    if x in expressed_genes:
+        return x
+    if re.search(r'^Gene[0-9]+__[A-Z0-9_]+$', x):
+        genes = re.sub(r'^Gene[0-9]+__', '', x).split('_')
+        return x if all(gene in expressed_genes for gene in genes) else None
+    if re.search(r'^Gene[0-9]+__[A-Z0-9_]+_reverse$', x):
+        genes = re.sub(r'_reverse$', '', re.sub(r'^Gene[0-9]+__', '', x))
+        genes = genes.split('_')
+        return x if all(gene in expressed_genes for gene in genes) else None
+    if re.search(r'^Gene[0-9]+__[^_][a-z]', x):
+        _log(x)
+        return x
+    return None
+
+
 def is_expressed(x, expressed_genes_entrez):
-    """
-    Determines if a gene is expressed based on the given criteria.
-
-    Args:
-        x (str): The gene name.
-        expressed_genes_entrez (list): List of expressed genes.
-
-    Returns:
-        str or None: The gene name if it is expressed, otherwise None.
-    """
-    if not re.search("Metab", x) and not re.search("orphanReac", x):
-        if x in expressed_genes_entrez:
-            return x
-        if re.search("Gene[0-9]+__[A-Z0-9_]+$", x):
-            genes = re.sub("Gene[0-9]+__", "", x).split("_")
-            if sum(gene in expressed_genes_entrez for gene in genes) != len(genes): # noqa E501
-                return None
-            return x
-        if re.search("Gene[0-9]+__[^_][a-z]", x):
-            _log(x)
-            return x
-        if re.search("Gene[0-9]+__[A-Z0-9_]+reverse", x):
-            genes = re.sub("_reverse", "", re.sub("Gene[0-9]+__", "", x)).split("_") # noqa E501
-            if sum(gene in expressed_genes_entrez for gene in genes) != len(genes): # noqa E501
-                return None
-            return x
-        return None
-    return x
+    """Return ``x`` when it passes the current COSMOS expression predicate."""
+    return _is_expressed(x, set(expressed_genes_entrez))
 
 
 def filter_pkn_expressed_genes(expressed_genes_entrez, unfiltered_graph):
-    """
-    Filters out unexpressed nodes from the prior knowledge network (PKN).
+    """Filter PKN nodes unsupported by the supplied expressed-gene set."""
+    return filter_pkn_expressed_genes_fast(
+        expressed_genes_entrez, unfiltered_graph
+    )
 
-    Args:
-        expressed_genes_entrez (list): List of expressed genes in Entrez ID
-        format.
-        meta_pkn (nx.DiGraph): prior knowledge network (PKN) graph.
 
-    Returns:
-        nx.DiGraph: Filtered PKN graph with unexpressed nodes removed.
-    """
-    _log("MOON: removing unexpressed nodes from PKN...")
-
+def filter_pkn_expressed_genes_fast(expressed_genes_entrez, unfiltered_graph):
+    """Fast graph-native equivalent of cosmosR's vectorized PKN filter."""
+    _log('MOON: removing unexpressed nodes from PKN...')
+    expressed_genes = set(expressed_genes_entrez)
     graph = unfiltered_graph.copy()
-
     nodes_to_remove = [
-        node
-        for node in graph.nodes
-        if is_expressed(node, expressed_genes_entrez) is None
+        node for node in graph.nodes
+        if _is_expressed(node, expressed_genes) is None
     ]
-
+    before = graph.number_of_edges()
     graph.remove_nodes_from(nodes_to_remove)
-
-    _log(f"MOON: {len(nodes_to_remove)} nodes removed")
-
+    _log(f'MOON: {before - graph.number_of_edges()} interactions removed')
     return graph
 
 
@@ -225,40 +428,27 @@ def filter_input_nodes_not_in_pkn(data, pkn):
     return new_data
 
 
-def keep_controllable_neighbours(source_dict, graph):
+def keep_controllable_neighbours(source_dict, graph, n_steps=None):
+    """Keep descendants of input nodes, optionally within ``n_steps``.
+
+    ``n_steps=None`` retains the historical NetworkCommons unlimited traversal.
+    Supplying an integer implements the bounded behaviour of current cosmosR.
     """
-    This function filters out nodes from a dictionary of source nodes that are
-    not controllable from the graph.
-
-    Parameters:
-    - source_dict: A dictionary of source nodes.
-    - graph: A NetworkX graph.
-
-    Returns:
-    - A dictionary of source nodes that are observable from the graph.
-    """
-    _log("MOON: filtering out nodes that are not controllable from sources...")
-
-    return _graph.run_reachability_filter(graph, source_dict)
+    _log('MOON: filtering out nodes that are not controllable from sources...')
+    nodes = _reachable_nodes(
+        graph, _input_nodes(source_dict, 'source_dict'), n_steps
+    )
+    return graph.subgraph(nodes).copy()
 
 
-def keep_observable_neighbours(target_dict, graph):
-    """
-    This function filters out nodes from a dictionary of target nodes that are
-    not observable from the graph.
-
-    Parameters:
-    - target_dict: A dictionary of target nodes.
-    - graph: A NetworkX graph.
-
-    Returns:
-    - A dictionary of target nodes that are observable from the graph.
-    """
-    _log("MOON: filtering out nodes that are not observable from targets...")
-
-    subnetwork = _graph.run_reachability_filter(graph.reverse(), target_dict)
-
-    return subnetwork.reverse()
+def keep_observable_neighbours(target_dict, graph, n_steps=None):
+    """Keep ancestors of measured nodes, optionally within ``n_steps``."""
+    _log('MOON: filtering out nodes that are not observable from targets...')
+    reversed_graph = graph.reverse(copy=False)
+    nodes = _reachable_nodes(
+        reversed_graph, _input_nodes(target_dict, 'target_dict'), n_steps
+    )
+    return graph.subgraph(nodes).copy()
 
 
 def compress_same_children(uncompressed_graph, sig_input, metab_input):
@@ -277,16 +467,19 @@ def compress_same_children(uncompressed_graph, sig_input, metab_input):
     and duplicated parents.
     """
     _log("MOON: starting network compression...")
-    graph = uncompressed_graph.copy()
+    graph = _signed_digraph(uncompressed_graph)
 
     parents = [node for node in graph.nodes if graph.out_degree(node) > 0]
     parents.sort()
     _log(f"MOON: {len(parents)} parents found")
 
-    df_signature = nx.to_pandas_edgelist(graph)
-    df_signature = df_signature.sort_values(by=['source', 'target'])
+    df_signature = _pkn_to_regulons(graph).sort_values(
+        by=['source', 'target']
+    )
 
-    df_signature['target'] = df_signature['target'] + df_signature['sign'].astype(str) # noqa E501
+    df_signature['target'] = (
+        df_signature['target'].astype(str) + df_signature['sign'].astype(str)
+    )
 
     # Create a dictionary to map each parent to its targets
     parent_to_targets = df_signature.groupby('source')['target'].apply(
@@ -316,60 +509,65 @@ def compress_same_children(uncompressed_graph, sig_input, metab_input):
 
     _log(f"MOON: {len(duplicated_parents)} duplicated parents found")
 
-    # Check for edges with different signs and exclude them from compression
-    records = []
-    for original_node, signature in duplicated_parents.items():
-        for parent in graph.predecessors(original_node):
-            sign = graph[parent][original_node]['sign']
-            records.append((signature, original_node, parent, sign))
+    # Do not merge a group when a shared predecessor has conflicting signs
+    # towards otherwise-identical children. Unlike the original R helper this
+    # also handles duplicate root parents, which have no incoming records.
+    grouped_parents = collections.defaultdict(list)
+    for node, signature in duplicated_parents.items():
+        grouped_parents[signature].append(node)
 
-    df_records = pd.DataFrame(records,
-                              columns=['signature',
-                                       'original_node',
-                                       'parent',
-                                       'sign'])
+    excluded_nodes = set()
+    potential_cases = 0
+    for nodes in grouped_parents.values():
+        incoming_signs = collections.defaultdict(set)
+        for node in nodes:
+            for parent in graph.predecessors(node):
+                potential_cases += 1
+                incoming_signs[parent].add(graph[parent][node]['sign'])
+        if any(len(signs) > 1 for signs in incoming_signs.values()):
+            excluded_nodes.update(nodes)
 
-    _log(f"MOON: {len(df_records)} potential compression cases found")
-
-    # Identify rows with the same signature but different signs
-    signature_parent_signs = (
-        df_records.groupby(['signature', 'parent'])['sign'].nunique() > 1
+    _log(f"MOON: {potential_cases} potential compression cases found")
+    _log(
+        'MOON: '
+        f'{len(excluded_nodes)} nodes excluded from compression after '
+        'edge check'
     )
 
-    # Filter out the rows where signature-parent pairs have conflicting signs
-    conflicting_pairs = signature_parent_signs[signature_parent_signs].index
-
-    excluded_nodes = []
-    for signature, parent in conflicting_pairs:
-        excluded_nodes.append(
-            df_records[
-                (df_records['signature'] == signature) &
-                (df_records['parent'] == parent)
-            ].original_node.values[0]
-        )
-        df_records = df_records[
-            ~((df_records['signature'] == signature) &
-              (df_records['parent'] == parent))
-        ]
-
-    _log(f"MOON: {len(excluded_nodes)} nodes excluded from compression after edge check")
-
-    df_records = df_records[~df_records['original_node'].isin(excluded_nodes)]
-
-    # Build new duplicated_signatures_dict
     new_duplicated_parents = {
-        row['original_node']: row['signature']
-        for _, row in df_records.iterrows()
+        node: signature for node, signature in duplicated_parents.items()
+        if node not in excluded_nodes
     }
 
     # Relabel the nodes in the graph based on the new duplicated signatures
-    subnetwork = nx.relabel_nodes(
-        graph, new_duplicated_parents, copy=False
-    ).copy()
+    subnetwork = nx.relabel_nodes(graph, new_duplicated_parents, copy=True)
 
-    _log(f"MOON: network reduced from {len(graph.nodes)} to {len(subnetwork.nodes)} nodes after compression") # noqa E501
+    _log(
+        f'MOON: network reduced from {len(graph.nodes)} to '
+        f'{len(subnetwork.nodes)} nodes after compression'
+    )
 
     return subnetwork, node_signatures, new_duplicated_parents
+
+
+def _run_decoupler(mat, regulons, statistic, n_perm):
+    if statistic == 'ulm':
+        estimate, _ = dc.run_ulm(
+            mat=mat, net=regulons, weight='sign', min_n=1
+        )
+        return estimate
+
+    # This is deliberately asymmetric: current cosmosR uses two permutations
+    # for plain wmean and reserves n_perm for normalized wmean.
+    times = n_perm if statistic == 'norm_wmean' else 2
+    estimate, norm, _, _ = dc.run_wmean(
+        mat=mat,
+        net=regulons,
+        times=times,
+        weight='sign',
+        min_n=1,
+    )
+    return norm if statistic == 'norm_wmean' else estimate
 
 
 def run_moon_core(
@@ -379,158 +577,128 @@ def run_moon_core(
         n_layers=None,
         n_perm=1000,
         downstream_cutoff=0,
-        statistic="ulm"
+        statistic='ulm',
+        return_levels=False,
 ):
+    """Iteratively propagate downstream activity through a signed PKN.
+
+    ``sign``, ``interaction``, and ``mor`` edge attributes are accepted. The
+    input graph is not modified; decoupler receives a local ``sign`` column.
+    ``return_levels`` is accepted for R compatibility and, like cosmosR,
+    levels are always returned.
     """
-    Runs the MOON algorithm to iteratively infer MOON scores from downstream
-    nodes.
-
-    Args:
-        upstream_input (dict, optional): Dictionary containing upstream input
-        data. Defaults to None.
-        downstream_input (dict): Dictionary containing downstream input data.
-        meta_network (networkx.DiGraph): Graph representing the regulatory
-        network.
-        n_layers (int): Number of layers to run the MOON algorithm.
-        n_perm (int): Number of permutations for statistical testing. Defaults
-        to 1000.
-        downstream_cutoff (float): Cutoff value for downstream input scores.
-        Defaults to 0.
-        statistic (str): Statistic to use for scoring. Can be "ulm"
-        (univariate linear model) or "wmean" (weighted mean). Defaults to ulm.
-
-    Returns:
-        pandas.DataFrame: DataFrame containing the decoupled regulatory
-        network.
-    """
-    regulons = nx.to_pandas_edgelist(graph)
-    regulons = regulons[~regulons["source"].isin(downstream_input.keys())]
-
-    decoupler_mat = pd.DataFrame(
-        list(downstream_input.values()), index=downstream_input.keys()
-    ).T
-
-    if "wmean" in statistic:
-        estimate, norm, corr, pvals = dc.run_wmean(
-            mat=decoupler_mat,
-            net=regulons,
-            times=n_perm,
-            weight='sign',
-            min_n=1
+    if statistic not in {'ulm', 'wmean', 'norm_wmean'}:
+        raise ValueError(
+            "Invalid statistic. Supported values are 'ulm', 'wmean', and "
+            "'norm_wmean'."
         )
-        if statistic == "norm_wmean":
-            estimate = norm
+    if graph is None:
+        raise ValueError('graph must be provided.')
+    if n_layers is None or n_layers < 1:
+        raise ValueError('n_layers must be a positive integer.')
 
-    elif statistic == "ulm":
-        estimate, pvals = dc.run_ulm(
-            mat=decoupler_mat, net=regulons, weight='sign', min_n=1
-        )
+    downstream_input = _as_named_scores(downstream_input, 'downstream_input')
+    upstream_input = (
+        None if upstream_input is None
+        else _as_named_scores(upstream_input, 'upstream_input')
+    )
+    regulons = _pkn_to_regulons(graph)
+    regulons = regulons.loc[
+        ~regulons['source'].isin(downstream_input)
+    ].copy()
+    decoupler_mat = pd.DataFrame([downstream_input], index=['sample'])
 
-    else:
-        raise ValueError("Invalid method. Currently supported: 'ulm' or 'wmean'.")
-
+    estimate = _run_decoupler(
+        decoupler_mat, regulons, statistic, n_perm
+    )
     n_plus_one = estimate.T
-    n_plus_one.columns = ["score"]
-    n_plus_one["level"] = 1
+    n_plus_one.columns = ['score']
+    n_plus_one['level'] = 1
+    results = [n_plus_one]
 
-    res_list = [n_plus_one]
-    i = 1
-    while len(regulons) > 1 and \
-            regulons["target"].isin(res_list[i - 1].index.values).sum() > 1 \
-            and i < n_layers:
-        _log(f"MOON: scoring layer {i} from downstream nodes...")
-        regulons = regulons[~regulons["source"].isin(res_list[i - 1].index.values)] # noqa E501
-        previous_n_plus_one = res_list[i - 1].drop(columns="level").T
-
-        if "wmean" in statistic:
-            estimate, norm, corr, pvals = dc.run_wmean(
-                mat=previous_n_plus_one,
-                net=regulons,
-                times=n_perm,
-                weight='sign',
-                min_n=1
-            )
-            if statistic == "norm_wmean":
-                estimate = norm
-        else:
-            estimate, pvals = dc.run_ulm(
-                mat=previous_n_plus_one,
-                net=regulons,
-                weight='sign',
-                min_n=1
-            )
-
+    layer = 1
+    while (
+        len(regulons) > 1
+        and regulons['target'].isin(results[layer - 1].index).sum() > 1
+        and layer < n_layers
+    ):
+        _log(f'MOON: scoring layer {layer} from downstream nodes...')
+        regulons = regulons.loc[
+            ~regulons['source'].isin(results[layer - 1].index)
+        ].copy()
+        previous_layer = results[layer - 1].drop(columns='level').T
+        estimate = _run_decoupler(
+            previous_layer, regulons, statistic, n_perm
+        )
         n_plus_one = estimate.T
-        regulons = regulons[~regulons["source"].isin(n_plus_one.index.values)]
-        n_plus_one["level"] = i + 1
-        res_list.append(n_plus_one)
-        i += 1
+        regulons = regulons.loc[
+            ~regulons['source'].isin(n_plus_one.index)
+        ].copy()
+        n_plus_one.columns = ['score']
+        n_plus_one['level'] = layer + 1
+        results.append(n_plus_one)
+        layer += 1
 
-    recursive_moon_res = pd.concat(res_list)
-
+    moon_res = pd.concat(results)
     downstream_names = pd.DataFrame.from_dict(
-        downstream_input, orient="index", columns=["score"]
+        downstream_input, orient='index', columns=['score']
     )
-    downstream_names = downstream_names[
-        abs(downstream_names["score"]) > downstream_cutoff
+    downstream_names = downstream_names.loc[
+        downstream_names['score'].abs() > downstream_cutoff
     ]
-    downstream_names["level"] = 0
-
-    recursive_moon_res = pd.concat(
-        [recursive_moon_res, downstream_names]
-    )
+    downstream_names['level'] = 0
+    moon_res = pd.concat([moon_res, downstream_names])
 
     if upstream_input is not None:
-        upstream_input_df = pd.DataFrame.from_dict(
-            upstream_input, orient="index", columns=["real_score"]
+        real_scores = pd.Series(upstream_input, name='real_score')
+        observed_scores = moon_res.index.to_series().map(real_scores)
+        coherent = observed_scores.isna() | (
+            np.sign(observed_scores) == np.sign(moon_res['score'])
         )
-        upstream_input_df = upstream_input_df.join(
-            recursive_moon_res, how='right'
-        )
-        upstream_input_df = upstream_input_df[
-            (np.sign(upstream_input_df["real_score"]) ==
-             np.sign(upstream_input_df["score"])) |
-            (np.isnan(upstream_input_df["real_score"]))
-        ]
-        recursive_moon_res = upstream_input_df.drop(
-            columns="real_score"
-        )
+        moon_res = moon_res.loc[coherent]
 
-    recursive_moon_res.reset_index(inplace=True)
-    recursive_moon_res.rename(columns={"index": "source"}, inplace=True) # noqa E501
-
-    return recursive_moon_res
+    return moon_res.reset_index().rename(columns={'index': 'source'})
 
 
-def run_moon(network,
-             sig_input,
-             metab_input,
-             tf_regn,
-             rna_input,
-             n_layers=6,
-             method='ulm',
-             max_iter=10):
-    """
-    Runs the MOON algorithm on the given network.
+def run_moon(
+        network,
+        sig_input,
+        metab_input,
+        tf_regn,
+        rna_input,
+        n_layers=6,
+        method='ulm',
+        max_iter=10,
+        n_perm=1000,
+        downstream_cutoff=0,
+):
+    """Run iterative MOON scoring and TF-target coherence filtering.
 
     Args:
-        network (NetworkX graph): The input network.
-        sig_input (numpy array): The input signal data.
-        metab_input (numpy array): The input metabolite data.
-        tf_regn (numpy array): The transcription factor regulation data.
-        rna_input (numpy array): The input RNA data.
+        network: Signed directed PKN. ``sign``, ``interaction``, and ``mor``
+            edge attributes are accepted.
+        sig_input: Upstream node-to-score mapping.
+        metab_input: Downstream node-to-score mapping.
+        tf_regn: TF regulon table with ``source``, ``target``, and a signed
+            ``mor``/``weight``/``sign``/``interaction`` column.
+        rna_input: RNA target node-to-score mapping.
         n_layers (int, optional): The number of layers in the MOON algorithm.
             Defaults to 6.
-        method (str, optional): The decoupleR method used in the MOON
-            algorithm. Defaults to 'ulm'.
+        method (str, optional): ``'ulm'``, ``'wmean'``, or ``'norm_wmean'``.
         max_iter (int, optional): The maximum number of iterations for the
             MOON algorithm. Defaults to 10.
+        n_perm (int, optional): Permutations for ``'norm_wmean'``. Plain
+            ``'wmean'`` uses the two permutations used by current cosmosR.
+        downstream_cutoff (float, optional): Minimum absolute downstream
+            score retained as a level-0 result.
 
     Returns:
         tuple: A tuple containing the MOON scores and the modified network.
-    """    
-    _log("MOON: starting MOON scoring...")
-    
+    """
+    if max_iter < 1:
+        raise ValueError('max_iter must be a positive integer.')
+    _log('MOON: starting MOON scoring...')
+
     moon_network = network.copy()
 
     before = 1
@@ -539,235 +707,401 @@ def run_moon(network,
 
     while before != after and i < max_iter:
         before = len(moon_network.edges)
-        moon_res = run_moon_core(sig_input,
-                                 metab_input,
-                                 moon_network,
-                                 n_layers=n_layers,
-                                 statistic=method)
+        moon_res = run_moon_core(
+            upstream_input=sig_input,
+            downstream_input=metab_input,
+            graph=moon_network,
+            n_layers=n_layers,
+            n_perm=n_perm,
+            downstream_cutoff=downstream_cutoff,
+            statistic=method,
+        )
 
-        moon_network = filter_incoherent_TF_target(moon_res,
-                                                   tf_regn,
-                                                   moon_network,
-                                                   rna_input)
+        moon_network = filter_incoherent_TF_target(
+            moon_res,
+            tf_regn,
+            moon_network,
+            rna_input,
+        )
 
         after = len(moon_network.edges)
         i += 1
         _log(f'Optimisation iteration {i} - Before: {before}, After: {after}')
 
-    if i == max_iter:
-        _log("MOON: Maximum number of iterations reached."
-              "Solution might not have converged")
+    if before == after:
+        _log(f'MOON: Solution converged after {i} iterations')
     else:
-        _log(f"MOON: Solution converged after {i} iterations")
+        _log(
+            'MOON: Maximum number of iterations reached.'
+            'Solution might not have converged'
+        )
 
     return moon_res, moon_network
+
+
+def _normalise_tf_regulon(tf_reg_net):
+    if not isinstance(tf_reg_net, pd.DataFrame):
+        raise TypeError('TF_reg_net must be a pandas DataFrame.')
+    if not {'source', 'target'}.issubset(tf_reg_net.columns):
+        raise ValueError(
+            "TF_reg_net must contain 'source', 'target', and a signed "
+            "interaction column."
+        )
+    result = tf_reg_net[['source', 'target']].copy()
+    result['mor'] = [
+        _canonical_sign(
+            row, f'TF interaction {row["source"]!r}->{row["target"]!r}'
+        )
+        for _, row in tf_reg_net.iterrows()
+    ]
+    return result
 
 
 def filter_incoherent_TF_target(
         moon_res, TF_reg_net, meta_network, RNA_input
 ):
-    """
-    Filters incoherent TF-target interactions from the meta_network based on
-    the given inputs.
+    """Remove TF-target edges whose score, RNA, and regulation signs conflict.
 
-    Parameters:
-    moon_res (pd.DataFrame): DataFrame
-    TF_reg_net (pd.DataFrame): DataFrame containing TF regulatory network.
-    meta_network (networkx.Graph): Graph representing the meta network.
-    RNA_input (dict): Dictionary containing RNA input values.
-
-    Returns:
-    networkx.Graph: Filtered meta network with incoherent TF-target
-    interactions removed.
+    The TF network may use current cosmosR's ``mor`` or NetworkCommons'
+    historical ``weight`` column (as well as ``sign`` or ``interaction``).
     """
+    if 'source' not in moon_res.columns or 'score' not in moon_res.columns:
+        raise ValueError("moon_res must contain 'source' and 'score' columns.")
     filtered_meta_network = meta_network.copy()
-
-    RNA_df = pd.DataFrame.from_dict(
-        RNA_input, orient='index', columns=['RNA_input']
+    rna_scores = _as_named_scores(RNA_input, 'RNA_input')
+    regulon = _normalise_tf_regulon(TF_reg_net)
+    rna_df = pd.DataFrame.from_dict(
+        rna_scores, orient='index', columns=['RNA_input']
     )
-    reg_meta = pd.merge(
-        moon_res, TF_reg_net, left_on='source', right_on='source', how='inner'
+    reg_meta = moon_res.merge(regulon, on='source', how='inner')
+    reg_meta = reg_meta.rename(columns={'score': 'TF_score'})
+    reg_meta = reg_meta.merge(
+        rna_df, left_on='target', right_index=True, how='inner'
     )
-    reg_meta.rename(columns={'score': 'TF_score'}, inplace=True)
-
-    reg_meta = pd.merge(
-        reg_meta, RNA_df, left_on='target', right_index=True, how='inner'
-    )
-    reg_meta['incoherent'] = np.sign(
-        reg_meta['TF_score'] * reg_meta['RNA_input'] * reg_meta['weight']
+    incoherent = np.sign(
+        reg_meta['TF_score'] * reg_meta['RNA_input'] * reg_meta['mor']
     ) < 0
-
-    reg_meta = reg_meta[reg_meta["incoherent"]][['source', 'target']]
-
-    tuple_list = list(reg_meta.itertuples(index=False, name=None))
-
-    filtered_meta_network.remove_edges_from(tuple_list)
-
+    incoherent = incoherent.fillna(False)
+    edges_to_remove = list(reg_meta.loc[
+        incoherent, ['source', 'target']
+    ].itertuples(index=False, name=None))
+    filtered_meta_network.remove_edges_from(edges_to_remove)
     return filtered_meta_network
 
 
+# Preserve the public cosmosR spelling for users moving a workflow verbatim.
+filter_incohrent_TF_target = filter_incoherent_TF_target
+
+
 def decompress_moon_result(
-        moon_res, node_signatures, duplicated_parents, meta_network_graph
+        moon_res,
+        node_signatures,
+        duplicated_parents=None,
+        meta_network_graph=None,
 ):
+    """Expand compressed MOON scores back to original PKN node identifiers.
+
+    The existing four-argument Python form is retained. The current R-style
+    ``(moon_res, compression_result, meta_network)`` form is also accepted,
+    including the three-tuple returned by ``compress_same_children``.
     """
-    Decompresses the moon_res dataframe by mapping the compressed nodes to
-    their corresponding original source using the provided
-    meta_network_compressed_list and the filtered meta_network.
-
-    Args:
-        moon_res (pandas.DataFrame): The compressed moon_res dataframe.
-        node_signatures (dict): The node signatures dictionary.
-        duplicated_parents (dict): The duplicated parents dictionary.
-        meta_network_graph (nx.DiGraph): The compressed meta_network.
-
-    Returns:
-        pandas.DataFrame: The decompressed moon_res dataframe with the source
-        column mapped to its corresponding original source.
-    """
-    _log("MOON: decompressing nodes...")
-
-    compressed_meta_network = nx.to_pandas_edgelist(meta_network_graph)
-
-    # Create a dataframe for duplicated parents
-    duplicated_parents_df = pd.DataFrame.from_dict(
-        duplicated_parents, orient='index', columns=['source']
-    )
-    duplicated_parents_df['source_original'] = duplicated_parents_df.index
-    duplicated_parents_df.reset_index(drop=True, inplace=True)
-
-    # Create a dataframe for addons
-    addons = pd.DataFrame(
-        list(node_signatures.keys() - duplicated_parents_df['source_original'])
-    )
-    addons.columns = ['source']
-    addons['source_original'] = addons['source']
-    addons.sort_values(by='source', inplace=True)
-
-    # Get final leaves (nodes with no outgoing edges)
-    final_leaves = compressed_meta_network[
-        ~compressed_meta_network['target'].isin(
-            compressed_meta_network['source']
+    _log('MOON: decompressing nodes...')
+    if isinstance(node_signatures, (tuple, list)):
+        if len(node_signatures) != 3:
+            raise ValueError(
+                'A compression result tuple must contain exactly three items.'
+            )
+        compression_result = node_signatures
+        if meta_network_graph is None:
+            meta_network_graph = duplicated_parents
+        _, node_signatures, duplicated_parents = compression_result
+    elif (
+        isinstance(node_signatures, Mapping)
+        and 'node_signatures' in node_signatures
+    ):
+        compression_result = node_signatures
+        if meta_network_graph is None:
+            meta_network_graph = duplicated_parents
+        node_signatures = compression_result['node_signatures']
+        duplicated_parents = compression_result.get(
+            'duplicated_signatures',
+            compression_result.get('duplicated_parents', {}),
         )
-    ]['target']
-    final_leaves = pd.DataFrame(
-        {'source': final_leaves, 'source_original': final_leaves}
+
+    if meta_network_graph is None:
+        raise ValueError('meta_network_graph must be provided.')
+    if 'source' not in moon_res.columns:
+        raise ValueError("moon_res must contain a 'source' column.")
+    node_signatures = dict(node_signatures)
+    duplicated_parents = dict(duplicated_parents or {})
+
+    records = [
+        {'source': compressed, 'source_original': original}
+        for original, compressed in duplicated_parents.items()
+    ]
+    duplicated_originals = set(duplicated_parents)
+    records.extend(
+        {'source': node, 'source_original': node}
+        for node in node_signatures
+        if node not in duplicated_originals
     )
-
-    # Combine addons and final leaves
-    addons = pd.concat([addons, final_leaves])
-
-    # Create mapping table by combining duplicated parents and addons
-    mapping_table = pd.concat([duplicated_parents_df, addons])
-    mapping_table = mapping_table.drop_duplicates()
-
-    # Merge the moon_res dataframe with the mapping table
-    moon_res_dec = pd.merge(moon_res, mapping_table, on='source', how='inner')
-
-    _log(f"MOON: decompressed {len(moon_res_dec) - len(moon_res)} nodes")
-
-    # Return the merged dataframe
+    # Match the R edge-table semantics: a final leaf is a target which never
+    # occurs as a source. Isolated NetworkX vertices are not represented in
+    # the R input and must therefore not add decompression rows here.
+    edge_sources = {
+        source for source, _, _ in _iter_edges_with_data(meta_network_graph)
+    }
+    final_leaves = {
+        target for _, target, _ in _iter_edges_with_data(meta_network_graph)
+        if target not in edge_sources
+    }
+    records.extend(
+        {'source': node, 'source_original': node}
+        for node in final_leaves
+    )
+    mapping_table = pd.DataFrame(
+        records, columns=['source', 'source_original']
+    ).drop_duplicates()
+    moon_res_dec = moon_res.merge(mapping_table, on='source', how='inner')
+    _log(f'MOON: decompressed {len(moon_res_dec) - len(moon_res)} nodes')
     return moon_res_dec
 
 
 def reduce_solution_network(
-        moon_res, meta_network, cutoff, sig_input, rna_input=None
+        moon_res,
+        meta_network,
+        cutoff,
+        sig_input,
+        rna_input=None,
+        n_steps=10,
 ):
+    """Extract the current cosmosR single-threshold MOON solution network.
+
+    The graph-native result is ``(network, ATT)``. The returned graph is the
+    SIF equivalent and contains canonical ``sign`` plus ``consistency=True``
+    edge attributes. ``source_original`` is accepted for legacy decompressed
+    Python results when it matches the original PKN node identifiers.
     """
-    Reduces the solution network based on MOON score cutoffs and returns the
-    reduced network and attribute table.
+    _log('MOON: reducing solution network...')
+    n_steps = _validated_n_steps(n_steps)
+    if n_steps is None:
+        raise ValueError('n_steps must be a non-negative integer.')
+    upstream_input = _as_named_scores(sig_input, 'sig_input')
+    source_graph = _signed_digraph(meta_network)
+    scores = _score_table(moon_res, source_graph)
+    qualified = scores.loc[scores['score'].abs() > cutoff].copy()
+    _log(
+        f'MOON: {len(scores) - len(qualified)} nodes removed by the '
+        'score cutoff'
+    )
 
-    Args:
-        moon_res (pandas.DataFrame): The solution MOON df.
-        meta_network (networkx.DiGraph): The original network.
-        cutoff (float): The cutoff value for filtering edges.
-        sig_input (dict): Dictionary containing the significant input scores.
-        rna_input (dict, optional): Dictionary containing the RNA input scores.
-        Defaults to None.
+    stable_columns = ['nodes', 'score', 'level', 'RNA_input']
+    if qualified.empty:
+        return nx.DiGraph(), _empty_att(stable_columns)
 
-    Returns:
-        res_network (networkx.DiGraph): The reduced network.
-        att (pandas.DataFrame): The attribute table containing the relevant
-        attributes of the nodes in the reduced network.
-    """
-    _log("MOON: reducing solution network...")
+    score_by_node = qualified.set_index('source')['score'].to_dict()
+    level_by_node = qualified.set_index('source')['level'].to_dict()
+    valid_nodes = set(qualified['source'])
+    result = nx.DiGraph()
+    result.add_nodes_from(
+        (node, dict(source_graph.nodes[node]))
+        for node in valid_nodes if node in source_graph
+    )
+    result.add_nodes_from(node for node in valid_nodes if node not in result)
 
-    recursive_moon_res = moon_res.copy()
+    for source, target, attributes in source_graph.edges(data=True):
+        if source not in valid_nodes or target not in valid_nodes:
+            continue
+        if (
+            np.sign(score_by_node[source] * score_by_node[target])
+            != attributes['sign']
+        ):
+            continue
+        copied_attributes = dict(attributes)
+        copied_attributes['consistency'] = True
+        result.add_edge(source, target, **copied_attributes)
 
-    _log(f"MOON: applying cutoff value on MOON scores: {cutoff}")
+    seeds = [node for node in upstream_input if node in result]
+    if not seeds:
+        _log('MOON: no upstream input nodes found in the qualified network.')
+        return nx.DiGraph(), _empty_att(stable_columns)
 
-    recursive_moon_res = recursive_moon_res[
-        abs(recursive_moon_res['score']) > cutoff
-    ]
-
-    _log(f"MOON: {len(moon_res) - len(recursive_moon_res)} nodes removed")
-
-    consistency_vec = recursive_moon_res.set_index(
-        'source_original')['score'].to_dict()
-
-    res_network = meta_network.subgraph(
-        [
-            node for node in meta_network.nodes if node in
-            recursive_moon_res.source_original.values
+    result = result.subgraph(_reachable_nodes(result, seeds, n_steps)).copy()
+    while result.number_of_nodes() > 0:
+        bad_children = [
+            node for node in result
+            if result.out_degree(node) == 0 and level_by_node[node] != 0
         ]
+        bad_parents = [
+            node for node in result
+            if result.in_degree(node) == 0 and node not in upstream_input
+        ]
+        to_remove = set(bad_children).union(bad_parents)
+        if not to_remove:
+            break
+        result.remove_nodes_from(to_remove)
+
+    nx.set_node_attributes(
+        result,
+        {node: score_by_node[node] for node in result.nodes},
+        'moon_score',
     )
-
-    res_network_edges = res_network.edges(data=True)
-    res_network = nx.DiGraph(res_network)
-
-    _log(f"MOON: checking sign consistency of {len(res_network_edges)} edges")
-    for source, target, data in res_network_edges:
-        if data['sign'] != np.sign(consistency_vec[source] * consistency_vec[target]): # noqa E501
-            res_network.remove_edge(source, target)
-    
-    _log(f"MOON: {len(res_network.edges)} edges kept")
-
-    recursive_moon_res.rename(columns={'source_original': 'nodes'},
-                              inplace=True)
-    recursive_moon_res.drop(columns=['source'], inplace=True)
-
-    sig_input_df = pd.DataFrame.from_dict(
-        sig_input, orient='index', columns=['real_score']
+    nx.set_node_attributes(
+        result, {node: level_by_node[node] for node in result.nodes}, 'level'
     )
-    merged_df = pd.merge(
-        sig_input_df, recursive_moon_res, how='inner',
-        left_index=True, right_on='nodes'
+    att = qualified.loc[
+        qualified['source'].isin(result.nodes), ['source', 'score', 'level']
+    ].rename(columns={'source': 'nodes'})
+    return result, _attach_rna(att, rna_input, 'nodes')
+
+
+def reduce_solution_network_double_thresh(
+        moon_res,
+        meta_network,
+        primary_thresh,
+        secondary_thresh,
+        sig_input,
+        rna_input=None,
+):
+    """Extract the current cosmosR two-threshold MOON solution network.
+
+    The path restriction intentionally follows the present R implementation:
+    it runs only after a selected sign-incoherent edge is removed. This keeps
+    the current cross-language behaviour, including disconnected components
+    when every initially selected edge is coherent.
+    """
+    upstream_input = _as_named_scores(sig_input, 'sig_input')
+    source_graph = _signed_digraph(meta_network)
+    scores = _score_table(moon_res, source_graph, require_level=True)
+    primary_nodes = set(scores.loc[
+        scores['score'].abs() > primary_thresh, 'source'
+    ])
+    secondary_nodes = set(scores.loc[
+        scores['score'].abs() > secondary_thresh, 'source'
+    ])
+    score_by_node = scores.set_index('source')['score'].to_dict()
+
+    result = nx.DiGraph()
+    for source, target, attributes in source_graph.edges(data=True):
+        if (
+            source in secondary_nodes
+            and target in secondary_nodes
+            and (source in primary_nodes or target in primary_nodes)
+        ):
+            result.add_edge(source, target, **dict(attributes))
+
+    while result.number_of_edges() > 0:
+        incoherent_edges = [
+            (source, target)
+            for source, target, attributes in result.edges(data=True)
+            if np.sign(score_by_node[source] * score_by_node[target])
+            != attributes['sign']
+        ]
+        if not incoherent_edges:
+            break
+        result.remove_edges_from(incoherent_edges)
+        if result.number_of_edges() == 0:
+            # An R edge table with no rows has no vertices. ``remove_edges``
+            # leaves isolated NetworkX vertices behind, so clear them here.
+            result = nx.DiGraph()
+            break
+
+        seeds = [node for node in upstream_input if node in result]
+        level_zero = set(scores.loc[
+            scores['level'] == 0, 'source'
+        ]).intersection(result.nodes)
+        if not seeds or not level_zero:
+            result = nx.DiGraph()
+            break
+        forward = _reachable_nodes(result, seeds, None)
+        backward = _reachable_nodes(
+            result.reverse(copy=False), level_zero, None
+        )
+        result = _edge_only_subgraph(result, forward.intersection(backward))
+
+    final_nodes = set(result.nodes)
+    att = scores.loc[
+        scores['source'].isin(final_nodes), ['source', 'score', 'level']
+    ].copy()
+    att['type'] = np.where(
+        att['source'].isin(upstream_input),
+        'upstream_input',
+        np.where(att['level'] == 0, 'level0', 'other'),
     )
-    _log(f"MOON: comparing real scores with MOON scores in upstream layer")
-    merged_df['filterout'] = np.sign(
-        merged_df['real_score']) != np.sign(
-            merged_df['score'])
-    _log(f"MOON: {merged_df['filterout'].sum()} nodes filtered out")
-    merged_df = merged_df[~ merged_df['filterout']]
-    upstream_nodes = merged_df.nodes.values
-    upstream_nodes = {
-        node: 1 for node in upstream_nodes if node in res_network.nodes
-    }
+    nx.set_node_attributes(
+        result,
+        {node: score_by_node[node] for node in result.nodes},
+        'moon_score',
+    )
+    return result, _attach_rna(att, rna_input, 'source')
 
-    _log(f"MOON: getting ego graph of {len(upstream_nodes)} upstream nodes, maximum depth set to 7") # noqa E501
-    nodes_pre = len(res_network.nodes)
-    res_network = get_ego_graph(res_network, upstream_nodes, 7)
-    _log(f"MOON: network reduced from {nodes_pre} to {len(res_network.nodes)} nodes") # noqa E501
 
-    moon_scores = recursive_moon_res.set_index(
-        'nodes')['score'].to_dict()
+def get_moon_scoring_network(
+        upstream_node,
+        meta_network,
+        moon_scores,
+        keep_upstream_node_peers=False,
+):
+    """Return the score-explanation subnetwork for one upstream MOON node."""
+    source_graph = _signed_digraph(meta_network)
+    scores = _score_table(moon_scores, source_graph, require_level=True)
+    upstream_rows = scores.loc[scores['source'] == upstream_node]
+    if len(upstream_rows) != 1:
+        raise ValueError(
+            'upstream_node must occur exactly once in moon_scores.'
+        )
+    n_steps = int(upstream_rows['level'].iloc[0])
+    if n_steps < 0:
+        raise ValueError('The upstream node level must be non-negative.')
 
-    nx.set_node_attributes(G=res_network,
-                           values=moon_scores,
-                           name='moon_score')
+    if not keep_upstream_node_peers:
+        scores = scores.loc[
+            ~(
+                (scores['level'] == n_steps)
+                & (scores['source'] != upstream_node)
+            )
+        ].copy()
 
-    att = recursive_moon_res[
-        recursive_moon_res['nodes'].isin(res_network.nodes)
-    ]
+    result = keep_controllable_neighbours(
+        {upstream_node: 1}, source_graph, n_steps=n_steps
+    )
+    result = _edge_only_subgraph(result)
+    targets = {target for _, target in result.edges()}
+    downstream_nodes = set(scores.loc[
+        (scores['level'] == 0) & scores['source'].isin(targets), 'source'
+    ])
+    if not downstream_nodes:
+        return nx.DiGraph(), scores.iloc[0:0].copy()
 
-    if rna_input is not None:
-        rna_input_df = pd.DataFrame.from_dict(
-            rna_input, orient='index', columns=['real_score']
-        ).reset_index().rename(columns={'index': 'nodes'})
-        att = pd.merge(att, rna_input_df, how='left', on='nodes')
-    else:
-        att['RNA_input'] = np.nan
+    result = keep_observable_neighbours(
+        {node: 1 for node in downstream_nodes}, result, n_steps=n_steps
+    )
+    result = _edge_only_subgraph(result)
+    scores = scores.loc[scores['source'].isin(result.nodes)].copy()
+    result = _edge_only_subgraph(result, set(scores['source']))
 
-    return res_network, att
+    if n_steps > 1 and not keep_upstream_node_peers:
+        for level in range(n_steps, -1, -1):
+            top_nodes = set(scores.loc[
+                scores['level'] == level, 'source'
+            ])
+            child_nodes = {
+                target for source, target in result.edges()
+                if source in top_nodes
+            }
+            scores = scores.loc[
+                scores['source'].isin(child_nodes)
+                | (scores['level'] != level - 1)
+            ].copy()
+            result = _edge_only_subgraph(result, set(scores['source']))
+
+    score_by_node = scores.set_index('source')['score'].to_dict()
+    nx.set_node_attributes(
+        result,
+        {node: score_by_node[node] for node in result.nodes},
+        'moon_score',
+    )
+    return result, scores
 
 
 def get_ego_graph(G, sources, depth_limit=7):
@@ -796,52 +1130,65 @@ def get_ego_graph(G, sources, depth_limit=7):
     return G.subgraph(reached_nodes).copy()
 
 
+def _translate_label(name, mapping_dict, keep_unmapped_suffix):
+    if name is None or pd.isna(name):
+        return name
+    translated = re.sub(r'^Metab__', '', str(name))
+    translated = re.sub(r'^Gene', 'Enzyme', translated)
+    suffix_match = re.search(r'_[a-z]$', translated)
+    suffix = suffix_match.group() if suffix_match else ''
+    translated = re.sub(r'_[a-z]$', '', translated)
+    if translated in mapping_dict:
+        return f'Metab__{mapping_dict[translated]}{suffix}'
+    return f'{translated}{suffix}' if keep_unmapped_suffix else translated
+
+
+def translate_column_HMDB(my_column, mapping_dict):
+    """Translate a node column using an HMDB mapping like current cosmosR."""
+    if mapping_dict is None:
+        raise ValueError(
+            'mapping_dict is required because NetworkCommons has no '
+            'packaged HMDB map.'
+        )
+
+    translate = lambda value: _translate_label(value, mapping_dict, True)
+    if isinstance(my_column, pd.Series):
+        return my_column.map(translate)
+    if isinstance(my_column, pd.Index):
+        return pd.Index(
+            [translate(value) for value in my_column], name=my_column.name
+        )
+    if isinstance(my_column, str):
+        return translate(my_column)
+    return [translate(value) for value in my_column]
+
+
 def translate_res(untranslated_network, att, mapping_dict):
-    """
-    Translates the network and attribute table based on the given mapping
-    dataframe.
+    """Translate a graph-native SIF equivalent and node attribute table.
 
-    Args:
-        network (networkx.DiGraph): The network to be translated.
-        att (pandas.DataFrame): The attribute table to be translated.
-        mapping_df (pandas.DataFrame): The mapping dataframe containing the
-        translation information.
-
-    Returns:
-        network (networkx.DiGraph): The translated network.
-        att (pandas.DataFrame): The translated attribute table.
+    This mirrors current cosmosR's intentionally distinct SIF and ATT suffix
+    handling: unmapped endpoint labels lose a compartment suffix in the graph,
+    while ATT labels retain it.
     """
-    _log("MOON: translating network and attribute table...")
+    _log('MOON: translating network and attribute table...')
+    if mapping_dict is None:
+        raise ValueError(
+            'mapping_dict is required because NetworkCommons has no '
+            'packaged HMDB map.'
+        )
+    if not isinstance(att, pd.DataFrame) or len(att.columns) == 0:
+        raise ValueError('att must be a pandas DataFrame with node labels.')
+
+    node_column = 'nodes' if 'nodes' in att.columns else att.columns[0]
     network = untranslated_network.copy()
-    att = att.copy()
-    to_rename = att.nodes.values
-    renamed = {}
-    suffixes = {}
-
-    for name in to_rename:
-        name_changed = re.sub("Metab__", "", name)
-        name_changed = re.sub("^Gene", "Enzyme", name_changed)
-        suffix = re.search("_[a-z]$", name_changed)
-        name_changed = re.sub("_[a-z]$", "", name_changed)
-
-        if name_changed in mapping_dict:
-            name_changed = mapping_dict[name_changed]
-            name_changed = "Metab__" + name_changed + suffix.group() \
-                if suffix else "Metab__" + name_changed
-            suffixes[name] = ""
-        elif suffix:
-            suffixes[name] = suffix.group()
-        else:
-            suffixes[name] = ""
-
-        renamed[name] = name_changed
-
-    network = nx.relabel_nodes(network, renamed, copy=False)
-
-    renamed = {k: v + suffixes[k] for k, v in renamed.items()}
-
-    att['nodes'] = att['nodes'].map(renamed)
-    
-    _log("MOON: nodes translated")
-
-    return network, att
+    renamed_nodes = {
+        node: _translate_label(node, mapping_dict, False)
+        for node in network.nodes
+    }
+    network = nx.relabel_nodes(network, renamed_nodes, copy=True)
+    translated_att = att.copy()
+    translated_att[node_column] = translated_att[node_column].map(
+        lambda value: _translate_label(value, mapping_dict, True)
+    )
+    _log('MOON: nodes translated')
+    return network, translated_att

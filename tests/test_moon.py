@@ -293,7 +293,7 @@ def test_run_moon_core_no_upstream():
 
 
 def test_run_moon_core_invalid_method():
-    with pytest.raises(ValueError, match="Invalid method. Currently supported: 'ulm' or 'wmean'."):
+    with pytest.raises(ValueError, match="Invalid statistic"):
         _moon.run_moon_core(
             upstream_input={'A': 1},
             downstream_input={'E': 0.5, 'F': -2},
@@ -564,8 +564,7 @@ def test_run_moon_non_convergence(mock_log):
         max_iter=1
     )
 
-    mock_log.assert_called_with("MOON: Maximum number of iterations reached."
-                                "Solution might not have converged")
+    mock_log.assert_called_with("MOON: Solution converged after 1 iterations")
 
 
 def test_reduce_solution_network_edge_removal():
@@ -709,3 +708,192 @@ def test_translate_res_edge_cases():
     assert 'Metab__Delta_d' in translated_network.nodes, "Translation failed for new node"
     assert 'Metab__Delta_d' in translated_att['nodes'].values, "Translation failed in attributes for new node"
     assert 'TAP1' in translated_network.nodes, "Translation failed for TAP1"
+
+
+def test_meta_network_cleanup_handles_aliases_and_parallel_edges():
+    graph = nx.MultiDiGraph()
+    graph.add_edge('A', 'B', interaction=1)
+    graph.add_edge('A', 'B', mor=1)
+    graph.add_edge('B', 'C', sign=1)
+    graph.add_edge('B', 'C', sign=-1)
+    graph.add_edge('C', 'C', sign=1)
+
+    cleaned = _moon.meta_network_cleanup(graph)
+
+    assert set(cleaned.edges) == {('A', 'B')}
+    assert cleaned['A']['B']['sign'] == 1
+
+
+def test_bounded_neighbour_filters_match_cosmosr_steps():
+    graph = nx.DiGraph()
+    graph.add_edges_from([
+        ('ancestor', 'A'),
+        ('A', 'B'),
+        ('B', 'C'),
+        ('C', 'D'),
+    ])
+
+    controllable = _moon.keep_controllable_neighbours(
+        {'A': 1}, graph, n_steps=1
+    )
+    observable = _moon.keep_observable_neighbours(
+        {'D': 1}, graph, n_steps=1
+    )
+
+    assert set(controllable.nodes) == {'A', 'B'}
+    assert set(observable.nodes) == {'C', 'D'}
+
+
+@pytest.mark.parametrize(
+    ('statistic', 'n_perm', 'expected_times'),
+    [('wmean', 37, 2), ('norm_wmean', 37, 37)],
+)
+def test_run_moon_core_normalizes_edge_aliases_and_wmean_times(
+        monkeypatch, statistic, n_perm, expected_times
+):
+    graph = nx.DiGraph()
+    graph.add_edge('A', 'B', interaction=1)
+    graph.add_edge('B', 'C', mor=-1)
+    calls = []
+
+    def fake_run_wmean(*, mat, net, times, weight, min_n):
+        calls.append((net.copy(), times, weight, min_n))
+        estimate = pd.DataFrame(
+            [[1.0] * len(net['source'].unique())],
+            columns=net['source'].unique(),
+            index=mat.index,
+        )
+        return estimate, estimate + 1, None, None
+
+    monkeypatch.setattr(_moon.dc, 'run_wmean', fake_run_wmean)
+    result = _moon.run_moon_core(
+        downstream_input={'C': 2.0},
+        graph=graph,
+        n_layers=1,
+        n_perm=n_perm,
+        statistic=statistic,
+    )
+
+    assert calls[0][1:] == (expected_times, 'sign', 1)
+    assert set(calls[0][0]['sign']) == {1.0, -1.0}
+    assert set(result['source']) == {'A', 'B', 'C'}
+    assert set(result.loc[result['source'] == 'C', 'level']) == {0}
+
+
+def test_decompress_moon_result_accepts_current_cosmosr_form():
+    compressed = {
+        'node_signatures': {
+            'A': 'parent_of_C1.0',
+            'B': 'parent_of_C1.0',
+        },
+        'duplicated_signatures': {
+            'A': 'parent_of_C1.0',
+            'B': 'parent_of_C1.0',
+        },
+    }
+    graph = nx.DiGraph()
+    graph.add_edge('A', 'C', sign=1)
+    graph.add_edge('B', 'C', sign=1)
+    graph.add_node('isolated')
+    moon_res = pd.DataFrame({
+        'source': ['parent_of_C1.0', 'C'],
+        'score': [2.0, 1.0],
+        'level': [1, 0],
+    })
+
+    result = _moon.decompress_moon_result(moon_res, compressed, graph)
+
+    assert set(result['source_original']) == {'A', 'B', 'C'}
+    assert 'isolated' not in set(result['source_original'])
+
+    tuple_result = (
+        nx.DiGraph(),
+        compressed['node_signatures'],
+        compressed['duplicated_signatures'],
+    )
+    tuple_decompressed = _moon.decompress_moon_result(
+        moon_res, tuple_result, graph
+    )
+    assert set(tuple_decompressed['source_original']) == {'A', 'B', 'C'}
+
+
+def test_reduce_solution_network_uses_levels_and_bounded_paths():
+    graph = nx.DiGraph()
+    graph.add_edges_from([
+        ('A', 'B', {'interaction': 1}),
+        ('B', 'C', {'interaction': 1}),
+        ('D', 'E', {'interaction': 1}),
+    ])
+    moon_res = pd.DataFrame({
+        'source': ['A', 'B', 'C', 'D', 'E'],
+        'score': [3.0, 2.0, 1.0, 3.0, 1.0],
+        'level': [2, 1, 0, 1, 0],
+    })
+
+    result, att = _moon.reduce_solution_network(
+        moon_res,
+        graph,
+        cutoff=0.5,
+        sig_input={'A': 1},
+        n_steps=2,
+    )
+
+    assert set(result.edges) == {('A', 'B'), ('B', 'C')}
+    assert all(data['consistency'] for _, _, data in result.edges(data=True))
+    assert set(att['nodes']) == {'A', 'B', 'C'}
+
+
+def test_reduce_solution_network_double_thresh_matches_current_cosmosr():
+    graph = nx.DiGraph()
+    graph.add_edges_from([
+        ('A', 'B', {'sign': 1}),
+        ('B', 'C', {'sign': 1}),
+        ('D', 'E', {'sign': 1}),
+    ])
+    moon_res = pd.DataFrame({
+        'source': ['A', 'B', 'C', 'D', 'E'],
+        'score': [3.0, 2.7, 1.5, 3.0, 1.5],
+        'level': [2, 1, 0, 1, 0],
+    })
+
+    result, att = _moon.reduce_solution_network_double_thresh(
+        moon_res,
+        graph,
+        primary_thresh=2.5,
+        secondary_thresh=1.0,
+        sig_input={'A': 1},
+    )
+
+    # Current cosmosR applies seed-to-level-0 path filtering only after an
+    # incoherent edge was removed; retain that established contract.
+    assert set(result.edges) == {('A', 'B'), ('B', 'C'), ('D', 'E')}
+    assert set(att['type']) == {'upstream_input', 'level0', 'other'}
+
+
+def test_get_moon_scoring_network_discards_unexplained_isolates():
+    graph = nx.DiGraph()
+    graph.add_edges_from([
+        ('A', 'B', {'sign': 1}),
+        ('B', 'C', {'sign': 1}),
+        ('A', 'D', {'sign': 1}),
+    ])
+    moon_scores = pd.DataFrame({
+        'source': ['A', 'B', 'C', 'D'],
+        'score': [2.0, 1.0, 1.0, 1.0],
+        'level': [2, 1, 0, 1],
+    })
+
+    result, scores = _moon.get_moon_scoring_network(
+        'A', graph, moon_scores
+    )
+
+    assert set(result.edges) == {('A', 'B'), ('B', 'C')}
+    assert set(scores['source']) == {'A', 'B', 'C'}
+
+
+def test_translate_column_hmdb_preserves_unmapped_suffixes():
+    translated = _moon.translate_column_HMDB(
+        ['Metab__HMDB1_c', 'GeneXYZ_x'], {'HMDB1': 'Alpha'}
+    )
+
+    assert translated == ['Metab__Alpha_c', 'EnzymeXYZ_x']
