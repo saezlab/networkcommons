@@ -17,6 +17,7 @@ NetworkCommons: Table of Contents
    datasets
    methods
    benchmarks
+   simulation
 
 
 .. toctree::

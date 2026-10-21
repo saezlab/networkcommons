@@ -28,6 +28,7 @@ __all__ = [
     'data',
     'eval',
     'methods',
+    'simulation',
     'utils',
     'visual',
 ]
@@ -45,6 +46,7 @@ _MODULES = [
     'data',
     'eval',
     'methods',
+    'simulation',
     'visual',
 ]
 
